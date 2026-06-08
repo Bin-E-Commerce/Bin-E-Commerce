@@ -44,7 +44,8 @@ The URL is built from:
 | `KEYCLOAK_URL` | Keycloak base |
 | `KEYCLOAK_REALM` | Realm |
 | `KEYCLOAK_WEB_CLIENT_ID` | OAuth client id, default `web-client` |
-| `FRONTEND_URL` | Callback base, default `http://localhost:5173` |
+| `FRONTEND_URL` | Frontend base URL, default `http://localhost:5173` |
+| `SOCIAL_AUTH_CALLBACK_URL` | Exact OAuth callback URL, default `${FRONTEND_URL}/callback` |
 | `provider` path param | `kc_idp_hint` |
 
 Query params include:
@@ -52,7 +53,7 @@ Query params include:
 - `client_id`
 - `response_type=code`
 - `scope=openid email profile`
-- `redirect_uri=${FRONTEND_URL}/auth/callback`
+- `redirect_uri=${SOCIAL_AUTH_CALLBACK_URL}` (default `http://localhost:5173/callback`)
 - `state`
 - `kc_idp_hint=${provider}`
 

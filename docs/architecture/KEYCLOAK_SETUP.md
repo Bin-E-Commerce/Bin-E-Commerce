@@ -161,6 +161,7 @@ KEYCLOAK_ADMIN_PASSWORD=admin
 
 # ── Application ───────────────────────────────────────────────────────
 FRONTEND_URL=http://localhost:5173
+SOCIAL_AUTH_CALLBACK_URL=http://localhost:5173/callback
 NODE_ENV=development
 
 # ── Database (PostgreSQL) ─────────────────────────────────────────────
@@ -195,7 +196,7 @@ curl -X POST "http://localhost:8080/realms/master/protocol/openid-connect/token"
 1. Chạy `auth-service` và `api-gateway`
 2. Gọi: `GET http://localhost:3000/api/v1/auth/social/start/google`
 3. Mở `authUrl` trong trình duyệt → đăng nhập bằng Google
-4. Sau khi redirect về `/auth/callback?code=...&state=...`, frontend gọi:
+4. Sau khi redirect về `/callback?code=...&state=...`, frontend gọi:
    `POST http://localhost:3000/api/v1/auth/social/callback/google` với `{ code, state }`
 
 ### Kiểm tra forgot/reset password
