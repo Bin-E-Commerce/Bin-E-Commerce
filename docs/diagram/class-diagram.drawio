@@ -1,0 +1,155 @@
+<mxfile host="app.diagrams.net" modified="2026-06-10T00:00:00.000Z" agent="Codex" version="24.7.17" type="device">
+  <diagram id="product-import-class-diagram" name="Product Import Class Diagram">
+    <mxGraphModel dx="1398" dy="696" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="2336" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="&lt;b&gt;Product Crawl / Import Class Diagram&lt;/b&gt;&lt;br&gt;Based on packages/crawl-tiki/data/test-products.json and database import graph" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontSize=20;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="60" y="40" width="860" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="&lt;b&gt;Rules from sample data&lt;/b&gt;&lt;br&gt;- One product graph contains categoryChain, brand, shop, product, images, variants, inventories, attributes, reviews.&lt;br&gt;- If source has no option/variant, importer creates one default variant and one inventory row.&lt;br&gt;- external_* + source_platform are used for idempotent upsert and source traceability." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff7ed;strokeColor=#fed7aa;fontSize=13;align=left;verticalAlign=top;spacing=12;" vertex="1" parent="1">
+          <mxGeometry x="980" y="40" width="560" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="svc-source" value="&lt;b&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;br&gt;ProductSourceAdapter&lt;/b&gt;&lt;hr&gt;platform: SourcePlatform&lt;br&gt;listProducts(query)&lt;br&gt;getProductDetail(externalId)&lt;br&gt;getProductReviews(productId)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="260" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-tiki" value="&lt;b&gt;TikiSourceAdapter&lt;/b&gt;&lt;hr&gt;platform = tiki&lt;br&gt;normalizes raw Tiki API&lt;br&gt;builds source product detail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="340" width="260" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-crawler" value="&lt;b&gt;ProductCrawlerService&lt;/b&gt;&lt;hr&gt;crawl(options)&lt;br&gt;resolve category/product pages&lt;br&gt;detail + reviews + checkpoint&lt;br&gt;map + validate + optional import" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#93c5fd;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="150" width="270" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-mapper" value="&lt;b&gt;ProductMapper&lt;/b&gt;&lt;hr&gt;mapToImportGraph(source)&lt;br&gt;map categories/brand/shop&lt;br&gt;map options/variants/images&lt;br&gt;map attributes/reviews" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#93c5fd;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="150" width="260" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="svc-repo" value="&lt;b&gt;PostgresProductImportRepository&lt;/b&gt;&lt;hr&gt;upsertProductGraph(graph)&lt;br&gt;transaction boundary&lt;br&gt;upsert categories, brand, shop&lt;br&gt;upsert product aggregate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#93c5fd;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="190" width="310" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="dto-graph" value="&lt;b&gt;ImportProductGraph&lt;/b&gt;&lt;hr&gt;categoryChain: ImportCategory[]&lt;br&gt;brand: ImportBrand | null&lt;br&gt;shop: ImportShop | null&lt;br&gt;product: ImportProduct&lt;br&gt;images: ImportProductImage[]&lt;br&gt;options: ImportProductOption[]&lt;br&gt;variants: ImportProductVariant[]&lt;br&gt;inventories: ImportInventory[]&lt;br&gt;attributes: ImportAttribute[]&lt;br&gt;reviews: ImportReview[]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f5f9;strokeColor=#64748b;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="340" width="330" height="230" as="geometry" />
+        </mxCell>
+
+        <mxCell id="category" value="&lt;b&gt;categories&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;parent_id: uuid FK nullable&lt;br&gt;name: varchar&lt;br&gt;slug: varchar UNIQUE&lt;br&gt;level: int&lt;br&gt;sort_order: int&lt;br&gt;is_active: boolean&lt;br&gt;source_platform: varchar&lt;br&gt;external_category_id: varchar&lt;br&gt;source_url: text" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="650" width="300" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="brand" value="&lt;b&gt;brands&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;name: varchar&lt;br&gt;slug: varchar UNIQUE&lt;br&gt;logo_url: text nullable&lt;br&gt;description: text nullable&lt;br&gt;is_active: boolean&lt;br&gt;source_platform: varchar&lt;br&gt;external_brand_id: varchar" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="420" y="650" width="280" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="shop" value="&lt;b&gt;shops&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;owner_id: uuid FK nullable&lt;br&gt;name: varchar&lt;br&gt;slug: varchar UNIQUE&lt;br&gt;avatar_url: text nullable&lt;br&gt;description: text nullable&lt;br&gt;status: enum&lt;br&gt;source_platform: varchar&lt;br&gt;external_shop_id: varchar" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="650" width="280" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="product" value="&lt;b&gt;products&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;shop_id: uuid FK nullable&lt;br&gt;category_id: uuid FK nullable&lt;br&gt;brand_id: uuid FK nullable&lt;br&gt;name: varchar&lt;br&gt;slug: varchar&lt;br&gt;description: text nullable&lt;br&gt;short_description: text nullable&lt;br&gt;status: enum&lt;br&gt;min_price: numeric&lt;br&gt;max_price: numeric&lt;br&gt;total_sold: int&lt;br&gt;rating_avg: numeric nullable&lt;br&gt;review_count: int&lt;br&gt;view_count: int&lt;br&gt;source_platform: varchar&lt;br&gt;external_product_id: varchar&lt;br&gt;source_url: text&lt;br&gt;created_at / updated_at" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#111827;strokeColor=#111827;fontColor=#ffffff;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="620" width="350" height="360" as="geometry" />
+        </mxCell>
+
+        <mxCell id="image" value="&lt;b&gt;product_images&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;product_id: uuid FK&lt;br&gt;variant_id: uuid FK nullable&lt;br&gt;image_url: text&lt;br&gt;alt_text: varchar nullable&lt;br&gt;sort_order: int&lt;br&gt;is_thumbnail: boolean&lt;br&gt;external_image_id: varchar" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1060" width="300" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="variant" value="&lt;b&gt;product_variants&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;product_id: uuid FK&lt;br&gt;sku: varchar UNIQUE&lt;br&gt;name: varchar&lt;br&gt;price: numeric&lt;br&gt;original_price: numeric nullable&lt;br&gt;stock_quantity: int&lt;br&gt;weight: numeric nullable&lt;br&gt;status: enum&lt;br&gt;image_url: text nullable&lt;br&gt;external_variant_id: varchar" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="420" y="1040" width="320" height="270" as="geometry" />
+        </mxCell>
+        <mxCell id="inventory" value="&lt;b&gt;inventories&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;variant_id: uuid FK UNIQUE&lt;br&gt;quantity_available: int&lt;br&gt;quantity_reserved: int&lt;br&gt;quantity_sold: int&lt;br&gt;low_stock_threshold: int" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="810" y="1060" width="300" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="option" value="&lt;b&gt;product_options&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;product_id: uuid FK&lt;br&gt;name: varchar&lt;br&gt;position: int&lt;br&gt;UNIQUE(product_id, name)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="1060" width="300" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="option-value" value="&lt;b&gt;product_option_values&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;option_id: uuid FK&lt;br&gt;value: varchar&lt;br&gt;position: int&lt;br&gt;UNIQUE(option_id, value)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="1310" width="300" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="variant-option" value="&lt;b&gt;product_variant_option_values&lt;/b&gt;&lt;hr&gt;variant_id: uuid FK&lt;br&gt;option_value_id: uuid FK&lt;br&gt;PK/UNIQUE(variant_id, option_value_id)&lt;br&gt;resolves many-to-many variant choices" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="1330" width="350" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="attribute" value="&lt;b&gt;attributes&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;category_id: uuid FK&lt;br&gt;name: varchar&lt;br&gt;slug: varchar&lt;br&gt;data_type: text | number | boolean&lt;br&gt;unit: varchar nullable&lt;br&gt;is_filterable: boolean&lt;br&gt;is_required: boolean&lt;br&gt;external_attribute_id: varchar&lt;br&gt;UNIQUE(category_id, slug)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1580" width="330" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="pav" value="&lt;b&gt;product_attribute_values&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;product_id: uuid FK&lt;br&gt;attribute_id: uuid FK&lt;br&gt;value_text: text nullable&lt;br&gt;value_number: numeric nullable&lt;br&gt;value_boolean: boolean nullable&lt;br&gt;UNIQUE(product_id, attribute_id)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="470" y="1580" width="340" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="review" value="&lt;b&gt;reviews&lt;/b&gt;&lt;hr&gt;id: uuid PK&lt;br&gt;user_id: uuid FK nullable&lt;br&gt;product_id: uuid FK&lt;br&gt;variant_id: uuid FK nullable&lt;br&gt;rating: int&lt;br&gt;content: text nullable&lt;br&gt;images: jsonb&lt;br&gt;status: enum&lt;br&gt;created_at: timestamptz&lt;br&gt;source_platform: varchar&lt;br&gt;external_review_id: varchar" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#111827;fontSize=12;align=left;verticalAlign=top;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="900" y="1580" width="330" height="270" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-impl" value="implements" style="endArrow=block;endFill=0;dashed=1;html=1;rounded=0;strokeColor=#64748b;fontSize=11;" edge="1" parent="1" source="svc-tiki" target="svc-source">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-crawler-source" value="uses" style="endArrow=open;html=1;rounded=0;strokeColor=#64748b;fontSize=11;" edge="1" parent="1" source="svc-crawler" target="svc-source">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-crawler-mapper" value="maps with" style="endArrow=open;html=1;rounded=0;strokeColor=#64748b;fontSize=11;" edge="1" parent="1" source="svc-crawler" target="svc-mapper">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-mapper-graph" value="creates" style="endArrow=open;html=1;rounded=0;strokeColor=#64748b;fontSize=11;" edge="1" parent="1" source="svc-mapper" target="dto-graph">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-graph-repo" value="upsert" style="endArrow=open;html=1;rounded=0;strokeColor=#64748b;fontSize=11;" edge="1" parent="1" source="dto-graph" target="svc-repo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-repo-product" value="persists aggregate" style="endArrow=open;html=1;rounded=0;strokeColor=#64748b;fontSize=11;" edge="1" parent="1" source="svc-repo" target="product">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel-category-self" value="0..1 parent / 0..* children" style="endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="category" target="category">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="40" y="760" as="sourcePoint" />
+            <mxPoint x="40" y="820" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="30" y="720" />
+              <mxPoint x="30" y="850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel-category-product" value="1 category / 0..* products" style="endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="category" target="product">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-brand-product" value="0..1 brand / 0..* products" style="endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="brand" target="product">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-shop-product" value="0..1 shop / 0..* products" style="endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="shop" target="product">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-product-image" value="1 / 0..* images" style="startArrow=diamondThin;startFill=1;endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="product" target="image">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-product-variant" value="1 / 1..* variants" style="startArrow=diamondThin;startFill=1;endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="product" target="variant">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-variant-image" value="0..1 variant image owner" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#6b7280;fontSize=11;" edge="1" parent="1" source="variant" target="image">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-variant-inventory" value="1 / 1 inventory" style="startArrow=diamondThin;startFill=1;endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="variant" target="inventory">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-product-option" value="1 / 0..* options" style="startArrow=diamondThin;startFill=1;endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="product" target="option">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-option-value" value="1 / 1..* values" style="startArrow=diamondThin;startFill=1;endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="option" target="option-value">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-variant-join" value="1 / 0..* choices" style="endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="variant" target="variant-option">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-value-join" value="1 / 0..* variant links" style="endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="option-value" target="variant-option">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-category-attr" value="1 category / 0..* attributes" style="startArrow=diamondThin;startFill=1;endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="category" target="attribute">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-product-pav" value="1 product / 0..* values" style="endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="product" target="pav">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-attr-pav" value="1 attribute / 0..* values" style="endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="attribute" target="pav">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-product-review" value="1 / 0..* reviews" style="endArrow=open;html=1;rounded=0;strokeColor=#111827;fontSize=11;" edge="1" parent="1" source="product" target="review">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-variant-review" value="0..1 reviewed variant" style="endArrow=open;html=1;rounded=0;dashed=1;strokeColor=#6b7280;fontSize=11;" edge="1" parent="1" source="variant" target="review">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
