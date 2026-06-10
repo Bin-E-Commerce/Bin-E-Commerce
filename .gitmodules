@@ -10,3 +10,6 @@
 [submodule "services/auth-service"]
 	path = services/auth-service
 	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Auth-Service.git
+[submodule "services/media-service"]
+	path = services/media-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Media-Service.git
