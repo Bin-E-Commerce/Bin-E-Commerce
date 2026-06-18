@@ -11,9 +11,9 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
-    "infra:up": "docker compose -f infra/docker/docker-compose.infra.yml up -d",
-    "infra:down": "docker compose -f infra/docker/docker-compose.infra.yml down",
-    "infra:logs": "docker compose -f infra/docker/docker-compose.infra.yml logs -f",
+    "infra:up": "docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml up -d",
+    "infra:down": "docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml down",
+    "infra:logs": "docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml logs -f",
     "services:up": "docker compose up -d",
     "services:down": "docker compose down",
     "services:build": "docker compose build"

@@ -3,8 +3,8 @@
 # Includes: PostgreSQL, MongoDB, Redis, Kafka (KRaft), Keycloak, Prometheus, Grafana
 #
 # Usage (run from repo root):
-#   docker compose -f infra/docker/docker-compose.infra.yml up -d
-#   docker compose -f infra/docker/docker-compose.infra.yml down -v
+#   docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml up -d
+#   docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml down -v
 # =============================================================================
 
 name: bin-ecommerce-infra
