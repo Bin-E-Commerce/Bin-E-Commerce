@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "source_platform": "shopee",
+  "source_exported_at": "2026-06-10T16:30:39.640Z",
+  "source_summary": {
+    "total_categories": 1341,
+    "completed_categories": 1341,
+    "failed_categories": 0,
+    "total_attributes": 15355
+  },
+  "import_order": [
+    "01_categories.json",
+    "02_category_attributes_root.json",
+    "03_category_attribute_options_root.json",
+    "04_category_attributes_conditional.json",
+    "05_category_attribute_options_conditional.json"
+  ],
+  "counts": {
+    "categories": 1593,
+    "root_attributes": 15355,
+    "root_options": 73593,
+    "conditional_attributes": 52,
+    "conditional_options": 161,
+    "total_attributes": 15407,
+    "total_options": 73754
+  },
+  "id_strategy": "UUID v5 ổn định. Chạy chuyển đổi lại vẫn tạo cùng ID cho cùng dữ liệu nguồn.",
+  "validation": {
+    "referential_integrity": "passed",
+    "errors": []
+  }
+}
