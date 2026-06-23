@@ -1,17 +1,28 @@
 export enum UserRole {
-  CUSTOMER = "CUSTOMER", // Dành cho khách hàng mua sắm trên nền tảng
-  CATALOG_MANAGER = "CATALOG_MANAGER", // Quản lý danh mục sản phẩm, bao gồm thêm/sửa/xóa sản phẩm và quản lý thông tin sản phẩm
-  INVENTORY_MANAGER = "INVENTORY_MANAGER", // Quản lý tồn kho, bao gồm cập nhật số lượng hàng hóa và theo dõi tình trạng kho
-  ORDER_MANAGER = "ORDER_MANAGER", // Quản lý đơn hàng, bao gồm xử lý đơn hàng, cập nhật trạng thái đơn hàng và quản lý thông tin khách hàng liên quan đến đơn hàng
-  SHIPPING_MANAGER = "SHIPPING_MANAGER", // Quản lý vận chuyển, bao gồm theo dõi và cập nhật trạng thái vận chuyển của đơn hàng
-  PROMOTION_MANAGER = "PROMOTION_MANAGER", // Quản lý khuyến mãi, bao gồm tạo, chỉnh sửa và xóa các chương trình khuyến mãi
-  RETURN_MANAGER = "RETURN_MANAGER", // Quản lý trả hàng, bao gồm xử lý yêu cầu trả hàng và hoàn tiền
-  ANALYST = "ANALYST", // Phân tích dữ liệu, bao gồm tạo báo cáo và phân tích hiệu suất kinh doanh
-  SUPPORT_AGENT = "SUPPORT_AGENT", // Hỗ trợ khách hàng, bao gồm giải đáp thắc mắc và xử lý khiếu nại
-  ADMIN = "ADMIN", // Quản trị hệ thống, bao gồm quản lý người dùng, vai trò và quyền hạn
+  CUSTOMER = "CUSTOMER", // Khách mua hàng trên nền tảng.
+  SELLER = "SELLER", // Người bán đã được duyệt và có quyền truy cập Seller Center.
+  CATALOG_MANAGER = "CATALOG_MANAGER", // Nhân sự quản lý danh mục, sản phẩm và dữ liệu catalog.
+  INVENTORY_MANAGER = "INVENTORY_MANAGER", // Nhân sự quản lý tồn kho, số lượng hàng và trạng thái kho.
+  ORDER_MANAGER = "ORDER_MANAGER", // Nhân sự xử lý đơn hàng và cập nhật trạng thái đơn.
+  SHIPPING_MANAGER = "SHIPPING_MANAGER", // Nhân sự theo dõi và điều phối vận chuyển.
+  PROMOTION_MANAGER = "PROMOTION_MANAGER", // Nhân sự tạo và quản lý chương trình khuyến mãi.
+  RETURN_MANAGER = "RETURN_MANAGER", // Nhân sự xử lý yêu cầu trả hàng và hoàn tiền.
+  ANALYST = "ANALYST", // Nhân sự xem báo cáo và phân tích hiệu suất kinh doanh.
+  SUPPORT_AGENT = "SUPPORT_AGENT", // Nhân sự hỗ trợ khách hàng và xử lý khiếu nại.
+  ADMIN = "ADMIN", // Quản trị viên hệ thống có quyền cao nhất.
 }
 
-// Nhóm các vai trò liên quan đến nhân viên để dễ dàng sử dụng trong các decorator @Roles() khi cần thiết
+// Nhóm vai trò người dùng cuối để phân biệt khách mua và người bán với nhân sự nội bộ.
+export const CUSTOMER_ROLES: UserRole[] = [UserRole.CUSTOMER];
+export const SELLER_ROLES: UserRole[] = [UserRole.SELLER];
+
+// Nhóm vai trò được phép vào Seller Center, dùng khi một màn hình cho cả seller và admin vận hành.
+export const SELLER_CENTER_ROLES: UserRole[] = [
+  UserRole.SELLER,
+  UserRole.ADMIN,
+];
+
+// Nhóm vai trò nhân sự nội bộ để dùng lại trong @Roles() khi bảo vệ các API quản trị.
 export const STAFF_ROLES: UserRole[] = [
   UserRole.CATALOG_MANAGER,
   UserRole.INVENTORY_MANAGER,

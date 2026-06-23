@@ -6,4 +6,4 @@ export * from "./enums/user-status.enum";
 export * from "./types/jwt-payload.type";
 
 // Kafka Events
-export * from "./kafka/events/notification.events";
+export * from "./kafka/events";
