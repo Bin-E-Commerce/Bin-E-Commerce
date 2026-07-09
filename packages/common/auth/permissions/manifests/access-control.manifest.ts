@@ -1,0 +1,267 @@
+import { UserRole } from "../../../enums/user-role.enum";
+import { Permission } from "../contracts/permission.enum";
+import { PermissionScope } from "../contracts/permission-scope.enum";
+
+// Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
+// Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.07.02.1";
+
+// Danh sách permission, role, scope và menu chính thức của hệ thống.
+export interface PermissionDefinition {
+  code: Permission; // Mã permission dùng trong DB, guard, menu, FE accessProfile.
+  name: string;
+  description: string;
+  resource: string;
+  action: string; // resource.action là cách đặt tên permission theo chuẩn RESTful, giúp FE và BE hiểu ngữ nghĩa permission.
+}
+
+// Danh sách role, permission và scope mặc định khi seed môi trường mới.
+export interface RoleDefinition {
+  code: UserRole;
+  name: string;
+  description: string;
+  isSystem: boolean; // Role hệ thống không được xóa, chỉ có thể bật/tắt hoặc gán quyền.
+}
+
+// Ma trận quyền mặc định khi seed môi trường mới.
+export interface RolePermissionDefinition {
+  roleCode: UserRole; // Role code dùng trong DB, guard, menu, FE accessProfile.
+  permissionCode: Permission;
+  scope: PermissionScope;
+}
+
+// Danh mục menu backend trả về cho FE trong accessProfile.
+export interface NavigationItemDefinition {
+  area: "admin" | "seller";
+  groupCode: string; // Mã nhóm menu dùng trong DB, guard, menu, FE accessProfile. FE sẽ render groupCode trong <el-menu-item-group> hoặc <q-item-label> tùy framework.
+  groupLabel: string; // Tên hiển thị nhóm menu trong sidebar, FE sẽ render groupLabel trong <el-menu-item-group> hoặc <q-item-label> tùy framework.
+  groupOrder: number; // Thứ tự nhóm menu trong sidebar, FE sẽ sort theo groupOrder trước, sortOrder sau.
+  code: string; // Mã menu dùng trong DB, guard, menu, FE accessProfile.
+  label: string; // Tên hiển thị trong menu.
+  description: string;
+  href: string; // Link menu, FE sẽ render <a href={href}> hoặc <router-link :to="{ path: href }"> tùy framework.
+  icon: string; // Icon hiển thị trong menu.
+  sortOrder: number; //  Thứ tự menu trong nhóm, FE sẽ sort theo groupOrder trước, sortOrder sau.
+  requiredPermissionCode: Permission; // Mã permission dùng trong DB, guard, menu, FE accessProfile. FE sẽ render menu nếu user có permission này.
+  requiredScope?: PermissionScope; // Scope mặc định của permission khi render menu, FE sẽ render menu nếu user có permission này với scope này. Nếu không có thì FE sẽ render menu nếu user có permission này với bất kỳ scope nào.
+  parentCode?: string; // Mã menu cha dùng trong DB, guard, menu, FE accessProfile. FE sẽ render menu con nếu user có permission này với scope này và menu cha có permission này với scope này. Nếu không có thì FE sẽ render menu con nếu user có permission này với bất kỳ scope nào.
+}
+
+// Danh mục permission chính thức của hệ thống.
+// Admin UI chỉ được bật/tắt các permission đã có trong danh sách này, không tự tạo permission tự do trong DB.
+export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
+  {
+    code: Permission.ADMIN_ACCESS,
+    name: "Truy cập Admin Center",
+    description: "Cho phép vào khu vực vận hành nội bộ của nền tảng.",
+    resource: "admin",
+    action: "access",
+  },
+  {
+    code: Permission.ADMIN_DASHBOARD_VIEW,
+    name: "Xem bảng điều khiển admin",
+    description: "Cho phép xem dashboard tổng quan của Admin Center.",
+    resource: "admin.dashboard",
+    action: "view",
+  },
+  {
+    code: Permission.ADMIN_ACCESS_CONTROL_READ,
+    name: "Xem trang phân quyền",
+    description: "Cho phép xem role, permission, scope và menu trong Admin Center.",
+    resource: "admin.access_control",
+    action: "read",
+  },
+  {
+    code: Permission.ADMIN_ACCESS_CONTROL_UPDATE,
+    name: "Chỉnh sửa phân quyền",
+    description: "Cho phép bật hoặc tắt permission cho từng role trong Admin Center.",
+    resource: "admin.access_control",
+    action: "update",
+  },
+  {
+    code: Permission.SELLER_APPLICATION_READ,
+    name: "Xem hồ sơ đăng ký seller",
+    description: "Cho phép xem danh sách và chi tiết hồ sơ đăng ký người bán.",
+    resource: "seller.application",
+    action: "read",
+  },
+  {
+    code: Permission.SELLER_APPLICATION_APPROVE,
+    name: "Duyệt hồ sơ đăng ký seller",
+    description: "Cho phép chấp thuận hồ sơ đăng ký người bán.",
+    resource: "seller.application",
+    action: "approve",
+  },
+  {
+    code: Permission.SELLER_APPLICATION_REJECT,
+    name: "Từ chối hồ sơ đăng ký seller",
+    description: "Cho phép từ chối hồ sơ đăng ký người bán.",
+    resource: "seller.application",
+    action: "reject",
+  },
+  {
+    code: Permission.SELLER_ACCESS,
+    name: "Truy cập Seller Center",
+    description: "Cho phép vào khu vực vận hành shop của người bán.",
+    resource: "seller",
+    action: "access",
+  },
+  {
+    code: Permission.SELLER_DASHBOARD_VIEW,
+    name: "Xem bảng điều khiển seller",
+    description: "Cho phép xem dashboard tổng quan trong Seller Center.",
+    resource: "seller.dashboard",
+    action: "view",
+  },
+];
+
+// Danh mục role nghiệp vụ chính thức.
+// DB có thể lưu trạng thái active hoặc assignment, nhưng code giữ danh sách role được hệ thống hiểu.
+export const ROLE_DEFINITIONS: RoleDefinition[] = [
+  {
+    code: UserRole.CUSTOMER,
+    name: "Khách hàng",
+    description: "Người dùng mua hàng trên nền tảng.",
+    isSystem: true,
+  },
+  {
+    code: UserRole.SELLER,
+    name: "Người bán",
+    description: "Người bán đã được duyệt và có quyền vận hành shop.",
+    isSystem: true,
+  },
+  {
+    code: UserRole.SUPPORT_AGENT,
+    name: "Nhân sự hỗ trợ",
+    description: "Nhân sự nội bộ xử lý hồ sơ và hỗ trợ người dùng.",
+    isSystem: true,
+  },
+  {
+    code: UserRole.ADMIN,
+    name: "Quản trị viên",
+    description: "Quản trị viên hệ thống có quyền vận hành toàn nền tảng.",
+    isSystem: true,
+  },
+];
+
+// Ma trận quyền mặc định khi seed môi trường mới.
+// Seed service chỉ tạo bản ghi còn thiếu, không ghi đè trạng thái quyền mà admin đã bật/tắt trong DB.
+export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_ACCESS,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_DASHBOARD_VIEW,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SUPPORT_AGENT,
+    permissionCode: Permission.SELLER_APPLICATION_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_ACCESS,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_DASHBOARD_VIEW,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_ACCESS_CONTROL_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_ACCESS_CONTROL_UPDATE,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.SELLER_APPLICATION_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.SELLER_APPLICATION_APPROVE,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.SELLER_APPLICATION_REJECT,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.SELLER_ACCESS,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.SELLER_DASHBOARD_VIEW,
+    scope: PermissionScope.GLOBAL,
+  },
+];
+
+// Manifest menu backend trả về cho FE trong accessProfile.
+// Mỗi item phải khai báo group rõ ràng để sidebar không tự gom sai ngữ nghĩa ở frontend.
+export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
+  {
+    area: "admin",
+    groupCode: "overview",
+    groupLabel: "Tổng quan",
+    groupOrder: 10,
+    code: "admin.dashboard",
+    label: "Bảng điều khiển",
+    description: "Sức khỏe hệ thống và việc cần xử lý",
+    href: "/admin/dashboard",
+    icon: "LayoutDashboard",
+    sortOrder: 10,
+    requiredPermissionCode: Permission.ADMIN_DASHBOARD_VIEW,
+  },
+  {
+    area: "admin",
+    groupCode: "seller",
+    groupLabel: "Người bán",
+    groupOrder: 20,
+    code: "admin.seller_applications",
+    label: "Hồ sơ chờ duyệt",
+    description: "Danh sách đăng ký seller cần kiểm tra",
+    href: "/admin/sellers/applications",
+    icon: "ClipboardCheck",
+    sortOrder: 10,
+    requiredPermissionCode: Permission.SELLER_APPLICATION_READ,
+  },
+  {
+    area: "admin",
+    groupCode: "system",
+    groupLabel: "Hệ thống",
+    groupOrder: 90,
+    code: "admin.access_control",
+    label: "Phân quyền",
+    description: "Vai trò, quyền, scope và menu",
+    href: "/admin/access-control",
+    icon: "ShieldCheck",
+    sortOrder: 10,
+    requiredPermissionCode: Permission.ADMIN_ACCESS_CONTROL_READ,
+  },
+  {
+    area: "seller",
+    groupCode: "overview",
+    groupLabel: "Tổng quan",
+    groupOrder: 10,
+    code: "seller.dashboard",
+    label: "Bảng điều khiển",
+    description: "Doanh thu, đơn cần xử lý và sức khỏe shop",
+    href: "/seller",
+    icon: "LayoutDashboard",
+    sortOrder: 10,
+    requiredPermissionCode: Permission.SELLER_DASHBOARD_VIEW,
+  },
+];
