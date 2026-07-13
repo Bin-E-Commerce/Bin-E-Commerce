@@ -16,6 +16,9 @@
 [submodule "services/seller-service"]
 	path = services/seller-service
 	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Seller-Service.git
+[submodule "services/product-service"]
+	path = services/product-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Product-Service.git
 [submodule "services/catalog-service"]
 	path = services/catalog-service
 	url = https://github.com/Bin-E-Commerce/Bin-Ecommerce-Catalog-Service.git
