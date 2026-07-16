@@ -99,8 +99,17 @@ export class ProductCrawlerService {
                                     'Missing repository for database import',
                                 );
                             }
-                            await this.deps.repository.upsertProductGraph(graph);
-                            stats.imported += 1;
+                            const importResult =
+                                await this.deps.repository.upsertProductGraph(
+                                    graph,
+                                );
+
+                            // Repository có thể bỏ qua product hợp lệ ở nguồn crawl nhưng chưa map được category nội bộ.
+                            if (importResult.insertedOrUpdated) {
+                                stats.imported += 1;
+                            } else {
+                                stats.skipped += 1;
+                            }
                         }
 
                         await this.deps.checkpoint.save({

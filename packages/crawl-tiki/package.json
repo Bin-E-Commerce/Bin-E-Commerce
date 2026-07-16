@@ -9,7 +9,8 @@
     "type-check": "tsc -p tsconfig.json --noEmit",
     "crawl": "npm run build && node dist/index.js",
     "crawl:sample": "npm run crawl -- --keyword laptop --pages 1 --limit 10 --details",
-    "import:sample": "npm run crawl -- --keyword laptop --pages 1 --limit 5 --details --import"
+    "import:sample": "npm run crawl -- --keyword laptop --pages 1 --limit 5 --details --import",
+    "import:product-service": "npm run build && node dist/import-product-service.js"
   },
   "dependencies": {
     "pg": "^8.13.3"
