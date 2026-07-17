@@ -21,4 +21,5 @@ export interface SellerApplicationReviewedPayload {
   shopName: string;
   reviewedAt: string;
   reviewNote?: string | null;
+  correctionTargets?: string[];
 }
