@@ -1,3 +1,5 @@
+import { IntegrationEventEnvelope } from "../contracts";
+
 export const SellerEvents = {
   APPLICATION_SUBMITTED: "seller.application-submitted",
   APPLICATION_APPROVED: "seller.application-approved",
@@ -12,6 +14,7 @@ export interface SellerApplicationSubmittedPayload {
   applicationId: string;
   shopName: string;
   submittedAt: string;
+  submissionRevision: number;
 }
 
 export interface SellerApplicationReviewedPayload {
@@ -22,4 +25,16 @@ export interface SellerApplicationReviewedPayload {
   reviewedAt: string;
   reviewNote?: string | null;
   correctionTargets?: string[];
+  submissionRevision: number;
 }
+
+export type SellerApplicationSubmittedEvent = IntegrationEventEnvelope<
+  typeof SellerEvents.APPLICATION_SUBMITTED,
+  SellerApplicationSubmittedPayload
+>;
+
+export type SellerApplicationReviewedEvent = IntegrationEventEnvelope<
+  | typeof SellerEvents.APPLICATION_APPROVED
+  | typeof SellerEvents.APPLICATION_REJECTED,
+  SellerApplicationReviewedPayload
+>;

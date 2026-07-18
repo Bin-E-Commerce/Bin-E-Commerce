@@ -7,3 +7,6 @@ export * from "./types/jwt-payload.type";
 
 // Kafka Events
 export * from "./kafka/events";
+
+// Notification contracts
+export * from "./notifications";
