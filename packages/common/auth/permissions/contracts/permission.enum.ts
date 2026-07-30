@@ -15,7 +15,9 @@ export enum Permission {
   SELLER_ACCESS = "seller.access", // Cho phép truy cập Seller Center, nhưng không có quyền gì khác.
   // 2. Seller Dashboard
   SELLER_DASHBOARD_VIEW = "seller.dashboard.view",
-  // 3. Seller Application
+  // 3. Seller Product
+  SELLER_PRODUCT_READ = "seller.product.read",
+  // 4. Seller Application
   SELLER_APPLICATION_READ = "seller.application.read",
   SELLER_APPLICATION_APPROVE = "seller.application.approve",
   SELLER_APPLICATION_REJECT = "seller.application.reject",

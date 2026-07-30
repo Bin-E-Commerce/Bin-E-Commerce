@@ -4,7 +4,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.07.02.1";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.07.30.1";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -113,6 +113,14 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     resource: "seller.dashboard",
     action: "view",
   },
+  {
+    code: Permission.SELLER_PRODUCT_READ,
+    name: "Xem sản phẩm của shop",
+    description:
+      "Cho phép người bán xem danh sách sản phẩm thuộc shop do mình sở hữu.",
+    resource: "seller.product",
+    action: "read",
+  },
 ];
 
 // Danh mục role nghiệp vụ chính thức.
@@ -155,6 +163,11 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.SELLER,
     permissionCode: Permission.SELLER_DASHBOARD_VIEW,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_PRODUCT_READ,
     scope: PermissionScope.OWN_SHOP,
   },
   {
@@ -263,5 +276,18 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     icon: "LayoutDashboard",
     sortOrder: 10,
     requiredPermissionCode: Permission.SELLER_DASHBOARD_VIEW,
+  },
+  {
+    area: "seller",
+    groupCode: "products",
+    groupLabel: "Quản lý sản phẩm",
+    groupOrder: 20,
+    code: "seller.products",
+    label: "Tất cả sản phẩm",
+    description: "Theo dõi sản phẩm, giá bán, tồn kho và trạng thái hiển thị",
+    href: "/seller/products",
+    icon: "PackageSearch",
+    sortOrder: 10,
+    requiredPermissionCode: Permission.SELLER_PRODUCT_READ,
   },
 ];
