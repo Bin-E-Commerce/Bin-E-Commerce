@@ -4,7 +4,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.07.30.1";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.07.31.2";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -121,6 +121,22 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     resource: "seller.product",
     action: "read",
   },
+  {
+    code: Permission.SELLER_SHOP_PROFILE_READ,
+    name: "Xem hồ sơ shop",
+    description:
+      "Cho phép người bán xem thông tin công khai, thuế và định danh đã xác minh của shop mình.",
+    resource: "seller.shop_profile",
+    action: "read",
+  },
+  {
+    code: Permission.SELLER_SHOP_PROFILE_UPDATE,
+    name: "Chỉnh sửa hồ sơ shop",
+    description:
+      "Cho phép người bán cập nhật tên, logo, mô tả và thông tin liên hệ công khai của shop mình.",
+    resource: "seller.shop_profile",
+    action: "update",
+  },
 ];
 
 // Danh mục role nghiệp vụ chính thức.
@@ -171,6 +187,16 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     scope: PermissionScope.OWN_SHOP,
   },
   {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_SHOP_PROFILE_READ,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_SHOP_PROFILE_UPDATE,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
     roleCode: UserRole.SUPPORT_AGENT,
     permissionCode: Permission.SELLER_APPLICATION_READ,
     scope: PermissionScope.GLOBAL,
@@ -218,6 +244,21 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.ADMIN,
     permissionCode: Permission.SELLER_DASHBOARD_VIEW,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.SELLER_PRODUCT_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.SELLER_SHOP_PROFILE_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.SELLER_SHOP_PROFILE_UPDATE,
     scope: PermissionScope.GLOBAL,
   },
 ];
@@ -289,5 +330,18 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     icon: "PackageSearch",
     sortOrder: 10,
     requiredPermissionCode: Permission.SELLER_PRODUCT_READ,
+  },
+  {
+    area: "seller",
+    groupCode: "shop",
+    groupLabel: "Quản lý shop",
+    groupOrder: 30,
+    code: "seller.shop_profile",
+    label: "Hồ sơ shop",
+    description: "Thông tin công khai, thuế và định danh của shop",
+    href: "/seller/shop",
+    icon: "Store",
+    sortOrder: 10,
+    requiredPermissionCode: Permission.SELLER_SHOP_PROFILE_READ,
   },
 ];

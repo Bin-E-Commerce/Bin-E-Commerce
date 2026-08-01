@@ -17,7 +17,10 @@ export enum Permission {
   SELLER_DASHBOARD_VIEW = "seller.dashboard.view",
   // 3. Seller Product
   SELLER_PRODUCT_READ = "seller.product.read",
-  // 4. Seller Application
+  // 4. Seller Shop Profile
+  SELLER_SHOP_PROFILE_READ = "seller.shop_profile.read",
+  SELLER_SHOP_PROFILE_UPDATE = "seller.shop_profile.update",
+  // 5. Seller Application
   SELLER_APPLICATION_READ = "seller.application.read",
   SELLER_APPLICATION_APPROVE = "seller.application.approve",
   SELLER_APPLICATION_REJECT = "seller.application.reject",
