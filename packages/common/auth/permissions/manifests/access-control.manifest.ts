@@ -4,7 +4,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.07.31.2";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.01.1";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -67,14 +67,16 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     code: Permission.ADMIN_ACCESS_CONTROL_READ,
     name: "Xem trang phân quyền",
-    description: "Cho phép xem role, permission, scope và menu trong Admin Center.",
+    description:
+      "Cho phép xem role, permission, scope và menu trong Admin Center.",
     resource: "admin.access_control",
     action: "read",
   },
   {
     code: Permission.ADMIN_ACCESS_CONTROL_UPDATE,
     name: "Chỉnh sửa phân quyền",
-    description: "Cho phép bật hoặc tắt permission cho từng role trong Admin Center.",
+    description:
+      "Cho phép bật hoặc tắt permission cho từng role trong Admin Center.",
     resource: "admin.access_control",
     action: "update",
   },
@@ -137,6 +139,38 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     resource: "seller.shop_profile",
     action: "update",
   },
+  {
+    code: Permission.SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE,
+    name: "Gửi yêu cầu đổi hồ sơ shop",
+    description:
+      "Cho phép người bán gửi thay đổi thuế, thanh toán hoặc định danh để admin xác minh.",
+    resource: "seller.shop_profile_change_request",
+    action: "create",
+  },
+  {
+    code: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
+    name: "Xem yêu cầu đổi hồ sơ shop",
+    description:
+      "Cho phép nhân sự vận hành xem dữ liệu trước và sau trong yêu cầu thay đổi hồ sơ shop.",
+    resource: "admin.shop_profile_change_request",
+    action: "read",
+  },
+  {
+    code: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE,
+    name: "Duyệt yêu cầu đổi hồ sơ shop",
+    description:
+      "Cho phép áp dụng thay đổi thuế, thanh toán hoặc định danh vào hồ sơ đang có hiệu lực.",
+    resource: "admin.shop_profile_change_request",
+    action: "approve",
+  },
+  {
+    code: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT,
+    name: "Từ chối yêu cầu đổi hồ sơ shop",
+    description:
+      "Cho phép từ chối yêu cầu thay đổi hồ sơ shop và ghi rõ lý do cho người bán.",
+    resource: "admin.shop_profile_change_request",
+    action: "reject",
+  },
 ];
 
 // Danh mục role nghiệp vụ chính thức.
@@ -194,6 +228,11 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.SELLER,
     permissionCode: Permission.SELLER_SHOP_PROFILE_UPDATE,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE,
     scope: PermissionScope.OWN_SHOP,
   },
   {
@@ -261,6 +300,21 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     permissionCode: Permission.SELLER_SHOP_PROFILE_UPDATE,
     scope: PermissionScope.GLOBAL,
   },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT,
+    scope: PermissionScope.GLOBAL,
+  },
 ];
 
 // Manifest menu backend trả về cho FE trong accessProfile.
@@ -291,6 +345,19 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     icon: "ClipboardCheck",
     sortOrder: 10,
     requiredPermissionCode: Permission.SELLER_APPLICATION_READ,
+  },
+  {
+    area: "admin",
+    groupCode: "seller",
+    groupLabel: "Người bán",
+    groupOrder: 20,
+    code: "admin.shop_profile_changes",
+    label: "Thay đổi hồ sơ shop",
+    description: "Duyệt thay đổi thuế, thanh toán và định danh",
+    href: "/admin/sellers/profile-changes",
+    icon: "FilePenLine",
+    sortOrder: 20,
+    requiredPermissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
   },
   {
     area: "admin",

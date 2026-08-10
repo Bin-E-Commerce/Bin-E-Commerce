@@ -20,6 +20,10 @@ export enum Permission {
   // 4. Seller Shop Profile
   SELLER_SHOP_PROFILE_READ = "seller.shop_profile.read",
   SELLER_SHOP_PROFILE_UPDATE = "seller.shop_profile.update",
+  SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE = "seller.shop_profile_change_request.create",
+  ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ = "admin.shop_profile_change_request.read",
+  ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE = "admin.shop_profile_change_request.approve",
+  ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT = "admin.shop_profile_change_request.reject",
   // 5. Seller Application
   SELLER_APPLICATION_READ = "seller.application.read",
   SELLER_APPLICATION_APPROVE = "seller.application.approve",
