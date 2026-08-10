@@ -1,11 +1,26 @@
 export interface TikiProductListResponse {
     data?: TikiProductListItem[];
+    filters?: TikiProductFilter[];
     paging?: {
         current_page?: number;
         last_page?: number;
         per_page?: number;
         total?: number;
     };
+}
+
+export interface TikiProductFilter {
+    code?: string;
+    display_name?: string;
+    values?: TikiProductFilterValue[];
+}
+
+export interface TikiProductFilterValue {
+    display_value?: string;
+    count?: number;
+    logo?: string;
+    query_value?: string | number;
+    url_key?: string;
 }
 
 export interface TikiProductListItem {

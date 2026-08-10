@@ -194,16 +194,17 @@ export class ProductServiceImportRepository implements ProductImportRepository {
             `
             INSERT INTO brands (
                 source_platform, external_brand_id, name, slug,
-                logo_url, description, is_active
+                normalized_name, logo_url, description, is_active
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (slug)
             DO UPDATE SET
                 name = EXCLUDED.name,
+                normalized_name = EXCLUDED.normalized_name,
                 source_platform = COALESCE(brands.source_platform, EXCLUDED.source_platform),
                 external_brand_id = COALESCE(brands.external_brand_id, EXCLUDED.external_brand_id),
-                logo_url = EXCLUDED.logo_url,
-                description = EXCLUDED.description,
+                logo_url = COALESCE(EXCLUDED.logo_url, brands.logo_url),
+                description = COALESCE(EXCLUDED.description, brands.description),
                 is_active = EXCLUDED.is_active,
                 updated_at = NOW()
             RETURNING id
@@ -213,6 +214,7 @@ export class ProductServiceImportRepository implements ProductImportRepository {
                 brand.externalId,
                 brand.name,
                 brand.slug,
+                slugify(brand.name).replace(/-/g, ' '),
                 brand.logoUrl,
                 brand.description,
                 brand.isActive,

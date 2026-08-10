@@ -1,4 +1,10 @@
-import { TIKI_API_BASE_URL } from '../config/tiki.config';
+import {
+    TIKI_API_BASE_URL,
+    TIKI_BASE_URL,
+    TIKI_BROWSER_USER_AGENT,
+    TIKI_PRODUCT_DETAIL_API_URL,
+    TIKI_PRODUCT_LISTING_API_URL,
+} from '../config/tiki.config';
 import { RetryableHttpClient } from './retryable-http.client';
 import type {
     TikiCategoryResponse,
@@ -10,6 +16,7 @@ import type {
 export interface TikiProductPageParams {
     keyword?: string;
     categoryId?: number;
+    brandId?: string;
     page: number;
     limit: number;
 }
@@ -17,9 +24,12 @@ export interface TikiProductPageParams {
 export class TikiProductClient {
     constructor(
         private readonly http = new RetryableHttpClient({
-            retries: 3,
-            baseDelayMs: 500,
-            userAgent: 'Mozilla/5.0 (compatible; BinEcommerceCrawler/1.0)',
+            retries: 4,
+            baseDelayMs: 1_000,
+            maxDelayMs: 60_000,
+            nonJsonDelayMs: 30_000,
+            referer: `${TIKI_BASE_URL}/`,
+            userAgent: TIKI_BROWSER_USER_AGENT,
         }),
     ) {}
 
@@ -43,7 +53,7 @@ export class TikiProductClient {
     async fetchProductPage(
         params: TikiProductPageParams,
     ): Promise<TikiProductListResponse> {
-        const url = new URL(`${TIKI_API_BASE_URL}/products`);
+        const url = new URL(TIKI_PRODUCT_LISTING_API_URL);
         url.searchParams.set('limit', String(params.limit));
         url.searchParams.set('page', String(params.page));
         url.searchParams.set('include', 'advertisement');
@@ -53,13 +63,16 @@ export class TikiProductClient {
         if (params.categoryId) {
             url.searchParams.set('category', String(params.categoryId));
         }
+        if (params.brandId) {
+            url.searchParams.set('brand', params.brandId);
+        }
 
         return this.http.getJson<TikiProductListResponse>(url);
     }
 
     // Lấy chi tiết sản phẩm để bổ sung ảnh, mô tả, thông số, seller và variant nếu Tiki trả về.
     async fetchProductDetail(id: number): Promise<TikiProductDetailResponse> {
-        const url = new URL(`${TIKI_API_BASE_URL}/products/${id}`);
+        const url = new URL(`${TIKI_PRODUCT_DETAIL_API_URL}/${id}`);
         return this.http.getJson<TikiProductDetailResponse>(url);
     }
 
