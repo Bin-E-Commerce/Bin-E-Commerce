@@ -18,6 +18,7 @@ export enum Permission {
   // 3. Seller Product
   SELLER_PRODUCT_READ = "seller.product.read",
   SELLER_PRODUCT_CREATE = "seller.product.create",
+  SELLER_PRODUCT_UPDATE = "seller.product.update",
   // 4. Seller Shop Profile
   SELLER_SHOP_PROFILE_READ = "seller.shop_profile.read",
   SELLER_SHOP_PROFILE_UPDATE = "seller.shop_profile.update",
