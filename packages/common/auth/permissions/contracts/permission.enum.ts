@@ -17,6 +17,7 @@ export enum Permission {
   SELLER_DASHBOARD_VIEW = "seller.dashboard.view",
   // 3. Seller Product
   SELLER_PRODUCT_READ = "seller.product.read",
+  SELLER_PRODUCT_CREATE = "seller.product.create",
   // 4. Seller Shop Profile
   SELLER_SHOP_PROFILE_READ = "seller.shop_profile.read",
   SELLER_SHOP_PROFILE_UPDATE = "seller.shop_profile.update",

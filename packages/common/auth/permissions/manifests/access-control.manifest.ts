@@ -4,7 +4,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.01.1";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.21.1";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -124,6 +124,14 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     action: "read",
   },
   {
+    code: Permission.SELLER_PRODUCT_CREATE,
+    name: "Thêm sản phẩm cho shop",
+    description:
+      "Cho phép người bán tạo bản nháp hoặc đăng sản phẩm mới thuộc shop do mình sở hữu.",
+    resource: "seller.product",
+    action: "create",
+  },
+  {
     code: Permission.SELLER_SHOP_PROFILE_READ,
     name: "Xem hồ sơ shop",
     description:
@@ -222,6 +230,11 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   },
   {
     roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_PRODUCT_CREATE,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
     permissionCode: Permission.SELLER_SHOP_PROFILE_READ,
     scope: PermissionScope.OWN_SHOP,
   },
@@ -238,6 +251,19 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.SUPPORT_AGENT,
     permissionCode: Permission.SELLER_APPLICATION_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    // Nhân sự hỗ trợ được xem hồ sơ và xử lý đầy đủ vòng review seller.
+    // Gateway và seller-service vẫn kiểm tra từng permission riêng nên không thể dùng quyền đọc để duyệt hoặc từ chối.
+    roleCode: UserRole.SUPPORT_AGENT,
+    permissionCode: Permission.SELLER_APPLICATION_APPROVE,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    // Tách quyền từ chối riêng để thao tác này được hiển thị, audit và thu hồi độc lập với quyền duyệt hồ sơ.
+    roleCode: UserRole.SUPPORT_AGENT,
+    permissionCode: Permission.SELLER_APPLICATION_REJECT,
     scope: PermissionScope.GLOBAL,
   },
   {
@@ -397,6 +423,19 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     icon: "PackageSearch",
     sortOrder: 10,
     requiredPermissionCode: Permission.SELLER_PRODUCT_READ,
+  },
+  {
+    area: "seller",
+    groupCode: "products",
+    groupLabel: "Quản lý sản phẩm",
+    groupOrder: 20,
+    code: "seller.products.create",
+    label: "Thêm sản phẩm",
+    description: "Tạo sản phẩm, phân loại, giá bán và tồn kho",
+    href: "/seller/products/new",
+    icon: "PackagePlus",
+    sortOrder: 20,
+    requiredPermissionCode: Permission.SELLER_PRODUCT_CREATE,
   },
   {
     area: "seller",
