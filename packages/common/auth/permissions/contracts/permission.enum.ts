@@ -22,14 +22,16 @@ export enum Permission {
   SELLER_PRODUCT_STATUS_UPDATE = "seller.product.status.update",
   SELLER_PRODUCT_DELETE = "seller.product.delete",
   SELLER_PRODUCT_RESTORE = "seller.product.restore",
-  // 4. Seller Shop Profile
+  // 4. Seller AI: chỉ cấp cho thao tác sinh nội dung trong phạm vi shop của seller.
+  SELLER_AI_PRODUCT_CONTENT_GENERATE = "seller.ai.product_content.generate",
+  // 5. Seller Shop Profile
   SELLER_SHOP_PROFILE_READ = "seller.shop_profile.read",
   SELLER_SHOP_PROFILE_UPDATE = "seller.shop_profile.update",
   SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE = "seller.shop_profile_change_request.create",
   ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ = "admin.shop_profile_change_request.read",
   ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE = "admin.shop_profile_change_request.approve",
   ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT = "admin.shop_profile_change_request.reject",
-  // 5. Seller Application
+  // 6. Seller Application
   SELLER_APPLICATION_READ = "seller.application.read",
   SELLER_APPLICATION_APPROVE = "seller.application.approve",
   SELLER_APPLICATION_REJECT = "seller.application.reject",

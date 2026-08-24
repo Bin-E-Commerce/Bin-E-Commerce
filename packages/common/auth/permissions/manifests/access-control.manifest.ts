@@ -1,10 +1,13 @@
+// File này là nguồn định nghĩa permission, role grant và navigation dùng chung cho Auth Service, Gateway và FE.
+// Không đặt logic kiểm tra JWT hay business workflow ở đây; chỉ khai báo contract để các lớp runtime cùng đọc.
+
 import { UserRole } from "../../../enums/user-role.enum";
 import { Permission } from "../contracts/permission.enum";
 import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.24.1";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.24.2";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -164,6 +167,14 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     action: "restore",
   },
   {
+    code: Permission.SELLER_AI_PRODUCT_CONTENT_GENERATE,
+    name: "Tạo gợi ý nội dung sản phẩm bằng AI",
+    description:
+      "Cho phép người bán sử dụng AI để đề xuất tên sản phẩm trong phạm vi shop của mình.",
+    resource: "seller.ai.product_content",
+    action: "generate",
+  },
+  {
     code: Permission.SELLER_SHOP_PROFILE_READ,
     name: "Xem hồ sơ shop",
     description:
@@ -283,6 +294,11 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.SELLER,
     permissionCode: Permission.SELLER_PRODUCT_RESTORE,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_AI_PRODUCT_CONTENT_GENERATE,
     scope: PermissionScope.OWN_SHOP,
   },
   {
