@@ -25,3 +25,7 @@
 [submodule "services/location-service"]
 	path = services/location-service
 	url = https://github.com/Bin-E-Commerce/Bin-Ecommerce-Location-Service.git
+[submodule "services/ai-service"]
+	path = services/ai-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Ai-Service.git
+	branch = main
