@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.24.2";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.25.3";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -175,6 +175,34 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     action: "generate",
   },
   {
+    code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
+    name: "Xem cong cu toi uu anh bang AI",
+    description: "Cho phep seller xem bang dieu khien va ket qua toi uu anh cua shop.",
+    resource: "seller.ai.image_optimization",
+    action: "view",
+  },
+  {
+    code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_GENERATE,
+    name: "Tao yeu cau toi uu anh bang AI",
+    description: "Cho phep seller tao job toi uu anh trong pham vi shop cua minh.",
+    resource: "seller.ai.image_optimization",
+    action: "generate",
+  },
+  {
+    code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_APPLY,
+    name: "Ap dung anh toi uu bang AI",
+    description: "Cho phep seller duyet va ap dung anh AI vao san pham cua shop.",
+    resource: "seller.ai.image_optimization",
+    action: "apply",
+  },
+  {
+    code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_ROLLBACK,
+    name: "Khoi phuc anh goc sau toi uu AI",
+    description: "Cho phep seller khoi phuc anh goc cua san pham da ap dung AI.",
+    resource: "seller.ai.image_optimization",
+    action: "rollback",
+  },
+  {
     code: Permission.SELLER_SHOP_PROFILE_READ,
     name: "Xem hồ sơ shop",
     description:
@@ -299,6 +327,26 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.SELLER,
     permissionCode: Permission.SELLER_AI_PRODUCT_CONTENT_GENERATE,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_GENERATE,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_APPLY,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_ROLLBACK,
     scope: PermissionScope.OWN_SHOP,
   },
   {
@@ -478,6 +526,20 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     icon: "LayoutDashboard",
     sortOrder: 10,
     requiredPermissionCode: Permission.SELLER_DASHBOARD_VIEW,
+  },
+  {
+    area: "seller",
+    groupCode: "products",
+    groupLabel: "Quản lý sản phẩm",
+    groupOrder: 20,
+    code: "seller.ai.image_optimization",
+    label: "Tối ưu hình ảnh AI",
+    description: "Tạo ảnh nền trắng và ảnh lifestyle cho sản phẩm",
+    href: "/seller/ai/optimization",
+    icon: "AiAssistant",
+    sortOrder: 5,
+    requiredPermissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
+    requiredScope: PermissionScope.OWN_SHOP,
   },
   {
     area: "seller",
