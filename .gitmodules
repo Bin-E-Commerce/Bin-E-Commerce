@@ -10,3 +10,22 @@
 [submodule "services/auth-service"]
 	path = services/auth-service
 	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Auth-Service.git
+[submodule "services/media-service"]
+	path = services/media-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Media-Service.git
+[submodule "services/seller-service"]
+	path = services/seller-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Seller-Service.git
+[submodule "services/product-service"]
+	path = services/product-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Product-Service.git
+[submodule "services/catalog-service"]
+	path = services/catalog-service
+	url = https://github.com/Bin-E-Commerce/Bin-Ecommerce-Catalog-Service.git
+[submodule "services/location-service"]
+	path = services/location-service
+	url = https://github.com/Bin-E-Commerce/Bin-Ecommerce-Location-Service.git
+[submodule "services/ai-service"]
+	path = services/ai-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Ai-Service.git
+	branch = main

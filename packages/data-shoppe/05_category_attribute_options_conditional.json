@@ -1,0 +1,2587 @@
+{
+  "schema_version": "1.0",
+  "target_table": "category_attribute_options",
+  "description": "Option thuộc các thuộc tính điều kiện.",
+  "upsert_conflict_keys": [
+    "attribute_id",
+    "external_value_id"
+  ],
+  "records": [
+    {
+      "id": "37535365-f232-5957-8db1-c55918daedd0",
+      "attribute_id": "8af3268d-1505-5722-b070-3edfcfdaff4b",
+      "external_value_id": "2115",
+      "value": "Commercial",
+      "display_value": "Commercial",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100175",
+        "attribute_external_id": "100318@100299:2151"
+      }
+    },
+    {
+      "id": "9fde5ff7-5e5d-5e5d-ba9f-5d4366fdeaff",
+      "attribute_id": "8af3268d-1505-5722-b070-3edfcfdaff4b",
+      "external_value_id": "2131",
+      "value": "Travel",
+      "display_value": "Du lịch",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100175",
+        "attribute_external_id": "100318@100299:2151"
+      }
+    },
+    {
+      "id": "f63192e4-2f97-5df8-bd92-3994c3b9befd",
+      "attribute_id": "8af3268d-1505-5722-b070-3edfcfdaff4b",
+      "external_value_id": "2145",
+      "value": "Handheld",
+      "display_value": "Cầm tay",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100175",
+        "attribute_external_id": "100318@100299:2151"
+      }
+    },
+    {
+      "id": "4dca38d8-1644-5e8c-9fce-c7581786f4f6",
+      "attribute_id": "8af3268d-1505-5722-b070-3edfcfdaff4b",
+      "external_value_id": "2162",
+      "value": "Upright",
+      "display_value": "Upright",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100175",
+        "attribute_external_id": "100318@100299:2151"
+      }
+    },
+    {
+      "id": "a64b32f2-9847-5bf2-ad50-f10e632fa1d1",
+      "attribute_id": "6ec76583-6995-5738-91c6-4cf0060b7192",
+      "external_value_id": "2298",
+      "value": "Android OS",
+      "display_value": "Android OS",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100185",
+        "attribute_external_id": "100330@100349:2316"
+      }
+    },
+    {
+      "id": "a372504a-47da-5832-a38a-3592606711ee",
+      "attribute_id": "6ec76583-6995-5738-91c6-4cf0060b7192",
+      "external_value_id": "2322",
+      "value": "Others OS",
+      "display_value": "OS khác",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100185",
+        "attribute_external_id": "100330@100349:2316"
+      }
+    },
+    {
+      "id": "256b86ff-6cd3-51ab-ba2d-344b606e6d10",
+      "attribute_id": "6ec76583-6995-5738-91c6-4cf0060b7192",
+      "external_value_id": "2343",
+      "value": "Web OS",
+      "display_value": "Web OS",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100185",
+        "attribute_external_id": "100330@100349:2316"
+      }
+    },
+    {
+      "id": "1ebf3172-d942-5360-893b-9bd075a69bb1",
+      "attribute_id": "6ec76583-6995-5738-91c6-4cf0060b7192",
+      "external_value_id": "2371",
+      "value": "Tizen OS",
+      "display_value": "Tizen OS",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100185",
+        "attribute_external_id": "100330@100349:2316"
+      }
+    },
+    {
+      "id": "b27d27c9-a596-5514-af9d-8375ab1d4609",
+      "attribute_id": "56480378-fbd5-5f27-a390-c59596cb3a4c",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100242",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "a8a60fc0-0569-575c-9fdf-6fe353be51e1",
+      "attribute_id": "56480378-fbd5-5f27-a390-c59596cb3a4c",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100242",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "e0422fd3-18de-5f9e-b39c-9a46bc0e282e",
+      "attribute_id": "56480378-fbd5-5f27-a390-c59596cb3a4c",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100242",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "c0595458-8d12-569d-9701-fa14d0963432",
+      "attribute_id": "56480378-fbd5-5f27-a390-c59596cb3a4c",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100242",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "8841c9f6-8201-581f-8f3b-ec4d8493c7de",
+      "attribute_id": "7a22aae9-9d73-58d2-a2de-afe0f56d5ad4",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100243",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "9b27351a-31ea-5033-adb3-f34e261116f6",
+      "attribute_id": "7a22aae9-9d73-58d2-a2de-afe0f56d5ad4",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100243",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "188cec36-df7c-552d-a8a2-4eda6a1c80c5",
+      "attribute_id": "7a22aae9-9d73-58d2-a2de-afe0f56d5ad4",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100243",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "e1687567-792e-5fc2-a18d-86c9efb11651",
+      "attribute_id": "7a22aae9-9d73-58d2-a2de-afe0f56d5ad4",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100243",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "4a3c5d54-d857-5dde-aa39-083843f96680",
+      "attribute_id": "b0f99be5-f577-5462-a310-01bab0732e5a",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100244",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "4b2fed14-1822-5fef-b4f3-2140d67f70fb",
+      "attribute_id": "b0f99be5-f577-5462-a310-01bab0732e5a",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100244",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "7ec7150f-a264-5739-b889-759f0d31aad9",
+      "attribute_id": "b0f99be5-f577-5462-a310-01bab0732e5a",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100244",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "1d95b5d5-7e31-52e2-9c6e-561c5274a1ae",
+      "attribute_id": "b0f99be5-f577-5462-a310-01bab0732e5a",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100244",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "afe695b1-6428-57a7-ac7e-78cc5dfeb919",
+      "attribute_id": "379ba9d1-c989-59fb-a841-43179bb5a025",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100245",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "5f83fe13-5250-5423-8449-e4c5a11958d6",
+      "attribute_id": "379ba9d1-c989-59fb-a841-43179bb5a025",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100245",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "b8968bd8-fea9-5fd9-a1f3-547e1e448ddc",
+      "attribute_id": "379ba9d1-c989-59fb-a841-43179bb5a025",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100245",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "56923192-1d32-5dca-b929-ef560541f9b8",
+      "attribute_id": "379ba9d1-c989-59fb-a841-43179bb5a025",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100245",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "54cadd88-0d94-5b04-b9bf-7134e5b59954",
+      "attribute_id": "70e48dd0-e4a9-5792-b92d-f9cebe8491f6",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100489",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "51eadce7-1275-5160-b818-80601b055da6",
+      "attribute_id": "70e48dd0-e4a9-5792-b92d-f9cebe8491f6",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100489",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "e2faec51-5edc-5d31-8cc3-b0553d3ec298",
+      "attribute_id": "70e48dd0-e4a9-5792-b92d-f9cebe8491f6",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100489",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "b61dd3d0-5889-5069-bad7-e2cd1b4fa295",
+      "attribute_id": "70e48dd0-e4a9-5792-b92d-f9cebe8491f6",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100489",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "83583d05-a90f-5c9f-8bbc-7510b306c51f",
+      "attribute_id": "2d7bb27e-74ce-5487-89f1-5e000b159fa3",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100490",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "055d8d14-2eb8-50d3-82c9-cf6971fafdfe",
+      "attribute_id": "2d7bb27e-74ce-5487-89f1-5e000b159fa3",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100490",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "7f61a876-cf6f-573b-bdd1-02cbb4607364",
+      "attribute_id": "2d7bb27e-74ce-5487-89f1-5e000b159fa3",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100490",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "e592b700-d5ac-5145-8e65-c28bb67482ae",
+      "attribute_id": "2d7bb27e-74ce-5487-89f1-5e000b159fa3",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100490",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "406c4251-760c-5fe4-a4de-ace63a93ee65",
+      "attribute_id": "4b1ee3a6-a44f-5deb-8d09-e1c0ddd9de54",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100491",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "ca2b97de-4fbc-5d93-8e26-800581639a8c",
+      "attribute_id": "4b1ee3a6-a44f-5deb-8d09-e1c0ddd9de54",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100491",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "bfebeb49-7dd9-5614-b69a-67328fde3fa2",
+      "attribute_id": "4b1ee3a6-a44f-5deb-8d09-e1c0ddd9de54",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100491",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "99592692-fbd5-59c9-84bb-82a9e55a7b96",
+      "attribute_id": "4b1ee3a6-a44f-5deb-8d09-e1c0ddd9de54",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100491",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "f2fc0d75-a073-57c7-aeb0-d64ae359c7cf",
+      "attribute_id": "8b287e0e-fb8e-5f82-ab24-f12c4eaf72cd",
+      "external_value_id": "2982",
+      "value": "Siri",
+      "display_value": "Siri",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100625",
+        "attribute_external_id": "100562@100527:2929"
+      }
+    },
+    {
+      "id": "0663b672-fa51-5d77-af7d-539bab68a4d1",
+      "attribute_id": "8b287e0e-fb8e-5f82-ab24-f12c4eaf72cd",
+      "external_value_id": "2995",
+      "value": "Alexa",
+      "display_value": "Alexa",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100625",
+        "attribute_external_id": "100562@100527:2929"
+      }
+    },
+    {
+      "id": "4d481b60-16e8-542f-8543-37d6c24bcb5a",
+      "attribute_id": "8b287e0e-fb8e-5f82-ab24-f12c4eaf72cd",
+      "external_value_id": "3013",
+      "value": "Others",
+      "display_value": "khác",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100625",
+        "attribute_external_id": "100562@100527:2929"
+      }
+    },
+    {
+      "id": "2e2f4d3f-ab3d-5960-bc8e-a96ae51bc8c9",
+      "attribute_id": "8b287e0e-fb8e-5f82-ab24-f12c4eaf72cd",
+      "external_value_id": "3025",
+      "value": "Google",
+      "display_value": "Google",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100625",
+        "attribute_external_id": "100562@100527:2929"
+      }
+    },
+    {
+      "id": "455dc7a0-24a7-584c-b8e6-807cc957a6ef",
+      "attribute_id": "072e5db6-bb6f-5777-af5c-db3ffd8fba0c",
+      "external_value_id": "5145",
+      "value": "8inches",
+      "display_value": "8inches",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100625",
+        "attribute_external_id": "100559@100552:3028"
+      }
+    },
+    {
+      "id": "2de1e8f7-c90f-51d1-b867-f5e575eaef1a",
+      "attribute_id": "072e5db6-bb6f-5777-af5c-db3ffd8fba0c",
+      "external_value_id": "5146",
+      "value": "10inches",
+      "display_value": "10inches",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100625",
+        "attribute_external_id": "100559@100552:3028"
+      }
+    },
+    {
+      "id": "24835386-b9c8-571a-98fd-94a793764a1d",
+      "attribute_id": "072e5db6-bb6f-5777-af5c-db3ffd8fba0c",
+      "external_value_id": "5147",
+      "value": "12inches",
+      "display_value": "12inches",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100625",
+        "attribute_external_id": "100559@100552:3028"
+      }
+    },
+    {
+      "id": "fadb8f0f-346a-54a7-ba9e-6f201ef9400b",
+      "attribute_id": "072e5db6-bb6f-5777-af5c-db3ffd8fba0c",
+      "external_value_id": "5148",
+      "value": "15inches",
+      "display_value": "15inches",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100625",
+        "attribute_external_id": "100559@100552:3028"
+      }
+    },
+    {
+      "id": "b13cd31b-f7c3-5660-b2e0-18e8b6c03f2c",
+      "attribute_id": "b5939a1e-00ae-53e1-bff2-0b832765b3ea",
+      "external_value_id": "5145",
+      "value": "8inches",
+      "display_value": "8inches",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100626",
+        "attribute_external_id": "100559@100552:3028"
+      }
+    },
+    {
+      "id": "57723b7f-f11a-5f2c-a08f-b33d6da03280",
+      "attribute_id": "b5939a1e-00ae-53e1-bff2-0b832765b3ea",
+      "external_value_id": "5146",
+      "value": "10inches",
+      "display_value": "10inches",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100626",
+        "attribute_external_id": "100559@100552:3028"
+      }
+    },
+    {
+      "id": "ef1b9516-dc1a-5007-b2e2-beb223ad631d",
+      "attribute_id": "b5939a1e-00ae-53e1-bff2-0b832765b3ea",
+      "external_value_id": "5147",
+      "value": "12inches",
+      "display_value": "12inches",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100626",
+        "attribute_external_id": "100559@100552:3028"
+      }
+    },
+    {
+      "id": "3671fa9c-2d3b-511c-8cb9-a80b2fa16f80",
+      "attribute_id": "b5939a1e-00ae-53e1-bff2-0b832765b3ea",
+      "external_value_id": "5148",
+      "value": "15inches",
+      "display_value": "15inches",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "100626",
+        "attribute_external_id": "100559@100552:3028"
+      }
+    },
+    {
+      "id": "c39bc1fa-fa53-5535-ab27-cdc748ea18bf",
+      "attribute_id": "5ef3e6c3-3838-519b-840b-d9be65bf195b",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101153",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "0c16648c-cebb-595a-bb08-e1b8a57aa1c0",
+      "attribute_id": "5ef3e6c3-3838-519b-840b-d9be65bf195b",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101153",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "901b56df-7e20-54fd-a342-ba61c72a587b",
+      "attribute_id": "5ef3e6c3-3838-519b-840b-d9be65bf195b",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101153",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "0a28a943-f06c-5c85-bf4b-d5ca94e28b95",
+      "attribute_id": "5ef3e6c3-3838-519b-840b-d9be65bf195b",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101153",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "5fd6f7ab-55a7-5cf0-b609-31c7d52d20a5",
+      "attribute_id": "d35c0738-08af-559d-8114-99e83aa59c84",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101154",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "321ceeca-c5a7-5db4-b80e-b9c112ade36c",
+      "attribute_id": "d35c0738-08af-559d-8114-99e83aa59c84",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101154",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "8338c26a-4185-50df-8bc4-308fcca15db4",
+      "attribute_id": "d35c0738-08af-559d-8114-99e83aa59c84",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101154",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "0a7b70b3-ef41-5008-8278-1ddfce7e252a",
+      "attribute_id": "d35c0738-08af-559d-8114-99e83aa59c84",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101154",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "ab1b0f93-5417-5024-853a-c99c85cf7aad",
+      "attribute_id": "5c941a68-d0f8-5e67-ba1f-ed3227fd7ab3",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101155",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "279b5505-a41c-5dde-968c-6620ba0cd9fb",
+      "attribute_id": "5c941a68-d0f8-5e67-ba1f-ed3227fd7ab3",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101155",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "69e0eaac-67ce-5df1-b6b4-6ac75cf14d86",
+      "attribute_id": "5c941a68-d0f8-5e67-ba1f-ed3227fd7ab3",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101155",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "cb222433-338a-57c5-bc1f-8f93fcaedeb4",
+      "attribute_id": "5c941a68-d0f8-5e67-ba1f-ed3227fd7ab3",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101155",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "a190bbf4-a5f3-5095-b2d8-c862c17ef3dd",
+      "attribute_id": "a44a9450-46c6-5131-8ab8-6b3d3eb9b6dd",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101156",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "98088693-4a35-5736-a5fe-467ec7036f1d",
+      "attribute_id": "a44a9450-46c6-5131-8ab8-6b3d3eb9b6dd",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101156",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "aa6af933-ecf2-5a3d-9de5-8ba99323fc18",
+      "attribute_id": "a44a9450-46c6-5131-8ab8-6b3d3eb9b6dd",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101156",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "f0750476-6824-52c8-8335-2a7f386937bf",
+      "attribute_id": "a44a9450-46c6-5131-8ab8-6b3d3eb9b6dd",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101156",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "9b32628c-13cd-5dc0-8a95-ea11f3b799c8",
+      "attribute_id": "023eac94-400f-53a7-9c7b-6d17a8a0a034",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101157",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "872232da-59c0-5e09-895e-be843aa4dca8",
+      "attribute_id": "023eac94-400f-53a7-9c7b-6d17a8a0a034",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101157",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "28045462-03fd-577d-86a9-0a00deaabae4",
+      "attribute_id": "023eac94-400f-53a7-9c7b-6d17a8a0a034",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101157",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "58c44d1b-4db9-5668-a4bf-df420165020e",
+      "attribute_id": "023eac94-400f-53a7-9c7b-6d17a8a0a034",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101157",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "81601e20-1ab9-5ebf-8432-dcac3890c1a5",
+      "attribute_id": "56c75207-a210-563d-8790-cf34192d649e",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101158",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "e28785e8-0fcd-5e2b-b076-f3691e788dc1",
+      "attribute_id": "56c75207-a210-563d-8790-cf34192d649e",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101158",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "a83d4230-fc7a-5868-80a0-3e69780ccb0f",
+      "attribute_id": "56c75207-a210-563d-8790-cf34192d649e",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101158",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "c22842eb-1c17-58a9-af1b-16cd5e5e00a6",
+      "attribute_id": "56c75207-a210-563d-8790-cf34192d649e",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101158",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "1349e9c0-fe19-58cb-8921-bf661a6dd7e8",
+      "attribute_id": "205172c4-1597-5c3d-a672-1ec59bfbb76b",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101159",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "1a7f6c46-da2e-56f4-a402-57bd23c27d09",
+      "attribute_id": "205172c4-1597-5c3d-a672-1ec59bfbb76b",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101159",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "94278780-8d9b-552b-8721-acf3d54f3539",
+      "attribute_id": "205172c4-1597-5c3d-a672-1ec59bfbb76b",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101159",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "ebe16b71-16ad-51e5-928a-b806c4516e43",
+      "attribute_id": "205172c4-1597-5c3d-a672-1ec59bfbb76b",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101159",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "f51189a5-6c5c-5087-b04f-0b88ab4cadb7",
+      "attribute_id": "4ee29f00-8ae6-5781-82ca-c8e771b7755f",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101160",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "2bc90e45-29c2-5024-98e6-beadb98e70fe",
+      "attribute_id": "4ee29f00-8ae6-5781-82ca-c8e771b7755f",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101160",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "09578e84-c27c-5f25-ad96-75081214690d",
+      "attribute_id": "4ee29f00-8ae6-5781-82ca-c8e771b7755f",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101160",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "1bcf26b8-2492-5d76-8c72-befb2c12c266",
+      "attribute_id": "4ee29f00-8ae6-5781-82ca-c8e771b7755f",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101160",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "b71a9840-5db0-56d5-a5c7-2a7ed3166cc9",
+      "attribute_id": "d4380db5-c8e8-533b-9716-143d142f249a",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101161",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "bb57071f-9a32-571f-b647-d36d22f253a6",
+      "attribute_id": "d4380db5-c8e8-533b-9716-143d142f249a",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101161",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "2e3f8c42-4846-5176-be2b-34cfe0507718",
+      "attribute_id": "d4380db5-c8e8-533b-9716-143d142f249a",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101161",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "8e76116f-561a-551a-af8c-2dc1caeb0ac5",
+      "attribute_id": "d4380db5-c8e8-533b-9716-143d142f249a",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101161",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "8000d340-611b-574f-bd61-d317ab245321",
+      "attribute_id": "4debd667-66e6-59b3-a170-d0dfc77a5af4",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101162",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "3d1a36fb-0ce1-5096-8678-3c713fb720ea",
+      "attribute_id": "4debd667-66e6-59b3-a170-d0dfc77a5af4",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101162",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "7b91d78f-46ac-5831-a2f2-7d7057b5233c",
+      "attribute_id": "4debd667-66e6-59b3-a170-d0dfc77a5af4",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101162",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "902a381b-d4e3-5932-97c4-96cb31b8a3dc",
+      "attribute_id": "4debd667-66e6-59b3-a170-d0dfc77a5af4",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101162",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "ea6d8a84-a465-5f1b-b099-bb6a66b0ab3d",
+      "attribute_id": "68f4a447-373a-59ae-928f-1c6b8c4601e9",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101163",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "3e85d475-2ecf-5a19-8fdf-cd56fbcbe0df",
+      "attribute_id": "68f4a447-373a-59ae-928f-1c6b8c4601e9",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101163",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "8da7ee3b-4e4c-580a-a6dc-89a95de9aed3",
+      "attribute_id": "68f4a447-373a-59ae-928f-1c6b8c4601e9",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101163",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "ed610ad6-a740-5313-aa2b-bf8302878805",
+      "attribute_id": "68f4a447-373a-59ae-928f-1c6b8c4601e9",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101163",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "5fc430e8-b708-53fc-a277-7c4739d6fa4d",
+      "attribute_id": "aa6fbd75-7af9-5b64-b34b-b7520b1cb43f",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101164",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "4cb91b94-962a-5817-89b9-b4f93f45174c",
+      "attribute_id": "aa6fbd75-7af9-5b64-b34b-b7520b1cb43f",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101164",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "cf98d35e-0a81-5bdd-9642-66a7100ba3f3",
+      "attribute_id": "aa6fbd75-7af9-5b64-b34b-b7520b1cb43f",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101164",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "db7eac9f-a287-57c4-9844-5a9e0fbd7832",
+      "attribute_id": "aa6fbd75-7af9-5b64-b34b-b7520b1cb43f",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101164",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "25f72802-4031-5635-a99b-4e122bdd0d14",
+      "attribute_id": "35313c7f-dda5-5565-a724-8dc5a0a25655",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101165",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "d91c7f43-7030-5a79-ac59-f3dd7ee3f776",
+      "attribute_id": "35313c7f-dda5-5565-a724-8dc5a0a25655",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101165",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "98ea8bb8-51dc-5b0b-8752-17e88eca6e77",
+      "attribute_id": "35313c7f-dda5-5565-a724-8dc5a0a25655",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101165",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "03b12e75-db90-5074-a563-6ee9636a3b2d",
+      "attribute_id": "35313c7f-dda5-5565-a724-8dc5a0a25655",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101165",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "f0af018e-cf4b-5f77-8d72-9e21274c1e5a",
+      "attribute_id": "670b5102-1c9e-57b0-b66e-cfe7e2895086",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101263",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "bcb377da-b75c-588b-b7cd-72e2c27bf5d4",
+      "attribute_id": "670b5102-1c9e-57b0-b66e-cfe7e2895086",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101263",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "44599f85-90ac-5e83-a3ac-a4e2e93257c0",
+      "attribute_id": "670b5102-1c9e-57b0-b66e-cfe7e2895086",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101263",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "2c92f265-1c9b-514e-836d-20d38b70ec1b",
+      "attribute_id": "670b5102-1c9e-57b0-b66e-cfe7e2895086",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101263",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "c3239ef9-4dea-5319-9d36-bef6c5d2857a",
+      "attribute_id": "f1ac995f-be4c-5434-be81-9e9f47ccd9b3",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101264",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "8f81ab29-308b-5b63-b74d-bd5217516bd3",
+      "attribute_id": "f1ac995f-be4c-5434-be81-9e9f47ccd9b3",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101264",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "79d3e09d-90a3-510c-aa84-65df93e0f184",
+      "attribute_id": "f1ac995f-be4c-5434-be81-9e9f47ccd9b3",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101264",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "9f2d7fc1-f67d-5a02-8e5d-ed244711115d",
+      "attribute_id": "f1ac995f-be4c-5434-be81-9e9f47ccd9b3",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101264",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "51e43858-84d9-5c8f-b4fc-6f19cbdc2a63",
+      "attribute_id": "c523c485-e6ef-53a8-97ac-7f581be41925",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101265",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "9d1728a4-d0b3-5ae8-a735-0f5e9153fc05",
+      "attribute_id": "c523c485-e6ef-53a8-97ac-7f581be41925",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101265",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "c1fd55f7-98da-583d-bbfa-27034681b58a",
+      "attribute_id": "c523c485-e6ef-53a8-97ac-7f581be41925",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101265",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "6922e67a-8ff4-56a5-b1cf-988c5203b7e1",
+      "attribute_id": "c523c485-e6ef-53a8-97ac-7f581be41925",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101265",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "4e761516-de1e-5772-936f-38feb1c0eaa3",
+      "attribute_id": "98ed4aca-ddc2-543b-a747-580125b1b771",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101266",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "62228a60-16c9-57b0-9018-74c648990b42",
+      "attribute_id": "98ed4aca-ddc2-543b-a747-580125b1b771",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101266",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "ecfce7db-26e2-5597-9583-243e52641d42",
+      "attribute_id": "98ed4aca-ddc2-543b-a747-580125b1b771",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101266",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "8e622d4e-5cc4-55a3-9501-2e8a935a5691",
+      "attribute_id": "98ed4aca-ddc2-543b-a747-580125b1b771",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101266",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "1e65a776-b274-5938-8255-427911ec5766",
+      "attribute_id": "b3b59958-6b78-55b0-baab-00c5cf4b4086",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101267",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "22046b49-0067-5419-9533-2c73487bd254",
+      "attribute_id": "b3b59958-6b78-55b0-baab-00c5cf4b4086",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101267",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "7274e8fb-9d4f-5774-aa6f-2c0f99d7a1bf",
+      "attribute_id": "b3b59958-6b78-55b0-baab-00c5cf4b4086",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101267",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "c811cfd7-cdbb-5237-a2cf-e4da1ce835b3",
+      "attribute_id": "b3b59958-6b78-55b0-baab-00c5cf4b4086",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101267",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "cff51f57-e23d-5f5d-bb94-98e6fc0d40c1",
+      "attribute_id": "8f0c8f05-82a3-574b-8445-3019af90a431",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101268",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "a03da3d1-27ad-591f-aa3b-300d75875a7a",
+      "attribute_id": "8f0c8f05-82a3-574b-8445-3019af90a431",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101268",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "13248dab-85a2-5d5c-af2c-88727652a3ca",
+      "attribute_id": "8f0c8f05-82a3-574b-8445-3019af90a431",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101268",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "64bfbb0f-e650-5b95-a82b-d88c3910c8ed",
+      "attribute_id": "8f0c8f05-82a3-574b-8445-3019af90a431",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101268",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "804c3ab8-2936-5f91-b8b4-adc44105a283",
+      "attribute_id": "8bcd2352-c25b-5114-86fe-c3b12fa7c5d7",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101269",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "c9cbf45d-48f4-5d4c-aef9-a38771bd0e66",
+      "attribute_id": "8bcd2352-c25b-5114-86fe-c3b12fa7c5d7",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101269",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "5f936259-dcda-5427-b041-ce374e5f054a",
+      "attribute_id": "8bcd2352-c25b-5114-86fe-c3b12fa7c5d7",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101269",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "89e4ff87-2053-5157-af4e-5f874c424846",
+      "attribute_id": "8bcd2352-c25b-5114-86fe-c3b12fa7c5d7",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101269",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "29b4badc-924b-5559-b295-051895a36cf4",
+      "attribute_id": "01514117-8942-5ecf-ae4d-c15ea5967489",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101270",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "85c1ef26-e5e1-56dd-b693-10ef8613fd8f",
+      "attribute_id": "01514117-8942-5ecf-ae4d-c15ea5967489",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101270",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "97a11e84-ec43-5fcb-8413-1a446d205ae6",
+      "attribute_id": "01514117-8942-5ecf-ae4d-c15ea5967489",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101270",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "41d632b7-b887-5cec-891d-865b0ade0c46",
+      "attribute_id": "01514117-8942-5ecf-ae4d-c15ea5967489",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101270",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "2f9753c5-feec-52ab-a96a-07b2324cebbf",
+      "attribute_id": "2717fc9b-e3d7-5510-985f-9a927fb6d823",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101379",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "49606b1a-50b3-5088-acea-43cdf1295e4d",
+      "attribute_id": "2717fc9b-e3d7-5510-985f-9a927fb6d823",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101379",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "c316eb22-6280-50f0-8b60-a697937597e4",
+      "attribute_id": "2717fc9b-e3d7-5510-985f-9a927fb6d823",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101379",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "de30cb42-505e-5d08-a7ab-52d51496787c",
+      "attribute_id": "2717fc9b-e3d7-5510-985f-9a927fb6d823",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101379",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "56ea7a9f-dd28-59bb-ad58-18f020cc0274",
+      "attribute_id": "e97cf593-161d-51b7-a505-829c0e7121da",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101395",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "2445773f-bbde-5287-9466-040e42ff98bd",
+      "attribute_id": "e97cf593-161d-51b7-a505-829c0e7121da",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101395",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "18add8c2-c134-58ef-820a-3643e362ce8c",
+      "attribute_id": "e97cf593-161d-51b7-a505-829c0e7121da",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101395",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "47413d49-5b49-59c4-97b5-1d0ea8000b33",
+      "attribute_id": "e97cf593-161d-51b7-a505-829c0e7121da",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101395",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "54b04f22-379f-5c2c-b4ad-181c2f965604",
+      "attribute_id": "254324bd-82b9-5811-9df0-039def7ecf88",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101396",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "279c8604-d1d2-56af-b260-02b4a924de70",
+      "attribute_id": "254324bd-82b9-5811-9df0-039def7ecf88",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101396",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "71e95e84-6326-5342-ab9c-23497489e795",
+      "attribute_id": "254324bd-82b9-5811-9df0-039def7ecf88",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101396",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "908b5c96-e2f2-526a-aa6e-2451f4392aa9",
+      "attribute_id": "254324bd-82b9-5811-9df0-039def7ecf88",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101396",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "e887d5c3-1388-52b7-bfb3-c22eb2a385b1",
+      "attribute_id": "54fb710b-6956-52df-8ce5-a00693c75bf2",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101397",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "b0020826-cea0-583f-9a14-514bf9fd91a0",
+      "attribute_id": "54fb710b-6956-52df-8ce5-a00693c75bf2",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101397",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "c1e67928-d6a1-5d4d-b1f6-fc619f100554",
+      "attribute_id": "54fb710b-6956-52df-8ce5-a00693c75bf2",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101397",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "bdb67c21-cc12-5a36-b538-1d30b0eef467",
+      "attribute_id": "54fb710b-6956-52df-8ce5-a00693c75bf2",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101397",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "71242bcc-d814-524d-9f74-c11263c61c68",
+      "attribute_id": "37fe337e-6963-59f9-ba9a-a844b55cf829",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101398",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "4e500497-3f80-591b-984c-f4ba73f5b219",
+      "attribute_id": "37fe337e-6963-59f9-ba9a-a844b55cf829",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101398",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "1731fbce-f7e6-56ff-bc42-4ad451ae4de2",
+      "attribute_id": "37fe337e-6963-59f9-ba9a-a844b55cf829",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101398",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "c512ee6a-c886-5f27-ba3d-07c4e2d48c44",
+      "attribute_id": "37fe337e-6963-59f9-ba9a-a844b55cf829",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101398",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "f3fa963b-e571-538c-a980-2967028d4721",
+      "attribute_id": "9c0fbe87-10af-569d-89de-becc6cdb9cc4",
+      "external_value_id": "7223",
+      "value": "Mandatory image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101399",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "18a38568-7606-50bf-b07f-413d38be1e01",
+      "attribute_id": "9c0fbe87-10af-569d-89de-becc6cdb9cc4",
+      "external_value_id": "7224",
+      "value": "Mandatory image, optional text",
+      "display_value": "Cung cấp hình ảnh (bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101399",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "76133e29-7dc0-56aa-9b34-cc3e0d5c527e",
+      "attribute_id": "9c0fbe87-10af-569d-89de-becc6cdb9cc4",
+      "external_value_id": "7225",
+      "value": "Optional image, mandatory text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (bắt buộc)",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101399",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "27bd1f44-7b9b-536e-a54e-e197a6452209",
+      "attribute_id": "9c0fbe87-10af-569d-89de-becc6cdb9cc4",
+      "external_value_id": "7226",
+      "value": "Optional image, optional text",
+      "display_value": "Cung cấp hình ảnh (không bắt buộc), mô tả bằng chữ (không bắt buộc)",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101399",
+        "attribute_external_id": "101220@101219:7221"
+      }
+    },
+    {
+      "id": "3e17d76d-b455-5bda-88b7-5b4cf9817e97",
+      "attribute_id": "a44cdb23-4739-5516-b5fa-554cefc936d8",
+      "external_value_id": "3164",
+      "value": "Ankle",
+      "display_value": "Mắt cá",
+      "sort_order": 0,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101890",
+        "attribute_external_id": "100602@100643:3341"
+      }
+    },
+    {
+      "id": "4593d514-c116-55e4-9747-0a8026ab3574",
+      "attribute_id": "a44cdb23-4739-5516-b5fa-554cefc936d8",
+      "external_value_id": "3176",
+      "value": "Belt",
+      "display_value": "Thắt lưng",
+      "sort_order": 1,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101890",
+        "attribute_external_id": "100602@100643:3341"
+      }
+    },
+    {
+      "id": "627949f7-f2a4-54ec-8458-ae1ab56eb6aa",
+      "attribute_id": "a44cdb23-4739-5516-b5fa-554cefc936d8",
+      "external_value_id": "3198",
+      "value": "Others",
+      "display_value": "Khác",
+      "sort_order": 2,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101890",
+        "attribute_external_id": "100602@100643:3341"
+      }
+    },
+    {
+      "id": "8f62640d-1995-54df-ae95-cf76f04c5ec1",
+      "attribute_id": "a44cdb23-4739-5516-b5fa-554cefc936d8",
+      "external_value_id": "3219",
+      "value": "Vest",
+      "display_value": "Vest",
+      "sort_order": 3,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101890",
+        "attribute_external_id": "100602@100643:3341"
+      }
+    },
+    {
+      "id": "21fbda50-6d48-566b-8de2-da651520cbcc",
+      "attribute_id": "a44cdb23-4739-5516-b5fa-554cefc936d8",
+      "external_value_id": "3233",
+      "value": "Wrist & Ankle",
+      "display_value": "Cổ tay & mắt cá",
+      "sort_order": 4,
+      "is_active": true,
+      "metadata": {
+        "source_value_type": 3,
+        "source_status": 0,
+        "source_attribute_model_id": 0,
+        "category_external_id": "101890",
+        "attribute_external_id": "100602@100643:3341"
+      }
+    }
+  ]
+}

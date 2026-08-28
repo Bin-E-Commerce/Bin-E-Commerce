@@ -1,0 +1,26 @@
+{
+  "name": "@bin-ecommerce/crawl-tiki",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "crawl": "npm run build && node dist/index.js",
+    "crawl:sample": "npm run crawl -- --keyword laptop --pages 1 --limit 10 --details",
+    "crawl:brands": "npm run build && node dist/crawl-brands.js",
+    "crawl:brands:tiki": "npm run crawl:brands -- --source storefront --skip-country --sample-products 0 --discovery-delay 500 --output data/tiki-brands.json --report data/tiki-brands.report.json --checkpoint data/tiki-brands.checkpoint.json",
+    "crawl:brands:sample": "npm run crawl:brands -- --source storefront --max-categories 5 --max-brands 30 --sample-products 1 --discovery-delay 350 --enrichment-delay 1500 --output data/tiki-brands.sample.json --report data/tiki-brands.sample.report.json --checkpoint data/tiki-brands.sample.checkpoint.json",
+    "crawl:brands:official": "npm run crawl:brands -- --source official --output data/tiki-brands.json --report data/tiki-brands.report.json --checkpoint data/tiki-brands.checkpoint.json",
+    "import:brands": "npm run crawl:brands -- --input data/tiki-brands.json --import",
+    "import:sample": "npm run crawl -- --keyword laptop --pages 1 --limit 5 --details --import",
+    "import:product-service": "npm run build && node dist/import-product-service.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
+  }
+}

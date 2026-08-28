@@ -3,8 +3,8 @@
 # Includes: PostgreSQL, MongoDB, Redis, Kafka (KRaft), Keycloak, Prometheus, Grafana
 #
 # Usage (run from repo root):
-#   docker compose -f infra/docker/docker-compose.infra.yml up -d
-#   docker compose -f infra/docker/docker-compose.infra.yml down -v
+#   docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml up -d
+#   docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml down -v
 # =============================================================================
 
 name: bin-ecommerce-infra
@@ -46,7 +46,7 @@ services:
       PGHOST: postgres
     command: >
       sh -c "
-        for db in keycloak bin_ecommerce_auth bin_ecommerce_order bin_ecommerce_inventory bin_ecommerce_shipping bin_ecommerce_promotion bin_ecommerce_return; do
+        for db in keycloak bin_ecommerce_auth bin_ecommerce_catalog bin_ecommerce_location bin_ecommerce_seller bin_ecommerce_product; do
           psql -tc \"SELECT 1 FROM pg_database WHERE datname = '$$db'\" | grep -q 1 ||
           psql -c \"CREATE DATABASE $$db\" || true;
           echo \"[db-init] $$db ensured\";
