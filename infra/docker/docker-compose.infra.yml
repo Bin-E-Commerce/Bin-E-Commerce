@@ -46,7 +46,7 @@ services:
       PGHOST: postgres
     command: >
       sh -c "
-        for db in keycloak bin_ecommerce_auth bin_ecommerce_catalog bin_ecommerce_location bin_ecommerce_seller bin_ecommerce_product; do
+        for db in keycloak bin_ecommerce_auth bin_ecommerce_catalog bin_ecommerce_location bin_ecommerce_seller bin_ecommerce_product bin_ecommerce_cart; do
           psql -tc \"SELECT 1 FROM pg_database WHERE datname = '$$db'\" | grep -q 1 ||
           psql -c \"CREATE DATABASE $$db\" || true;
           echo \"[db-init] $$db ensured\";

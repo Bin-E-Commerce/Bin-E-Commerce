@@ -10,6 +10,9 @@ export enum Permission {
   ADMIN_ACCESS_CONTROL_READ = "admin.access_control.read",
   ADMIN_ACCESS_CONTROL_UPDATE = "admin.access_control.update",
 
+  // Customer Cart
+  CART_READ = "cart.read",
+
   // Seller
   // 1. Seller Center
   SELLER_ACCESS = "seller.access", // Cho phép truy cập Seller Center, nhưng không có quyền gì khác.

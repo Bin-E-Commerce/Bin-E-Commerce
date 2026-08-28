@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.25.3";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.29.1";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -82,6 +82,13 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
       "Cho phép bật hoặc tắt permission cho từng role trong Admin Center.",
     resource: "admin.access_control",
     action: "update",
+  },
+  {
+    code: Permission.CART_READ,
+    name: "Xem giỏ hàng",
+    description: "Cho phép Customer hoặc Seller xem giỏ hàng active của chính mình.",
+    resource: "cart",
+    action: "read",
   },
   {
     code: Permission.SELLER_APPLICATION_READ,
@@ -284,6 +291,16 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
 // Ma trận quyền mặc định khi seed môi trường mới.
 // Seed service chỉ tạo bản ghi còn thiếu, không ghi đè trạng thái quyền mà admin đã bật/tắt trong DB.
 export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.CART_READ,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.CART_READ,
+    scope: PermissionScope.OWN,
+  },
   {
     roleCode: UserRole.SELLER,
     permissionCode: Permission.SELLER_ACCESS,
