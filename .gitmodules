@@ -29,3 +29,6 @@
 	path = services/ai-service
 	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Ai-Service.git
 	branch = main
+[submodule "services/cart-service"]
+	path = services/cart-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Cart-Service.git
