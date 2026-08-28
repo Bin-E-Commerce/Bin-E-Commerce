@@ -1,0 +1,279 @@
+<!doctype html>
+<!-- Trang mô phỏng luồng tối ưu ảnh AI độc lập; không gọi API và không phụ thuộc framework. -->
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sơ đồ tương tác mô tả luồng tối ưu hình ảnh AI của Seller Center.">
+  <title>AI Image Optimization Flow</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+  <main class="page-shell">
+    <header class="hero-card">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="ai-mark"><img src="../../../web/public/images/icon/ai-icon.svg" alt=""></span>
+          SELLER AI ARCHITECTURE</div>
+        <h1>AI Image Optimization Flow</h1>
+        <p class="hero-lead">Theo dõi từng bước từ lúc seller chọn ảnh đến khi kết quả AI được kiểm tra, duyệt và áp
+          dụng an toàn vào sản phẩm.</p>
+        <div class="hero-facts" aria-label="Nguyên tắc vận hành"><span><strong>Ảnh gốc</strong> luôn được giữ
+            lại</span><span><strong>1 sản phẩm · 1 ảnh</strong> trong phiên bản hiện tại</span><span><strong>Seller
+              duyệt</strong> trước khi áp dụng</span></div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-orbit orbit-one"></div>
+        <div class="hero-orbit orbit-two"></div><span class="hero-visual-mark"><img
+            src="../../../web/public/images/icon/ai-icon.svg" alt=""></span><span class="orbit-dot dot-one"></span><span
+          class="orbit-dot dot-two"></span>
+      </div>
+    </header>
+    <section class="control-card" aria-label="Điều khiển mô phỏng">
+      <div>
+        <p class="section-kicker">MÔ PHỎNG LUỒNG</p>
+        <p id="stage-status" class="stage-status" aria-live="polite">Sẵn sàng bắt đầu · Bước 1 / 19</p>
+      </div>
+      <div class="control-actions"><button class="button button-primary" id="play-button" type="button"><span
+            aria-hidden="true">▶</span> Chạy luồng</button><button class="button button-secondary" id="pause-button"
+          type="button"><span aria-hidden="true">Ⅱ</span> Tạm dừng</button><button class="button button-secondary"
+          id="replay-button" type="button"><span aria-hidden="true">↻</span> Chạy lại</button><button
+          class="button button-icon" id="previous-button" type="button" aria-label="Bước trước">←</button><button
+          class="button button-icon" id="next-button" type="button" aria-label="Bước tiếp theo">→</button><label
+          class="speed-control">Tốc độ <select id="speed-select" aria-label="Tốc độ mô phỏng">
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.5">1.5x</option>
+          </select></label></div>
+    </section>
+    <section class="architecture-card" aria-labelledby="architecture-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">KIẾN TRÚC HỆ THỐNG</p>
+          <h2 id="architecture-title">Một yêu cầu đi qua những service nào?</h2>
+          <p>Đường nối biểu diễn request hoặc event. Chấm sáng là gói dữ liệu đang di chuyển trong bước mô phỏng.</p>
+        </div>
+        <div class="legend" aria-label="Chú thích sơ đồ"><span><i class="legend-dot legend-main"></i> Luồng
+            chính</span><span><i class="legend-dot legend-branch"></i> Nhánh provider</span><span><i
+              class="legend-dot legend-error"></i> Khôi phục lỗi</span></div>
+      </div>
+      <div class="architecture-map" id="architecture-map"><svg class="flow-lines" viewBox="0 0 1400 490" role="img"
+          aria-label="Sơ đồ kết nối giữa các service">
+          <defs>
+            <marker id="arrow-main" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+              orient="auto">
+              <path d="M0 0L10 5L0 10z" fill="#18181b"></path>
+            </marker>
+            <marker id="arrow-branch" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+              orient="auto">
+              <path d="M0 0L10 5L0 10z" fill="#52525b"></path>
+            </marker>
+            <marker id="arrow-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+              orient="auto">
+              <path d="M0 0L10 5L0 10z" fill="#b91c1c"></path>
+            </marker>
+          </defs>
+          <path class="connector connector-main" d="M174 120H1224" marker-end="url(#arrow-main)"></path>
+          <path class="connector connector-branch" d="M676 120C676 206 676 206 540 300H420"
+            marker-end="url(#arrow-branch)"></path>
+          <path class="connector connector-branch" d="M676 120C676 206 676 206 830 300H980"
+            marker-end="url(#arrow-branch)"></path>
+          <path class="connector connector-error" d="M1224 120C1320 120 1320 414 1040 414H820"
+            marker-end="url(#arrow-error)"></path>
+          <circle class="packet packet-main" r="6">
+            <animateMotion dur="7s" repeatCount="indefinite" path="M174 120H1224"></animateMotion>
+          </circle>
+          <circle class="packet packet-branch" r="5">
+            <animateMotion dur="5s" repeatCount="indefinite" path="M676 120C676 206 676 206 540 300H420">
+            </animateMotion>
+          </circle>
+          <circle class="packet packet-branch" r="5">
+            <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite" path="M676 120C676 206 676 206 830 300H980">
+            </animateMotion>
+          </circle>
+          <circle class="packet packet-error" r="5">
+            <animateMotion dur="8s" repeatCount="indefinite" path="M1224 120C1320 120 1320 414 1040 414H820">
+            </animateMotion>
+          </circle>
+        </svg>
+        <div class="lane lane-seller"><span class="lane-label">Seller Center</span><button class="architecture-node"
+            data-stage="1" type="button"><span class="node-index">01</span><strong>Chọn sản phẩm</strong><small>Seller
+              chọn ảnh nguồn</small></button></div>
+        <div class="lane lane-gateway"><span class="lane-label">API Gateway</span><button class="architecture-node"
+            data-stage="3" type="button"><span class="node-index">03</span><strong>Auth + Permission</strong><small>JWT
+              · seller scope</small></button></div>
+        <div class="lane lane-ai"><span class="lane-label">AI Service</span><button class="architecture-node"
+            data-stage="5" type="button"><span class="node-index">05</span><strong>Validate
+              request</strong><small>Ownership · input policy</small></button></div>
+        <div class="lane lane-storage"><span class="lane-label">Storage &amp; Queue</span><button
+            class="architecture-node" data-stage="7" type="button"><span class="node-index">07</span><strong>Job +
+              Outbox</strong><small>PostgreSQL · Kafka</small></button></div>
+        <div class="lane lane-worker"><span class="lane-label">AI Worker</span><button class="architecture-node"
+            data-stage="10" type="button"><span class="node-index">10</span><strong>Claim bằng
+              lease</strong><small>Idempotent worker</small></button></div>
+        <div class="lane lane-media"><span class="lane-label">Media Service</span><button class="architecture-node"
+            data-stage="14" type="button"><span class="node-index">14</span><strong>Lưu asset mới</strong><small>Giữ ảnh
+              gốc</small></button></div>
+        <div class="lane lane-product"><span class="lane-label">Product Service</span><button class="architecture-node"
+            data-stage="18" type="button"><span class="node-index">18</span><strong>Apply an toàn</strong><small>Version
+              check · rollback</small></button></div>
+        <div class="branch-label branch-white">Nền trắng · rembg + Pillow</div>
+        <div class="branch-label branch-lifestyle">Lifestyle · GPT-Image-2</div>
+        <div class="error-label">Timeout / 409 / reject → phục hồi</div>
+      </div>
+    </section>
+    <section class="timeline-card" aria-labelledby="timeline-title">
+      <div class="section-heading compact-heading">
+        <div>
+          <p class="section-kicker">19 BƯỚC CHI TIẾT</p>
+          <h2 id="timeline-title">Từ request đến kết quả được duyệt</h2>
+        </div><button class="mode-toggle" id="failure-toggle" type="button" aria-pressed="false"><span
+            class="toggle-indicator"></span> Hiện nhánh lỗi</button>
+      </div>
+      <div class="stage-progress" aria-hidden="true"><span id="stage-progress-bar"></span></div>
+      <ol class="stage-list" id="stage-list">
+        <li><button class="stage-node" data-stage="1" type="button"><span>01</span><strong>Chọn sản
+              phẩm</strong><small>Seller Center</small></button></li>
+        <li><button class="stage-node" data-stage="2" type="button"><span>02</span><strong>Chọn ảnh
+              nguồn</strong><small>Source asset</small></button></li>
+        <li><button class="stage-node" data-stage="3" type="button"><span>03</span><strong>Xác thực
+              JWT</strong><small>API Gateway</small></button></li>
+        <li><button class="stage-node" data-stage="4" type="button"><span>04</span><strong>Kiểm tra
+              quyền</strong><small>OWN_SHOP</small></button></li>
+        <li><button class="stage-node" data-stage="5" type="button"><span>05</span><strong>Kiểm tra
+              ownership</strong><small>AI Service</small></button></li>
+        <li><button class="stage-node" data-stage="6" type="button"><span>06</span><strong>Validate
+              asset</strong><small>HTTPS · MIME</small></button></li>
+        <li><button class="stage-node" data-stage="7" type="button"><span>07</span><strong>Lưu
+              job</strong><small>PostgreSQL</small></button></li>
+        <li><button class="stage-node" data-stage="8" type="button"><span>08</span><strong>Ghi
+              outbox</strong><small>Atomic transaction</small></button></li>
+        <li><button class="stage-node" data-stage="9" type="button"><span>09</span><strong>Publish
+              event</strong><small>Kafka topic v1</small></button></li>
+        <li><button class="stage-node" data-stage="10" type="button"><span>10</span><strong>Claim
+              job</strong><small>Lease + attempt</small></button></li>
+        <li><button class="stage-node" data-stage="11" type="button"><span>11</span><strong>Tải ảnh
+              gốc</strong><small>Media Service</small></button></li>
+        <li><button class="stage-node" data-stage="12" type="button"><span>12</span><strong>Chọn
+              provider</strong><small>Local / external</small></button></li>
+        <li><button class="stage-node" data-stage="13" type="button"><span>13</span><strong>Tạo ảnh</strong><small>White
+              / lifestyle</small></button></li>
+        <li><button class="stage-node" data-stage="14" type="button"><span>14</span><strong>Upload
+              output</strong><small>Processed asset</small></button></li>
+        <li><button class="stage-node" data-stage="15" type="button"><span>15</span><strong>Ready to
+              review</strong><small>REVIEW_REQUIRED</small></button></li>
+        <li><button class="stage-node" data-stage="16" type="button"><span>16</span><strong>Seller xem
+              preview</strong><small>Before / after</small></button></li>
+        <li><button class="stage-node" data-stage="17"
+            type="button"><span>17</span><strong>Finalization</strong><small>Medium quality</small></button></li>
+        <li><button class="stage-node" data-stage="18" type="button"><span>18</span><strong>Apply product
+              media</strong><small>Product Service</small></button></li>
+        <li><button class="stage-node" data-stage="19" type="button"><span>19</span><strong>Hoàn
+              tất</strong><small>APPLIED</small></button></li>
+      </ol>
+    </section>
+    <section class="provider-grid" aria-labelledby="provider-title">
+      <div class="section-heading compact-heading">
+        <div>
+          <p class="section-kicker">TÁCH NHÁNH PROVIDER</p>
+          <h2 id="provider-title">Mỗi kiểu tối ưu giải quyết một bài toán khác nhau</h2>
+        </div><span class="cost-note">Ưu tiên local để tiết kiệm chi phí</span>
+      </div>
+      <article class="provider-card">
+        <div class="provider-image"><img
+            src="../../../web/public/images/ai/product-optimization/product-ai-white-background.png"
+            alt="Minh họa tạo nền trắng"></div>
+        <div class="provider-copy"><span class="provider-badge">LOCAL PROCESSING</span>
+          <h3>Nền trắng sạch và đồng nhất</h3>
+          <p>Worker dùng <strong>rembg</strong> để tách nền, sau đó ghép nền trắng bằng <strong>Pillow</strong>. Không
+            gửi ảnh tới LLM nên chi phí thấp và dễ kiểm soát.</p>
+          <ul>
+            <li>Input: ảnh nguồn qua Media Service</li>
+            <li>Output: ảnh JPEG đã validate</li>
+            <li>Lỗi: job FAILED, không dùng ảnh gốc giả làm output</li>
+          </ul>
+        </div>
+      </article>
+      <article class="provider-card">
+        <div class="provider-image"><img
+            src="../../../web/public/images/ai/product-optimization/product-ai-content-points.png"
+            alt="Minh họa tạo nền lifestyle"></div>
+        <div class="provider-copy"><span class="provider-badge provider-badge-dark">EXTERNAL PROVIDER</span>
+          <h3>Bối cảnh lifestyle theo yêu cầu</h3>
+          <p>Worker chuẩn hóa ảnh và gửi instruction an toàn tới <strong>GPT-Image-2</strong>. Kết quả chỉ là đề xuất,
+            seller phải kiểm tra trước khi áp dụng.</p>
+          <ul>
+            <li>Input: ảnh và mô tả bối cảnh đã lọc</li>
+            <li>Output: ảnh lifestyle mới, giữ hình dáng sản phẩm</li>
+            <li>Lỗi: timeout hoặc quota → retry có kiểm soát/DLQ</li>
+          </ul>
+        </div>
+      </article>
+    </section>
+    <section class="safety-grid" id="failure-section" aria-labelledby="safety-title">
+      <div class="section-heading compact-heading">
+        <div>
+          <p class="section-kicker">AN TOÀN VÀ KHÔI PHỤC</p>
+          <h2 id="safety-title">Nếu một bước thất bại, dữ liệu được bảo vệ ra sao?</h2>
+        </div>
+      </div>
+      <article class="safety-card"><span class="safety-icon safety-icon-error">!</span>
+        <div>
+          <h3>Provider timeout</h3>
+          <p>Đánh dấu job FAILED và hiển thị lý do có thể thử lại. Không gọi lại request trả phí vô hạn.</p>
+          <code>FAILED → tạo yêu cầu mới</code>
+        </div>
+      </article>
+      <article class="safety-card"><span class="safety-icon safety-icon-warning">↻</span>
+        <div>
+          <h3>Kafka redelivery</h3>
+          <p>Worker kiểm tra jobId và eventId, claim lease nguyên tử để không tạo output trùng.</p>
+          <code>duplicate event → no-op</code>
+        </div>
+      </article>
+      <article class="safety-card"><span class="safety-icon safety-icon-success">✓</span>
+        <div>
+          <h3>Seller từ chối</h3>
+          <p>Chỉ cleanup asset AI. Ảnh gốc được giữ lại để seller có thể khôi phục.</p>
+          <code>REJECTED → cleanup output</code>
+        </div>
+      </article>
+      <article class="safety-card"><span class="safety-icon safety-icon-dark">↯</span>
+        <div>
+          <h3>Product version conflict</h3>
+          <p>Product Service trả 409 nếu sản phẩm đã đổi sau khi job tạo, không ghi đè thay đổi mới.</p>
+          <code>409 → tạo job mới</code>
+        </div>
+      </article>
+    </section>
+    <aside class="details-panel" id="details-panel" aria-labelledby="details-title" aria-hidden="true">
+      <div class="details-header">
+        <div>
+          <p class="section-kicker">CHI TIẾT BƯỚC</p>
+          <h2 id="details-title">Chọn một node để xem</h2>
+        </div><button class="close-button" id="close-details" type="button" aria-label="Đóng chi tiết">×</button>
+      </div>
+      <div class="details-body">
+        <p id="details-summary">Mỗi node mô tả boundary, dữ liệu và quy tắc an toàn của service.</p>
+        <div class="details-columns">
+          <div><span class="detail-label">INPUT</span>
+            <p id="details-input">—</p>
+          </div>
+          <div><span class="detail-label">OUTPUT</span>
+            <p id="details-output">—</p>
+          </div>
+        </div>
+        <div class="detail-block"><span class="detail-label">QUY TẮC BẢO VỆ</span>
+          <p id="details-safety">—</p>
+        </div>
+        <div class="detail-block detail-failure"><span class="detail-label">LỖI CÓ THỂ GẶP</span>
+          <p id="details-failure">—</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <script src="./flow.js" defer></script>
+</body>
+
+</html>
