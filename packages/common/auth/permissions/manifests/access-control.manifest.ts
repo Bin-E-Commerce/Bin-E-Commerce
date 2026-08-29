@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.29.1";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.29.3";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -89,6 +89,30 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     description: "Cho phép Customer hoặc Seller xem giỏ hàng active của chính mình.",
     resource: "cart",
     action: "read",
+  },
+  {
+    code: Permission.CART_ITEM_ADD,
+    name: "Thêm sản phẩm vào giỏ hàng",
+    description:
+      "Cho phép Customer hoặc Seller thêm sản phẩm nội bộ vào giỏ hàng của chính mình.",
+    resource: "cart.item",
+    action: "add",
+  },
+  {
+    code: Permission.CART_ITEM_UPDATE,
+    name: "Cập nhật số lượng trong giỏ hàng",
+    description:
+      "Cho phép Customer hoặc Seller tăng, giảm số lượng sản phẩm trong giỏ hàng của chính mình.",
+    resource: "cart.item",
+    action: "update",
+  },
+  {
+    code: Permission.CART_ITEM_REMOVE,
+    name: "Xóa sản phẩm khỏi giỏ hàng",
+    description:
+      "Cho phép Customer hoặc Seller xóa sản phẩm khỏi giỏ hàng của chính mình.",
+    resource: "cart.item",
+    action: "remove",
   },
   {
     code: Permission.SELLER_APPLICATION_READ,
@@ -299,6 +323,36 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.SELLER,
     permissionCode: Permission.CART_READ,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.CART_ITEM_ADD,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.CART_ITEM_ADD,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.CART_ITEM_UPDATE,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.CART_ITEM_UPDATE,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.CART_ITEM_REMOVE,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.CART_ITEM_REMOVE,
     scope: PermissionScope.OWN,
   },
   {

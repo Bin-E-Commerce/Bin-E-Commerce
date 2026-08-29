@@ -10,8 +10,11 @@ export enum Permission {
   ADMIN_ACCESS_CONTROL_READ = "admin.access_control.read",
   ADMIN_ACCESS_CONTROL_UPDATE = "admin.access_control.update",
 
-  // Customer Cart
+  // Cart dùng chung cho Customer và Seller
   CART_READ = "cart.read",
+  CART_ITEM_ADD = "cart.item.add",
+  CART_ITEM_UPDATE = "cart.item.update",
+  CART_ITEM_REMOVE = "cart.item.remove",
 
   // Seller
   // 1. Seller Center

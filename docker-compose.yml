@@ -40,7 +40,7 @@ services:
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: bin-ecommerce
       AUTH_SERVICE_URL: http://auth-service:3001
-      PRODUCT_SERVICE_URL: http://product-service:3002
+      PRODUCT_SERVICE_URL: http://product-service:3008
       CART_SERVICE_URL: http://cart-service:3003
       ORDER_SERVICE_URL: http://order-service:3004
       INVENTORY_SERVICE_URL: http://inventory-service:3005
@@ -118,8 +118,8 @@ services:
   cart-service:
     <<: *service-defaults
     build:
-      context: .
-      dockerfile: services/cart-service/Dockerfile
+      context: ./services/cart-service
+      dockerfile: Dockerfile
     image: bin-ecommerce/cart-service:local
     container_name: cart-service
     environment:
@@ -130,6 +130,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: bin_ecommerce_cart
+      PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL:-http://host.docker.internal:3008}
     depends_on:
       auth-service:
         condition: service_healthy
