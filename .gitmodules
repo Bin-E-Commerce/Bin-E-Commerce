@@ -32,3 +32,6 @@
 [submodule "services/cart-service"]
 	path = services/cart-service
 	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Cart-Service.git
+[submodule "services/order-service"]
+	path = services/order-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Order-Service.git
