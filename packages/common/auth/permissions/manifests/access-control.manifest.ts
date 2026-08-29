@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.29.3";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.30.1";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -120,6 +120,22 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     description: "Cho phép Customer hoặc Seller tạo đơn COD từ giỏ hàng của chính mình.",
     resource: "order",
     action: "create",
+  },
+  {
+    code: Permission.ORDER_READ,
+    name: "Xem đơn hàng của tôi",
+    description:
+      "Cho phép Customer xem lịch sử và chi tiết các đơn hàng thuộc tài khoản của mình.",
+    resource: "order",
+    action: "read",
+  },
+  {
+    code: Permission.ORDER_CANCEL,
+    name: "Hủy đơn hàng của tôi",
+    description:
+      "Cho phép Customer hủy đơn COD đã xác nhận thuộc tài khoản của mình.",
+    resource: "order",
+    action: "cancel",
   },
   {
     code: Permission.SELLER_APPLICATION_READ,
@@ -370,6 +386,16 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.SELLER,
     permissionCode: Permission.ORDER_CREATE,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.ORDER_READ,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.ORDER_CANCEL,
     scope: PermissionScope.OWN,
   },
   {

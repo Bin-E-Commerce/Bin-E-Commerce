@@ -18,6 +18,8 @@ export enum Permission {
 
   // Order dùng chung cho Customer và Seller khi đặt COD từ cart của chính mình.
   ORDER_CREATE = "order.create",
+  ORDER_READ = "order.read",
+  ORDER_CANCEL = "order.cancel",
 
   // Seller
   // 1. Seller Center
