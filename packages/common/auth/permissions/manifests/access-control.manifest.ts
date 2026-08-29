@@ -115,6 +115,13 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     action: "remove",
   },
   {
+    code: Permission.ORDER_CREATE,
+    name: "Tạo đơn COD",
+    description: "Cho phép Customer hoặc Seller tạo đơn COD từ giỏ hàng của chính mình.",
+    resource: "order",
+    action: "create",
+  },
+  {
     code: Permission.SELLER_APPLICATION_READ,
     name: "Xem hồ sơ đăng ký seller",
     description: "Cho phép xem danh sách và chi tiết hồ sơ đăng ký người bán.",
@@ -353,6 +360,16 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.SELLER,
     permissionCode: Permission.CART_ITEM_REMOVE,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.ORDER_CREATE,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.ORDER_CREATE,
     scope: PermissionScope.OWN,
   },
   {

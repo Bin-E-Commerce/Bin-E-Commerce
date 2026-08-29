@@ -16,6 +16,9 @@ export enum Permission {
   CART_ITEM_UPDATE = "cart.item.update",
   CART_ITEM_REMOVE = "cart.item.remove",
 
+  // Order dùng chung cho Customer và Seller khi đặt COD từ cart của chính mình.
+  ORDER_CREATE = "order.create",
+
   // Seller
   // 1. Seller Center
   SELLER_ACCESS = "seller.access", // Cho phép truy cập Seller Center, nhưng không có quyền gì khác.

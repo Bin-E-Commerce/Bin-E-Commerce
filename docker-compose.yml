@@ -3,6 +3,7 @@ version: "3.9"
 # This compose file runs ALL 10 NestJS services + Nginx.
 # Infra (Postgres, Mongo, Redis, Kafka, Keycloak) must be started separately:
 #   docker compose -f infra/docker/docker-compose.infra.yml up -d
+# Copy .env.example to .env before starting this application stack.
 
 networks:
   bin_infra_net:
@@ -43,6 +44,7 @@ services:
       PRODUCT_SERVICE_URL: http://product-service:3008
       CART_SERVICE_URL: http://cart-service:3003
       ORDER_SERVICE_URL: http://order-service:3004
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
       INVENTORY_SERVICE_URL: http://inventory-service:3005
       NOTIFICATION_SERVICE_URL: http://notification-service:3006
       SHIPPING_SERVICE_URL: http://shipping-service:3007
@@ -83,6 +85,7 @@ services:
       FRONTEND_URL: http://localhost:5173
       SOCIAL_AUTH_CALLBACK_URL: http://localhost:5173/callback
       KAFKA_BROKERS: kafka:9092
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
       interval: 30s
@@ -91,28 +94,27 @@ services:
       start_period: 30s
 
   # ── Product Service ──────────────────────────────────────────────────────────
-  # product-service:
-  #   <<: *service-defaults
-  #   build:
-  #     context: .
-  #     dockerfile: services/product-service/Dockerfile
-  #   image: bin-ecommerce/product-service:local
-  #   container_name: product-service
-  #   environment:
-  #     PORT: 3002
-  #     NODE_ENV: development
-  #     POSTGRES_HOST: postgres
-  #     POSTGRES_PORT: 5432
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_DB: bin_product
-  #     MONGODB_URI: mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@mongo:27017/bin_product?authSource=admin
-  #     KAFKA_BROKERS: kafka:9092
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:3002/api/health"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 3
+  product-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+    image: bin-ecommerce/product-service:local
+    container_name: product-service
+    environment:
+      PORT: 3008
+      NODE_ENV: development
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: bin_ecommerce_product
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3008/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   # ── Cart Service ─────────────────────────────────────────────────────────────
   cart-service:
@@ -130,9 +132,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: bin_ecommerce_cart
-      PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL:-http://host.docker.internal:3008}
+      PRODUCT_SERVICE_URL: http://product-service:3008
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
     depends_on:
       auth-service:
+        condition: service_healthy
+      product-service:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3003/api/health"]
@@ -141,30 +146,37 @@ services:
       retries: 3
 
   # # ── Order Service ─────────────────────────────────────────────────────────────
-  # order-service:
-  #   <<: *service-defaults
-  #   build:
-  #     context: .
-  #     dockerfile: services/order-service/Dockerfile
-  #   image: bin-ecommerce/order-service:local
-  #   container_name: order-service
-  #   environment:
-  #     PORT: 3004
-  #     NODE_ENV: development
-  #     POSTGRES_HOST: postgres
-  #     POSTGRES_PORT: 5432
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_DB: bin_order
-  #     KAFKA_BROKERS: kafka:9092
-  #     CAMUNDA_ZEEBE_ADDRESS: ${CAMUNDA_ZEEBE_ADDRESS}
-  #     CAMUNDA_CLIENT_ID: ${CAMUNDA_CLIENT_ID}
-  #     CAMUNDA_CLIENT_SECRET: ${CAMUNDA_CLIENT_SECRET}
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:3004/api/health"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 3
+  order-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    image: bin-ecommerce/order-service:local
+    container_name: order-service
+    environment:
+      PORT: 3004
+      NODE_ENV: development
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: bin_ecommerce_order
+      CART_SERVICE_URL: http://cart-service:3003
+      AUTH_SERVICE_URL: http://auth-service:3001
+      PRODUCT_SERVICE_URL: http://product-service:3008
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+    depends_on:
+      cart-service:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3004/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   # # ── Inventory Service ─────────────────────────────────────────────────────────
   # inventory-service:
