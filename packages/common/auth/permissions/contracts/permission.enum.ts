@@ -20,6 +20,7 @@ export enum Permission {
   ORDER_CREATE = "order.create",
   ORDER_READ = "order.read",
   ORDER_CANCEL = "order.cancel",
+  SELLER_ORDER_READ = "seller.order.read",
 
   // Seller
   // 1. Seller Center

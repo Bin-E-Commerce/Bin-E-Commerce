@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.30.1";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.30.2";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -136,6 +136,14 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
       "Cho phép Customer hủy đơn COD đã xác nhận thuộc tài khoản của mình.",
     resource: "order",
     action: "cancel",
+  },
+  {
+    code: Permission.SELLER_ORDER_READ,
+    name: "Xem đơn hàng của shop",
+    description:
+      "Cho phép Seller xem các đơn hàng có sản phẩm thuộc shop của mình.",
+    resource: "seller.order",
+    action: "read",
   },
   {
     code: Permission.SELLER_APPLICATION_READ,
@@ -397,6 +405,11 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     roleCode: UserRole.CUSTOMER,
     permissionCode: Permission.ORDER_CANCEL,
     scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_ORDER_READ,
+    scope: PermissionScope.OWN_SHOP,
   },
   {
     roleCode: UserRole.SELLER,
@@ -680,6 +693,20 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     icon: "PackagePlus",
     sortOrder: 20,
     requiredPermissionCode: Permission.SELLER_PRODUCT_CREATE,
+  },
+  {
+    area: "seller",
+    groupCode: "orders",
+    groupLabel: "Quản lý đơn hàng",
+    groupOrder: 25,
+    code: "seller.orders",
+    label: "Đơn hàng",
+    description: "Theo dõi đơn hàng có sản phẩm thuộc shop",
+    href: "/seller/orders",
+    icon: "ClipboardList",
+    sortOrder: 10,
+    requiredPermissionCode: Permission.SELLER_ORDER_READ,
+    requiredScope: PermissionScope.OWN_SHOP,
   },
   {
     area: "seller",
