@@ -39,11 +39,6 @@ scrape_configs:
       - targets: [notification-service:3005]
     metrics_path: /metrics
 
-  - job_name: location-service
-    static_configs:
-      - targets: [location-service:3006]
-    metrics_path: /metrics
-
   - job_name: seller-service
     static_configs:
       - targets: [seller-service:3007]

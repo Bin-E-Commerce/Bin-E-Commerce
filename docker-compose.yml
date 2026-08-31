@@ -47,7 +47,7 @@ services:
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
       INVENTORY_SERVICE_URL: http://inventory-service:3005
       NOTIFICATION_SERVICE_URL: http://notification-service:3006
-      SHIPPING_SERVICE_URL: http://shipping-service:3007
+      SHIPPING_SERVICE_URL: http://shipping-service:3012
       PROMOTION_SERVICE_URL: http://promotion-service:3008
       RETURN_SERVICE_URL: http://return-service:3009
       ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
@@ -224,28 +224,44 @@ services:
   #     timeout: 5s
   #     retries: 3
 
-  # # ── Shipping Service ──────────────────────────────────────────────────────────
-  # shipping-service:
-  #   <<: *service-defaults
-  #   build:
-  #     context: .
-  #     dockerfile: services/shipping-service/Dockerfile
-  #   image: bin-ecommerce/shipping-service:local
-  #   container_name: shipping-service
-  #   environment:
-  #     PORT: 3007
-  #     NODE_ENV: development
-  #     POSTGRES_HOST: postgres
-  #     POSTGRES_PORT: 5432
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_DB: bin_shipping
-  #     KAFKA_BROKERS: kafka:9092
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:3007/api/health"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 3
+  # ── Shipping Service ──────────────────────────────────────────────────────────
+  shipping-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/shipping-service/Dockerfile
+    image: bin-ecommerce/shipping-service:local
+    container_name: shipping-service
+    ports:
+      - "3012:3012"
+    environment:
+      PORT: 3012
+      NODE_ENV: development
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: bin_shipping
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_CLIENT_ID: shipping-service
+      KAFKA_GROUP_ID: shipping-service
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+      ORDER_SERVICE_URL: http://order-service:3004
+      SELLER_SERVICE_URL: http://seller-service:3007
+      GHN_BASE_URL: ${GHN_BASE_URL:-https://dev-online-gateway.ghn.vn}
+      GHN_TOKEN: ${GHN_TOKEN:-}
+      GHN_SHOP_ID: ${GHN_SHOP_ID:-}
+      GHN_CLIENT_ID: ${GHN_CLIENT_ID:-}
+      GHN_SERVICE_TYPE_ID: ${GHN_SERVICE_TYPE_ID:-2}
+      GHN_REQUEST_TIMEOUT_MS: ${GHN_REQUEST_TIMEOUT_MS:-10000}
+    depends_on:
+      order-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3012/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   # # ── Promotion Service ─────────────────────────────────────────────────────────
   # promotion-service:
