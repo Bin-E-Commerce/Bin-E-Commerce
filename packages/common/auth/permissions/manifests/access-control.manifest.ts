@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.30.2";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.30.7";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -143,6 +143,41 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     description:
       "Cho phép Seller xem các đơn hàng có sản phẩm thuộc shop của mình.",
     resource: "seller.order",
+    action: "read",
+  },
+  {
+    code: Permission.SELLER_SHIPPING_READ,
+    name: "Xem vận đơn của shop",
+    description: "Cho phép Seller xem hành trình vận chuyển của đơn thuộc shop mình.",
+    resource: "seller.shipping",
+    action: "read",
+  },
+  {
+    code: Permission.SELLER_SHIPPING_MANAGE,
+    name: "Quản lý vận đơn của shop",
+    description: "Cho phép Seller tạo, làm mới, hủy đủ điều kiện và in nhãn vận đơn thuộc shop mình.",
+    resource: "seller.shipping",
+    action: "manage",
+  },
+  {
+    code: Permission.SELLER_SHIPPING_SETTINGS_READ,
+    name: "Xem thiết lập giao nhận",
+    description: "Cho phép Seller xem địa chỉ lấy hàng và cấu hình vận hành của shop mình.",
+    resource: "seller.shipping.settings",
+    action: "read",
+  },
+  {
+    code: Permission.SELLER_SHIPPING_SETTINGS_MANAGE,
+    name: "Quản lý thiết lập giao nhận",
+    description: "Cho phép Seller cập nhật địa chỉ lấy hàng và cấu hình vận hành của shop mình.",
+    resource: "seller.shipping.settings",
+    action: "manage",
+  },
+  {
+    code: Permission.SHIPPING_TRACKING_READ,
+    name: "Theo dõi vận chuyển đơn hàng",
+    description: "Cho phép Customer xem hành trình vận chuyển đơn hàng của chính mình.",
+    resource: "shipping.tracking",
     action: "read",
   },
   {
@@ -402,7 +437,17 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     scope: PermissionScope.OWN,
   },
   {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.ORDER_READ,
+    scope: PermissionScope.OWN,
+  },
+  {
     roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.ORDER_CANCEL,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.SELLER,
     permissionCode: Permission.ORDER_CANCEL,
     scope: PermissionScope.OWN,
   },
@@ -410,6 +455,41 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     roleCode: UserRole.SELLER,
     permissionCode: Permission.SELLER_ORDER_READ,
     scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_ORDER_MANAGE,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_SHIPPING_SETTINGS_MANAGE,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_SHIPPING_READ,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SELLER_SHIPPING_MANAGE,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.SHIPPING_TRACKING_READ,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.SHIPPING_TRACKING_READ,
+    scope: PermissionScope.OWN,
   },
   {
     roleCode: UserRole.SELLER,
@@ -666,6 +746,34 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     icon: "AiAssistant",
     sortOrder: 5,
     requiredPermissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
+    requiredScope: PermissionScope.OWN_SHOP,
+  },
+  {
+    area: "seller",
+    groupCode: "fulfillment",
+    groupLabel: "Vận hành giao nhận",
+    groupOrder: 26,
+    code: "seller.shipping.settings",
+    label: "Thiết lập giao nhận",
+    description: "Địa chỉ lấy hàng, khung giờ và đơn vị vận chuyển",
+    href: "/seller/shipping/settings",
+    icon: "Truck",
+    sortOrder: 20,
+    requiredPermissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
+    requiredScope: PermissionScope.OWN_SHOP,
+  },
+  {
+    area: "seller",
+    groupCode: "fulfillment",
+    groupLabel: "Vận hành giao nhận",
+    groupOrder: 26,
+    code: "seller.shipping.providers",
+    label: "Đơn vị vận chuyển",
+    description: "Quản lý nhà vận chuyển và lịch bàn giao",
+    href: "/seller/shipping/providers",
+    icon: "Truck",
+    sortOrder: 30,
+    requiredPermissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
     requiredScope: PermissionScope.OWN_SHOP,
   },
   {

@@ -21,6 +21,12 @@ export enum Permission {
   ORDER_READ = "order.read",
   ORDER_CANCEL = "order.cancel",
   SELLER_ORDER_READ = "seller.order.read",
+  SELLER_ORDER_MANAGE = "seller.order.manage",
+  SELLER_SHIPPING_SETTINGS_READ = "seller.shipping.settings.read",
+  SELLER_SHIPPING_SETTINGS_MANAGE = "seller.shipping.settings.manage",
+  SELLER_SHIPPING_READ = "seller.shipping.read",
+  SELLER_SHIPPING_MANAGE = "seller.shipping.manage",
+  SHIPPING_TRACKING_READ = "shipping.tracking.read",
 
   // Seller
   // 1. Seller Center

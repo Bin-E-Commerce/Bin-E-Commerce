@@ -3,6 +3,7 @@ export enum NotificationCategory {
   SELLER_APPLICATION = "seller_application",
   SHOP_PROFILE = "shop_profile",
   ORDER = "order",
+  SHIPPING = "shipping",
   PAYMENT = "payment",
   INVENTORY = "inventory",
   SUPPORT = "support",
