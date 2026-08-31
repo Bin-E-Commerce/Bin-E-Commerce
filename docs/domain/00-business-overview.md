@@ -91,8 +91,8 @@
   └──────────┘          │  └──────────────────────────────────┘  │
                         │                                         │
   ┌──────────┐          │  ┌──────────────────────────────────┐  │
-  │  GHN/    │─────────▶│  │       Shipping Webhook            │  │
-  │  GHTK    │          │  │ /webhooks/shipping                │  │
+  │  GHN     │─────────▶│  │       Shipping Webhook            │  │
+  │   Test   │          │  │ /api/v1/internal/webhooks/ghn     │  │
   └──────────┘          │  └──────────────────────────────────┘  │
                         └─────────────────────────────────────────┘
 ```
@@ -146,7 +146,7 @@ Stage 5: ORDER PROCESSING (Camunda Saga)
         ▼
 Stage 6: DELIVERY
     │
-    ├─ Order SHIPPING — nhận tracking number từ GHN/GHTK
+    ├─ Order SHIPPING — nhận tracking number từ GHN Test
     ├─ Theo dõi tracking (GET /orders/:id)
     └─ Order DELIVERED — xác nhận giao hàng
         │
@@ -228,7 +228,7 @@ Stage 7: POST-PURCHASE
 | `order-service`        | 3004 | RDS PostgreSQL | Order, Saga, Payment, Promotion apply              |
 | `inventory-service`    | 3005 | RDS PostgreSQL | Inventory per variant, Reservation                 |
 | `notification-service` | 3006 | MongoDB Atlas  | Kafka consumer, Email, DLQ                         |
-| `shipping-service`     | 3007 | RDS PostgreSQL | Shipment, GHN/GHTK webhook                         |
+| `shipping-service`     | 3012 | RDS PostgreSQL | Shipment, GHN Test webhook                         |
 | `promotion-service`    | 3008 | RDS PostgreSQL | Voucher, Promotion rules                           |
 | `return-service`       | 3009 | RDS PostgreSQL | Return request, Refund orchestration               |
 
@@ -302,7 +302,7 @@ Stage 7: POST-PURCHASE
 | `POST` | `/api/auth/reset-password`  | auth-service     | Đặt lại mật khẩu                   |
 | `GET`  | `/api/auth/verify-email`    | auth-service     | Xác thực email                     |
 | `POST` | `/api/webhooks/stripe`      | order-service    | Stripe webhook                     |
-| `POST` | `/api/webhooks/shipping`    | shipping-service | GHN/GHTK webhook                   |
+| `POST` | `/api/v1/internal/webhooks/ghn` | shipping-service | GHN Test webhook                |
 
 ### Auth User APIs (JWT required — role: USER)
 
@@ -394,9 +394,9 @@ User                Frontend         API Gateway          Services              
  │                     │                  │                  │                         │
  │                     │                  │ (Kafka consumers) │                        │
  │                     │                  │   notification-svc: email order confirmed  │
- │                     │                  │   shipping-svc: tạo vận đơn GHN           │
+ │                     │                  │   shipping-svc: tạo vận đơn GHN Test       │
  │                     │                  │                                            │
- │ (Email nhận)         │                  │                   GHN Webhook ────────────▶
+ │ (Email nhận)         │                  │                   GHN Webhook ─────────────▶
  │                     │                  │                  shipping-svc cập nhật    │
  │                     │                  │                  Kafka: order.delivered    │
  │                     │                  │                                            │
@@ -558,7 +558,7 @@ Request → API Gateway
 | [04-order.md](04-order.md)                               | Order Management & Camunda Saga              | order-service :3004                             |
 | [05-inventory.md](05-inventory.md)                       | Inventory per Variant                        | inventory-service :3005                         |
 | [06-payment-notification.md](06-payment-notification.md) | Payment & Notification                       | order-service :3004, notification-service :3006 |
-| [07-shipping-delivery.md](07-shipping-delivery.md)       | Shipping & Delivery                          | shipping-service :3007                          |
+| [07-shipping-delivery.md](07-shipping-delivery.md)       | Shipping & Delivery                          | shipping-service :3012                          |
 | [08-promotion-voucher.md](08-promotion-voucher.md)       | Promotion & Voucher                          | promotion-service :3008                         |
 | [09-review-rating.md](09-review-rating.md)               | Review & Rating                              | product-service :3002                           |
 | [10-return-refund.md](10-return-refund.md)               | Return & Refund                              | return-service :3009                            |

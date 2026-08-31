@@ -74,7 +74,7 @@ bin-ecommerce/
 │   ├── order-service/          # :3004  — Order lifecycle + Zeebe BPMN workflow
 │   ├── inventory-service/      # :3005  — Stock management, reservations, low-stock alerts
 │   ├── notification-service/   # :3006  — Email/push dispatch, template engine (MongoDB)
-│   ├── shipping-service/       # :3007  — Shipment tracking, GHN/GHTK webhook handler
+│   ├── shipping-service/       # :3012  — GHN Test fee, shipment, tracking and webhook
 │   ├── promotion-service/      # :3008  — Discount rules, voucher validation, usage tracking
 │   └── return-service/         # :3009  — Return request + Zeebe BPMN refund workflow
 │
@@ -188,7 +188,7 @@ git push → GitHub Actions
 | order-service        | 3004 | PostgreSQL | Prod/Cons  | ✓     | Order FSM, payment intent, BPMN fulfillment     |
 | inventory-service    | 3005 | PostgreSQL | Consumer   | —     | Stock levels, soft reservations, alert triggers |
 | notification-service | 3006 | MongoDB    | Consumer   | —     | Email/push dispatch, Handlebars templates       |
-| shipping-service     | 3007 | PostgreSQL | Prod/Cons  | —     | Shipment creation, real-time tracking webhook   |
+| shipping-service     | 3012 | PostgreSQL | Prod/Cons  | —     | Demo shipment creation, tracking and map         |
 | promotion-service    | 3008 | PostgreSQL | Consumer   | —     | Discount engine, voucher lifecycle, usage caps  |
 | return-service       | 3009 | PostgreSQL | Prod/Cons  | ✓     | Return requests, evidence upload, BPMN refund   |
 
@@ -297,7 +297,7 @@ Detailed domain design documents are in [`doc/domain/`](doc/domain/):
 | 03  | [Cart](doc/domain/03-cart.md)                           | Guest cart, voucher apply, TTL                |
 | 04  | [Order](doc/domain/04-order.md)                         | Order states, COD flow, code generation       |
 | 05  | [Inventory](doc/domain/05-inventory.md)                 | Stock management, reservations, bulk import   |
-| 07  | [Shipping](doc/domain/07-shipping-delivery.md)          | GHN/GHTK integration, tracking webhooks       |
+| 07  | [Shipping](doc/domain/07-shipping-delivery.md)          | GHN Test fee, shipment and tracking           |
 | 08  | [Promotions](doc/domain/08-promotion-voucher.md)        | Discount types, stacking rules, usage caps    |
 | 09  | [Reviews](doc/domain/09-review-rating.md)               | Rating system, moderation, verified purchases |
 | 10  | [Returns](doc/domain/10-return-refund.md)               | Return policy, refund workflow, Zeebe BPMN    |
