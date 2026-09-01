@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.08.30.7";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.09.01.2";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -136,6 +136,20 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
       "Cho phép Customer hủy đơn COD đã xác nhận thuộc tài khoản của mình.",
     resource: "order",
     action: "cancel",
+  },
+  {
+    code: Permission.ORDER_CONFIRM_DELIVERY,
+    name: "Xác nhận đã nhận hàng",
+    description: "Cho phép Customer xác nhận hoặc báo vấn đề với đơn hàng đã giao.",
+    resource: "order.delivery",
+    action: "confirm",
+  },
+  {
+    code: Permission.PRODUCT_REVIEW_CREATE,
+    name: "Đánh giá sản phẩm đã mua",
+    description: "Cho phép Customer gửi đánh giá cho sản phẩm trong đơn hàng đã giao.",
+    resource: "product.review",
+    action: "create",
   },
   {
     code: Permission.SELLER_ORDER_READ,
@@ -444,6 +458,16 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   {
     roleCode: UserRole.CUSTOMER,
     permissionCode: Permission.ORDER_CANCEL,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.ORDER_CONFIRM_DELIVERY,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.PRODUCT_REVIEW_CREATE,
     scope: PermissionScope.OWN,
   },
   {
@@ -757,7 +781,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     label: "Thiết lập giao nhận",
     description: "Địa chỉ lấy hàng, khung giờ và đơn vị vận chuyển",
     href: "/seller/shipping/settings",
-    icon: "Truck",
+    icon: "Settings2",
     sortOrder: 20,
     requiredPermissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
     requiredScope: PermissionScope.OWN_SHOP,

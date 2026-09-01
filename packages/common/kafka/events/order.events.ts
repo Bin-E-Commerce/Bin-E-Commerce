@@ -6,6 +6,10 @@ import { IntegrationEventEnvelope } from "../contracts";
 export const OrderEvents = {
   CREATED: "order.created",
   CANCELLED: "order.cancelled",
+  DELIVERY_AWAITING_CONFIRMATION: "order.delivery.awaiting_confirmation",
+  DELIVERY_CONFIRMED: "order.delivery.confirmed",
+  DELIVERY_ISSUE_REPORTED: "order.delivery.issue_reported",
+  DELIVERY_AUTO_CONFIRMED: "order.delivery.auto_confirmed",
 } as const;
 
 export type OrderEventType = (typeof OrderEvents)[keyof typeof OrderEvents];
@@ -65,4 +69,18 @@ export interface OrderCancelledPayload {
 export type OrderCancelledEvent = IntegrationEventEnvelope<
   typeof OrderEvents.CANCELLED,
   OrderCancelledPayload
+>;
+
+// Payload dùng chung cho các event sau khi đơn được giao; không đưa thông tin nhạy cảm vào Kafka.
+export interface OrderDeliveryPayload {
+  orderId: string;
+  status: "PENDING" | "CONFIRMED" | "ISSUE_REPORTED" | "AUTO_CONFIRMED";
+}
+
+export type OrderDeliveryEvent = IntegrationEventEnvelope<
+  | typeof OrderEvents.DELIVERY_AWAITING_CONFIRMATION
+  | typeof OrderEvents.DELIVERY_CONFIRMED
+  | typeof OrderEvents.DELIVERY_ISSUE_REPORTED
+  | typeof OrderEvents.DELIVERY_AUTO_CONFIRMED,
+  OrderDeliveryPayload
 >;

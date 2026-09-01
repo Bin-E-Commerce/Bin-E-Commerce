@@ -20,6 +20,8 @@ export enum Permission {
   ORDER_CREATE = "order.create",
   ORDER_READ = "order.read",
   ORDER_CANCEL = "order.cancel",
+  ORDER_CONFIRM_DELIVERY = "order.delivery.confirm",
+  PRODUCT_REVIEW_CREATE = "product.review.create",
   SELLER_ORDER_READ = "seller.order.read",
   SELLER_ORDER_MANAGE = "seller.order.manage",
   SELLER_SHIPPING_SETTINGS_READ = "seller.shipping.settings.read",

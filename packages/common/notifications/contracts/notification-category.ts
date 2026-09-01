@@ -5,6 +5,7 @@ export enum NotificationCategory {
   ORDER = "order",
   SHIPPING = "shipping",
   PAYMENT = "payment",
+  PRODUCT_REVIEW = "product_review",
   INVENTORY = "inventory",
   SUPPORT = "support",
   SYSTEM = "system",
