@@ -110,6 +110,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: bin_ecommerce_product
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+      ORDER_SERVICE_URL: http://order-service:3004
+      AUTH_SERVICE_URL: http://auth-service:3001
+      KAFKA_BROKERS: kafka:9092
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3008/api/health"]
       interval: 30s
