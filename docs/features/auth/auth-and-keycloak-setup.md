@@ -240,7 +240,6 @@ PUT /api/v1/admin/users/:id/status            ← đổi trạng thái (ADMIN on
 | `ORDER_MANAGER`     | Quản lý đơn hàng   | `/admin/orders`                                          |
 | `SHIPPING_MANAGER`  | Quản lý vận chuyển | `/admin/shipments`                                       |
 | `PROMOTION_MANAGER` | Quản lý khuyến mãi | `/admin/promotions`, `/admin/vouchers`                   |
-| `RETURN_MANAGER`    | Quản lý hoàn trả   | `/admin/returns`                                         |
 | `ANALYST`           | Phân tích dữ liệu  | `/admin/analytics`                                       |
 | `SUPPORT_AGENT`     | CSKH               | `/admin/users` (read only)                               |
 | `ADMIN`             | Toàn quyền         | Bypass tất cả role checks                                |
@@ -310,7 +309,6 @@ Vào **Realm roles** (menu trái) → **Create role** cho từng role sau:
 | `ORDER_MANAGER`     | Manages orders                  |
 | `SHIPPING_MANAGER`  | Manages shipments               |
 | `PROMOTION_MANAGER` | Manages promotions and vouchers |
-| `RETURN_MANAGER`    | Manages return requests         |
 | `ANALYST`           | Analytics access                |
 | `SUPPORT_AGENT`     | Customer support                |
 | `ADMIN`             | Full system access              |

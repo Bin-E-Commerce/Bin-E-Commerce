@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="https://raw.githubusercontent.com/Bin-E-Commerce/Bin-E-Commerce-UI-Web/main/public/images/logo/logo_icon.png" alt="Bin E-Commerce" width="112" />
+
 # 🛒 Bin E-Commerce
 
 **A production-grade e-commerce platform built with microservices architecture**
@@ -188,7 +190,7 @@ git push → GitHub Actions
 | order-service        | 3004 | PostgreSQL | Prod/Cons  | ✓     | Order FSM, payment intent, BPMN fulfillment     |
 | inventory-service    | 3005 | PostgreSQL | Consumer   | —     | Stock levels, soft reservations, alert triggers |
 | notification-service | 3006 | MongoDB    | Consumer   | —     | Email/push dispatch, Handlebars templates       |
-| shipping-service     | 3012 | PostgreSQL | Prod/Cons  | —     | Demo shipment creation, tracking and map         |
+| shipping-service     | 3012 | PostgreSQL | Prod/Cons  | —     | Demo shipment creation, tracking and map        |
 | promotion-service    | 3008 | PostgreSQL | Consumer   | —     | Discount engine, voucher lifecycle, usage caps  |
 | return-service       | 3009 | PostgreSQL | Prod/Cons  | ✓     | Return requests, evidence upload, BPMN refund   |
 

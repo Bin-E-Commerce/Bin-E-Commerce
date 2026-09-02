@@ -13,11 +13,15 @@ export type ShipmentStatus =
   | "IN_TRANSIT"
   | "DELIVERED"
   | "FAILED"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "RETURNING"
+  | "RETURNED";
 
 export interface ShipmentStatusUpdatedPayload {
   shipmentId: string;
   orderId: string;
+  shipmentKind?: "FORWARD" | "RETURN";
+  returnRequestId?: string | null;
   orderNumber: string;
   shopId: string;
   sellerUserId: string;

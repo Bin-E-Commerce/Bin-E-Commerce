@@ -1,3 +1,6 @@
+// File này định nghĩa các role còn được hệ thống cấp quyền ở phase hiện tại.
+// Nghiệp vụ hoàn hàng dùng permission theo return; không tách role nhân sự hoàn tiền riêng.
+
 export enum UserRole {
   CUSTOMER = "CUSTOMER", // Khách mua hàng trên nền tảng.
   SELLER = "SELLER", // Người bán đã được duyệt và có quyền truy cập Seller Center.

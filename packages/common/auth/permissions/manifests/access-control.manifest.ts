@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.09.01.2";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.09.01.4";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -86,7 +86,8 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     code: Permission.CART_READ,
     name: "Xem giỏ hàng",
-    description: "Cho phép Customer hoặc Seller xem giỏ hàng active của chính mình.",
+    description:
+      "Cho phép Customer hoặc Seller xem giỏ hàng active của chính mình.",
     resource: "cart",
     action: "read",
   },
@@ -117,7 +118,8 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     code: Permission.ORDER_CREATE,
     name: "Tạo đơn COD",
-    description: "Cho phép Customer hoặc Seller tạo đơn COD từ giỏ hàng của chính mình.",
+    description:
+      "Cho phép Customer hoặc Seller tạo đơn COD từ giỏ hàng của chính mình.",
     resource: "order",
     action: "create",
   },
@@ -140,14 +142,53 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     code: Permission.ORDER_CONFIRM_DELIVERY,
     name: "Xác nhận đã nhận hàng",
-    description: "Cho phép Customer xác nhận hoặc báo vấn đề với đơn hàng đã giao.",
+    description:
+      "Cho phép Customer xác nhận hoặc báo vấn đề với đơn hàng đã giao.",
     resource: "order.delivery",
     action: "confirm",
   },
   {
+    code: Permission.RETURN_CREATE,
+    name: "Tạo yêu cầu hoàn hàng",
+    description:
+      "Cho phép khách hàng tạo yêu cầu hoàn hàng cho đơn đủ điều kiện.",
+    resource: "return",
+    action: "create",
+  },
+  {
+    code: Permission.RETURN_READ,
+    name: "Xem yêu cầu hoàn hàng",
+    description: "Cho phép xem yêu cầu hoàn hàng trong phạm vi được cấp.",
+    resource: "return",
+    action: "read",
+  },
+  {
+    code: Permission.RETURN_CANCEL,
+    name: "Hủy yêu cầu hoàn hàng",
+    description: "Cho phép khách hàng hủy yêu cầu hoàn hàng đang chờ xử lý.",
+    resource: "return",
+    action: "cancel",
+  },
+  {
+    code: Permission.RETURN_REVIEW,
+    name: "Duyệt yêu cầu hoàn hàng",
+    description:
+      "Cho phép seller duyệt hoặc từ chối yêu cầu hoàn hàng của shop.",
+    resource: "return",
+    action: "review",
+  },
+  {
+    code: Permission.RETURN_INSPECT,
+    name: "Kiểm tra hàng hoàn",
+    description: "Cho phép seller ghi nhận kết quả kiểm tra hàng hoàn.",
+    resource: "return",
+    action: "inspect",
+  },
+  {
     code: Permission.PRODUCT_REVIEW_CREATE,
     name: "Đánh giá sản phẩm đã mua",
-    description: "Cho phép Customer gửi đánh giá cho sản phẩm trong đơn hàng đã giao.",
+    description:
+      "Cho phép Customer gửi đánh giá cho sản phẩm trong đơn hàng đã giao.",
     resource: "product.review",
     action: "create",
   },
@@ -162,35 +203,40 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     code: Permission.SELLER_SHIPPING_READ,
     name: "Xem vận đơn của shop",
-    description: "Cho phép Seller xem hành trình vận chuyển của đơn thuộc shop mình.",
+    description:
+      "Cho phép Seller xem hành trình vận chuyển của đơn thuộc shop mình.",
     resource: "seller.shipping",
     action: "read",
   },
   {
     code: Permission.SELLER_SHIPPING_MANAGE,
     name: "Quản lý vận đơn của shop",
-    description: "Cho phép Seller tạo, làm mới, hủy đủ điều kiện và in nhãn vận đơn thuộc shop mình.",
+    description:
+      "Cho phép Seller tạo, làm mới, hủy đủ điều kiện và in nhãn vận đơn thuộc shop mình.",
     resource: "seller.shipping",
     action: "manage",
   },
   {
     code: Permission.SELLER_SHIPPING_SETTINGS_READ,
     name: "Xem thiết lập giao nhận",
-    description: "Cho phép Seller xem địa chỉ lấy hàng và cấu hình vận hành của shop mình.",
+    description:
+      "Cho phép Seller xem địa chỉ lấy hàng và cấu hình vận hành của shop mình.",
     resource: "seller.shipping.settings",
     action: "read",
   },
   {
     code: Permission.SELLER_SHIPPING_SETTINGS_MANAGE,
     name: "Quản lý thiết lập giao nhận",
-    description: "Cho phép Seller cập nhật địa chỉ lấy hàng và cấu hình vận hành của shop mình.",
+    description:
+      "Cho phép Seller cập nhật địa chỉ lấy hàng và cấu hình vận hành của shop mình.",
     resource: "seller.shipping.settings",
     action: "manage",
   },
   {
     code: Permission.SHIPPING_TRACKING_READ,
     name: "Theo dõi vận chuyển đơn hàng",
-    description: "Cho phép Customer xem hành trình vận chuyển đơn hàng của chính mình.",
+    description:
+      "Cho phép Customer xem hành trình vận chuyển đơn hàng của chính mình.",
     resource: "shipping.tracking",
     action: "read",
   },
@@ -288,28 +334,32 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
     name: "Xem cong cu toi uu anh bang AI",
-    description: "Cho phep seller xem bang dieu khien va ket qua toi uu anh cua shop.",
+    description:
+      "Cho phep seller xem bang dieu khien va ket qua toi uu anh cua shop.",
     resource: "seller.ai.image_optimization",
     action: "view",
   },
   {
     code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_GENERATE,
     name: "Tao yeu cau toi uu anh bang AI",
-    description: "Cho phep seller tao job toi uu anh trong pham vi shop cua minh.",
+    description:
+      "Cho phep seller tao job toi uu anh trong pham vi shop cua minh.",
     resource: "seller.ai.image_optimization",
     action: "generate",
   },
   {
     code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_APPLY,
     name: "Ap dung anh toi uu bang AI",
-    description: "Cho phep seller duyet va ap dung anh AI vao san pham cua shop.",
+    description:
+      "Cho phep seller duyet va ap dung anh AI vao san pham cua shop.",
     resource: "seller.ai.image_optimization",
     action: "apply",
   },
   {
     code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_ROLLBACK,
     name: "Khoi phuc anh goc sau toi uu AI",
-    description: "Cho phep seller khoi phuc anh goc cua san pham da ap dung AI.",
+    description:
+      "Cho phep seller khoi phuc anh goc cua san pham da ap dung AI.",
     resource: "seller.ai.image_optimization",
     action: "rollback",
   },
@@ -399,6 +449,56 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     roleCode: UserRole.CUSTOMER,
     permissionCode: Permission.CART_READ,
     scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.RETURN_CREATE,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.RETURN_READ,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.CUSTOMER,
+    permissionCode: Permission.RETURN_CANCEL,
+    scope: PermissionScope.OWN,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.RETURN_READ,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.RETURN_REVIEW,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.SELLER,
+    permissionCode: Permission.RETURN_INSPECT,
+    scope: PermissionScope.OWN_SHOP,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.RETURN_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.RETURN_REVIEW,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.RETURN_INSPECT,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_ACCESS,
+    scope: PermissionScope.GLOBAL,
   },
   {
     roleCode: UserRole.SELLER,
@@ -852,5 +952,19 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     icon: "Store",
     sortOrder: 10,
     requiredPermissionCode: Permission.SELLER_SHOP_PROFILE_READ,
+  },
+  {
+    area: "seller",
+    groupCode: "orders",
+    groupLabel: "Quản lý đơn hàng",
+    groupOrder: 25,
+    code: "seller.returns",
+    label: "Xử lý hoàn hàng",
+    description: "Duyệt yêu cầu, nhận hàng hoàn và kiểm tra hoàn tiền",
+    href: "/seller/returns",
+    icon: "RotateCcw",
+    sortOrder: 20,
+    requiredPermissionCode: Permission.RETURN_READ,
+    requiredScope: PermissionScope.OWN_SHOP,
   },
 ];
