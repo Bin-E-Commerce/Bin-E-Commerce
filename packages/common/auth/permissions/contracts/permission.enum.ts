@@ -27,6 +27,7 @@ export enum Permission {
   RETURN_REVIEW = "return.review",
   RETURN_INSPECT = "return.inspect",
   PRODUCT_REVIEW_CREATE = "product.review.create",
+  SHOP_FOLLOW = "shop.follow",
   SELLER_ORDER_READ = "seller.order.read",
   SELLER_ORDER_MANAGE = "seller.order.manage",
   SELLER_SHIPPING_SETTINGS_READ = "seller.shipping.settings.read",
