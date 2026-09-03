@@ -1,10 +1,3 @@
-# ─── AI / Agent tooling ─────────────────────────────────────────
-.agents/
-.trae/
-skills-lock.json
-.github/agents/
-.github/copilot-instructions.md
-
 # ─── Dependencies ────────────────────────────────────────────────
 node_modules/
 .pnp
@@ -41,6 +34,13 @@ Thumbs.db
 # ─── Docker ──────────────────────────────────────────────────────
 .dockerignore
 
+# ─── AI / Agent tooling ─────────────────────────────────────────
+AGENTS.md
+.agents/
+.trae/
+skills-lock.json
+.github/agents/
+.github/copilot-instructions.md
 
 # ─── Keycloak ──────────────────────────────────────────────────────
 infra/keycloak/realm-export.json
