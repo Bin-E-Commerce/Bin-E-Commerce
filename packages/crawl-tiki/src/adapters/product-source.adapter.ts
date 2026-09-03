@@ -7,6 +7,9 @@ import type {
 
 export interface ProductPageRequest {
     categoryExternalId?: string;
+    sellerExternalId?: string;
+    sellerName?: string;
+    sellerSlug?: string;
     keyword?: string;
     page: number;
     limit: number;

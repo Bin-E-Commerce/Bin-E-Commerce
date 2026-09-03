@@ -85,6 +85,58 @@ export class RetryableHttpClient {
         );
     }
 
+    // Đọc nội dung text của trang nguồn khi adapter cần parse HTML hồ sơ shop thay vì JSON API.
+    // Vẫn dùng cùng retry/backoff và nhận diện rate-limit như getJson để crawler không lưu profile dở dang.
+    async getText(
+        url: URL,
+        requestHeaders: Record<string, string> = {},
+    ): Promise<string> {
+        return retry(
+            async () => {
+                const response = await fetch(url, {
+                    headers: {
+                        accept: 'text/html,application/xhtml+xml',
+                        'accept-language':
+                            this.options.acceptLanguage ?? 'vi-VN,vi;q=0.9,en;q=0.8',
+                        ...(this.options.referer
+                            ? { referer: this.options.referer }
+                            : {}),
+                        'user-agent': this.options.userAgent,
+                        ...requestHeaders,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new RetryableHttpError(
+                        `HTTP ${response.status}: ${url.toString()}`,
+                        response.status,
+                        this.parseRetryAfter(response.headers.get('retry-after')),
+                        'http_error',
+                    );
+                }
+
+                const contentType = response.headers.get('content-type') ?? '';
+                const body = await response.text();
+                if (!contentType.toLowerCase().includes('html')) {
+                    throw new RetryableHttpError(
+                        `Nguồn trả ${contentType || 'unknown content-type'} thay vì HTML cho ${url.toString()}.`,
+                        response.status,
+                        null,
+                        'non_json',
+                    );
+                }
+
+                return body;
+            },
+            {
+                retries: this.options.retries,
+                baseDelayMs: this.options.baseDelayMs,
+                maxDelayMs: this.options.maxDelayMs,
+                resolveDelayMs: (error) => this.resolveRetryDelay(error),
+            },
+        );
+    }
+
     // Ưu tiên thời gian server yêu cầu; response HTML nhận cooldown dài hơn lỗi mạng thông thường.
     private resolveRetryDelay(error: unknown): number | undefined {
         if (!(error instanceof RetryableHttpError)) return undefined;

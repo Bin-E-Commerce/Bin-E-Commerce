@@ -28,6 +28,7 @@ export interface TikiProductListItem {
     sku?: string;
     name?: string;
     url_path?: string;
+    short_description?: string;
     thumbnail_url?: string;
     price?: number;
     original_price?: number;
@@ -44,6 +45,16 @@ export interface TikiProductListItem {
         name?: string;
         slug?: string;
         logo?: string;
+    };
+    seller_id?: number;
+    seller_product_id?: number;
+    visible_impression_info?: {
+        amplitude?: {
+            primary_category_name?: string;
+            category_l1_name?: string;
+            category_l2_name?: string;
+            category_l3_name?: string;
+        };
     };
 }
 
@@ -110,6 +121,7 @@ export interface TikiProductDetailResponse extends TikiProductListItem {
 export interface TikiCategoryResponse {
     id?: number;
     name?: string;
+    url_key?: string;
     url_path?: string;
     level?: number;
     parent_id?: number;

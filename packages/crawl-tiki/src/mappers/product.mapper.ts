@@ -56,6 +56,10 @@ export class ProductMapper {
                           sourceSlug(source.shop.name, source.shop.externalId),
                       avatarUrl: source.shop.avatarUrl ?? null,
                       description: source.shop.description ?? null,
+                      sourceUrl: source.shop.sourceUrl ?? null,
+                      ratingAverage: source.shop.ratingAverage ?? null,
+                      reviewCount: source.shop.reviewCount ?? 0,
+                      followerCount: source.shop.followerCount ?? 0,
                       status: 'active',
                   }
                 : null,

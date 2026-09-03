@@ -29,6 +29,10 @@ export interface ImportShop {
     slug: string;
     avatarUrl: string | null;
     description: string | null;
+    sourceUrl: string | null;
+    ratingAverage: number | null;
+    reviewCount: number;
+    followerCount: number;
     status: 'active' | 'inactive';
 }
 

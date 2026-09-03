@@ -1,5 +1,9 @@
 import { TIKI_BASE_URL } from '../config/tiki.config';
 import { TikiProductClient } from '../clients/tiki-product.client';
+import {
+    TikiShopClient,
+    type TikiShopProfile,
+} from '../clients/tiki-shop.client';
 import type {
     ProductPageRequest,
     ProductPageResult,
@@ -23,8 +27,18 @@ import { buildTikiProductUrl } from '../utils/tiki-url';
 
 export class TikiSourceAdapter implements ProductSourceAdapter {
     readonly platform = 'tiki' as const;
+    private readonly productSourceUrls = new Map<string, string>();
+    private readonly productListItems = new Map<string, TikiProductListItem>();
+    private sellerContext: { id: string; name: string; slug?: string } | null = null;
+    private readonly shopProfilePromises = new Map<
+        string,
+        Promise<TikiShopProfile>
+    >();
 
-    constructor(private readonly client = new TikiProductClient()) {}
+    constructor(
+        private readonly client = new TikiProductClient(),
+        private readonly shopClient = new TikiShopClient(),
+    ) {}
 
     // Lấy danh mục gốc từ Tiki và chuẩn hóa về SourceCategory.
     async listRootCategories(): Promise<SourceCategory[]> {
@@ -46,17 +60,33 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
 
     // Lấy một trang sản phẩm theo keyword hoặc category id rồi map item tối giản cho crawler.
     async listProducts(request: ProductPageRequest): Promise<ProductPageResult> {
+        if (request.sellerExternalId && request.sellerName) {
+            this.sellerContext = {
+                id: request.sellerExternalId,
+                name: request.sellerName,
+                slug: request.sellerSlug,
+            };
+        }
+
         const response = await this.client.fetchProductPage({
             keyword: request.keyword,
             categoryId: request.categoryExternalId
                 ? Number(request.categoryExternalId)
                 : undefined,
+            sellerId: request.sellerExternalId,
             page: request.page,
             limit: request.limit,
         });
 
+        const items = (response.data ?? []).map((item) => {
+            const mappedItem = this.mapListItem(item);
+            this.productListItems.set(mappedItem.externalId, item);
+            this.productSourceUrls.set(mappedItem.externalId, mappedItem.sourceUrl);
+            return mappedItem;
+        });
+
         return {
-            items: (response.data ?? []).map((item) => this.mapListItem(item)),
+            items,
             currentPage: response.paging?.current_page ?? request.page,
             lastPage: response.paging?.last_page ?? null,
         };
@@ -64,8 +94,56 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
 
     // Lấy chi tiết product và chuẩn hóa về contract chung để mapper không phụ thuộc raw Tiki.
     async getProductDetail(externalId: string): Promise<SourceProductDetail> {
-        const detail = await this.client.fetchProductDetail(Number(externalId));
-        return this.mapDetail(detail, []);
+        let detail: TikiProductDetailResponse;
+        try {
+            detail = await this.client.fetchProductDetail(
+                Number(externalId),
+                this.productSourceUrls.get(externalId),
+            );
+        } catch (error) {
+            const listItem = this.productListItems.get(externalId);
+            if (!listItem || !this.sellerContext) throw error;
+            detail = this.mapListItemToDetail(listItem, this.sellerContext);
+        }
+        const shopProfile = await this.fetchShopProfile(detail.current_seller);
+        return this.mapDetail(detail, [], shopProfile);
+    }
+
+    // Lấy profile shop một lần rồi tái sử dụng cho các product cùng seller để giảm request và giữ metric đồng nhất.
+    // Nếu trang shop tạm lỗi, vẫn trả fallback từ product detail để product không mất seller name/avatar/sourceUrl.
+    private async fetchShopProfile(
+        seller: TikiProductDetailResponse['current_seller'],
+    ): Promise<TikiShopProfile | null> {
+        if (!seller?.id || !seller.name) return null;
+
+        const externalId = String(seller.id);
+        const cached = this.shopProfilePromises.get(externalId);
+        if (cached) return cached;
+
+        const slug = sourceSlug(seller.name, externalId);
+        const fallback: TikiShopProfile = {
+            externalId,
+            name: seller.name,
+            slug,
+            avatarUrl: seller.logo ?? null,
+            description: null,
+            sourceUrl: seller.link ?? `${TIKI_BASE_URL}/cua-hang/${slug}`,
+            ratingAverage: null,
+            reviewCount: null,
+            followerCount: null,
+        };
+        const profilePromise = this.shopClient
+            .fetchShopProfile(fallback.sourceUrl, {
+                externalId,
+                name: seller.name,
+                slug,
+                avatarUrl: seller.logo ?? null,
+            })
+            .then((profile) => profile ?? fallback)
+            .catch(() => fallback);
+
+        this.shopProfilePromises.set(externalId, profilePromise);
+        return profilePromise;
     }
 
     // Lấy review public của Tiki; nếu request fail thì để crawler ghi nhận lỗi ở cấp product.
@@ -121,10 +199,69 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
         };
     }
 
+    // Dựng detail tối thiểu từ listing khi endpoint detail bị giới hạn, vẫn giữ seller/giá/rating/lượt bán thật.
+    private mapListItemToDetail(
+        item: TikiProductListItem,
+        seller: { id: string; name: string; slug?: string },
+    ): TikiProductDetailResponse {
+        const amplitude = item.visible_impression_info?.amplitude;
+        const categoryNames = [
+            amplitude?.category_l1_name,
+            amplitude?.category_l2_name,
+            amplitude?.category_l3_name,
+            amplitude?.primary_category_name,
+        ]
+            .filter((name): name is string => Boolean(name?.trim()))
+            .map((name) => this.normalizeListingCategory(name))
+            .filter((name, index, names) => names.indexOf(name) === index);
+        const categoryName = categoryNames.at(-1) ?? 'Sản phẩm khác';
+
+        return {
+            ...item,
+            short_description: item.short_description,
+            images: item.thumbnail_url
+                ? [{
+                      base_url: item.thumbnail_url,
+                      large_url: item.thumbnail_url,
+                      medium_url: item.thumbnail_url,
+                      small_url: item.thumbnail_url,
+                  }]
+                : [],
+            categories: { name: categoryName },
+            breadcrumbs: categoryNames.map((name, index) => ({
+                category_id: index + 1,
+                name,
+            })),
+            specifications: [],
+            current_seller: {
+                id: Number(seller.id),
+                name: seller.name,
+                link: `${TIKI_BASE_URL}/cua-hang/${seller.slug ?? slugify(seller.name)}`,
+            },
+            configurable_options: [],
+            configurable_products: [],
+        };
+    }
+
+    // Chuẩn hóa nhãn taxonomy riêng của Tiki về category tương đương đã tồn tại trong catalog nội bộ.
+    private normalizeListingCategory(name: string): string {
+        const normalized = name.trim().toLowerCase();
+        if (normalized === 'ngon') return 'Thực phẩm và đồ uống';
+        if (
+            normalized.includes('điều khiển từ xa') ||
+            normalized.includes('phụ kiện tivi') ||
+            normalized.includes('phụ kiện, linh kiện máy lạnh')
+        ) {
+            return 'Thiết bị điều khiển từ xa';
+        }
+        return name.trim();
+    }
+
     // Map chi tiết Tiki thành SourceProductDetail, bao gồm ảnh, variant, option, brand, shop và thông số kỹ thuật.
     private mapDetail(
         detail: TikiProductDetailResponse,
         reviews: SourceProductReview[],
+        shopProfile: TikiShopProfile | null = null,
     ): SourceProductDetail {
         const name = detail.name ?? `Tiki product ${detail.id}`;
         const options = this.collectOptions(detail);
@@ -168,6 +305,13 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
                       ),
                       avatarUrl: detail.current_seller.logo ?? null,
                       description: null,
+                      sourceUrl:
+                          shopProfile?.sourceUrl ??
+                          detail.current_seller.link ??
+                          null,
+                      ratingAverage: shopProfile?.ratingAverage ?? null,
+                      reviewCount: shopProfile?.reviewCount ?? null,
+                      followerCount: shopProfile?.followerCount ?? null,
                   }
                 : null,
             categories: this.collectCategories(detail),
@@ -281,11 +425,14 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
     // Gom breadcrumb/category thành category chain từ cha tới con để importer upsert theo cấp.
     private collectCategories(detail: TikiProductDetailResponse): SourceCategory[] {
         const breadcrumbs = (detail.breadcrumbs ?? []).filter(
-            (breadcrumb) => breadcrumb.category_id,
+            (breadcrumb) => breadcrumb.category_id || breadcrumb.name,
         );
         if (breadcrumbs.length > 0) {
             return breadcrumbs.map((breadcrumb, index) => {
-                const externalId = String(breadcrumb.category_id ?? index);
+                const externalId = String(
+                    breadcrumb.category_id ??
+                        sourceSlug(breadcrumb.name ?? 'category', String(index)),
+                );
                 const name = breadcrumb.name ?? `Tiki category ${externalId}`;
                 return {
                     externalId,

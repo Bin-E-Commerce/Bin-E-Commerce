@@ -80,6 +80,10 @@ export interface SourceProductDetail {
         slug?: string;
         avatarUrl?: string | null;
         description?: string | null;
+        sourceUrl?: string | null;
+        ratingAverage?: number | null;
+        reviewCount?: number | null;
+        followerCount?: number | null;
     } | null;
     categories: SourceCategory[];
     images: SourceProductImage[];

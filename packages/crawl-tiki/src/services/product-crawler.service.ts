@@ -32,6 +32,8 @@ export class ProductCrawlerService {
     }
 
     // Crawl theo category hoặc keyword, validate dữ liệu và import nếu có repository.
+    // Crawl theo category, keyword hoặc seller; reviews-only loại product không có review thật trước khi tăng crawled count.
+    // Quy tắc này giữ dataset recommendation có dữ liệu đánh giá thực tế thay vì chỉ dựa vào reviewCount trên listing.
     async crawl(options: ProductCrawlOptions): Promise<ProductCrawlerRunResult> {
         const stats: CrawlStats = {
             crawled: 0,
@@ -52,6 +54,9 @@ export class ProductCrawlerService {
             for (let page = startPage; page <= options.pages; page += 1) {
                 const pageResult = await this.deps.source.listProducts({
                     categoryExternalId: categoryExternalId ?? undefined,
+                    sellerExternalId: options.sellerId,
+                    sellerName: options.sellerName,
+                    sellerSlug: options.sellerSlug,
                     keyword: options.keyword,
                     page,
                     limit: options.limit,
@@ -72,12 +77,38 @@ export class ProductCrawlerService {
                         const detail = await this.deps.source.getProductDetail(
                             item.externalId,
                         );
+
+                        // Listing filter của Tiki có thể trả product nhiều nhà bán; chỉ giữ detail có current seller
+                        // đúng seller được yêu cầu để snapshot không trộn shop và dữ liệu shop không bị sai lệch.
+                        if (
+                            options.sellerId &&
+                            detail.shop?.externalId !== options.sellerId
+                        ) {
+                            stats.skipped += 1;
+                            this.logger.warn('skip product from another seller', {
+                                externalId: item.externalId,
+                                expectedSellerId: options.sellerId,
+                                actualSellerId: detail.shop?.externalId ?? null,
+                            });
+                            continue;
+                        }
+
                         if (options.includeReviews) {
                             detail.reviews = await this.deps.source.getProductReviews(
                                 item.externalId,
                                 options.reviewLimit,
                             );
                         }
+                        // Chỉ giữ product có review đã lấy được từ endpoint review; reviewCount trên listing
+                        // có thể không đồng nhất với dữ liệu chi tiết nên không dùng nó làm điều kiện duy nhất.
+                        if (options.requireReviews && detail.reviews.length === 0) {
+                            stats.skipped += 1;
+                            this.logger.warn('skip product without reviews', {
+                                externalId: item.externalId,
+                            });
+                            continue;
+                        }
+
                         const graph = this.mapper.mapToImportGraph(detail);
                         const validation = validateProductGraph(graph);
 

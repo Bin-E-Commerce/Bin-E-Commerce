@@ -90,6 +90,13 @@ export class ProductServiceImportRepository implements ProductImportRepository {
         const fallback = await this.findCategoryByNormalizedName(names);
         if (fallback) return fallback.id;
 
+        const sourceFallback = await this.findSourceRootFallbackCategory(graph);
+        if (sourceFallback) return sourceFallback;
+
+        const sourceAliasFallback =
+            await this.findSourceRootAliasCategory(graph);
+        if (sourceAliasFallback) return sourceAliasFallback;
+
         return this.findLaptopFallbackCategory(graph);
     }
 
@@ -113,6 +120,135 @@ export class ProductServiceImportRepository implements ProductImportRepository {
         );
 
         return result.rows[0] ?? null;
+    }
+
+    // Map source root "nha sach" ve category Sach da co trong catalog khi breadcrumb chi tiet khac ten.
+    // Fallback nay chi doc catalog va khong tao/chinh sua master data cua catalog-service.
+    private async findSourceRootFallbackCategory(
+        graph: ImportProductGraph,
+    ): Promise<string | null> {
+        const rootCategory = graph.categoryChain.at(0);
+        if (!rootCategory?.slug.toLowerCase().includes('nha-sach')) {
+            return null;
+        }
+
+        const result = await this.catalogDb.query<{ id: string }>(
+            `
+            SELECT id
+            FROM categories
+            WHERE is_active = true
+              AND level = 1
+              AND lower(slug) LIKE 'sach-%'
+            ORDER BY is_leaf DESC, sort_order ASC
+            LIMIT 1
+            `,
+        );
+
+        return result.rows[0]?.id ?? null;
+    }
+
+    // Ánh xạ root taxonomy của nguồn về nhóm cấp cao đã có trong catalog khi tên danh mục chi tiết không đồng nhất.
+    // Fallback chỉ đọc category hiện hữu, giúp dữ liệu crawl vẫn import được mà không làm phình master data catalog.
+    private async findSourceRootAliasCategory(
+        graph: ImportProductGraph,
+    ): Promise<string | null> {
+        const sourceRoot = graph.categoryChain.at(0)?.name.toLowerCase() ?? '';
+        const productText = graph.product.name.toLowerCase();
+        const targetName = this.resolveSourceRootAlias(
+            sourceRoot,
+            productText,
+        );
+        if (!targetName) return null;
+
+        const result = await this.catalogDb.query<{ id: string }>(
+            `
+            SELECT id
+            FROM categories
+            WHERE is_active = true
+              AND level = 0
+              AND lower(name) = lower($1)
+            LIMIT 1
+            `,
+            [targetName],
+        );
+
+        if (result.rows[0]?.id) return result.rows[0].id;
+
+        // Một vài nhóm dùng chung như "Khác" nằm ở level khác trong catalog nên vẫn cần resolve theo tên.
+        const fallbackResult = await this.catalogDb.query<{ id: string }>(
+            `
+            SELECT id
+            FROM categories
+            WHERE is_active = true
+              AND lower(name) = lower($1)
+            ORDER BY level ASC, sort_order ASC
+            LIMIT 1
+            `,
+            [targetName],
+        );
+
+        return fallbackResult.rows[0]?.id ?? null;
+    }
+
+    // Chọn nhóm catalog gần nhất theo root nguồn và tên sản phẩm để giữ phân loại đủ đúng khi hai taxonomy khác nhau.
+    private resolveSourceRootAlias(
+        sourceRoot: string,
+        productText: string,
+    ): string | null {
+        if (sourceRoot.includes('balo và vali')) return 'Du lịch & Hành lý';
+        if (sourceRoot.includes('túi thời trang nam')) return 'Túi Ví Nam';
+        if (sourceRoot.includes('túi thời trang nữ')) return 'Túi Ví Nữ';
+        if (sourceRoot.includes('thời trang nam')) return 'Thời Trang Nam';
+        if (sourceRoot.includes('thời trang nữ')) return 'Thời Trang Nữ';
+        if (sourceRoot.includes('giày - dép nam')) return 'Giày Dép Nam';
+        if (sourceRoot.includes('giày - dép nữ')) return 'Giày Dép Nữ';
+        if (sourceRoot.includes('đồng hồ và trang sức')) return 'Đồng Hồ';
+        if (sourceRoot.includes('chăm sóc nhà cửa')) {
+            return 'Nhà cửa & Đời sống';
+        }
+        if (sourceRoot.includes('máy ảnh - máy quay phim')) {
+            return 'Cameras & Flycam';
+        }
+        if (sourceRoot.includes('điện gia dụng')) {
+            return 'Thiết Bị Điện Gia Dụng';
+        }
+        if (sourceRoot.includes('điện tử - điện lạnh')) {
+            return 'Thiết Bị Điện Gia Dụng';
+        }
+        if (
+            sourceRoot.includes('điện thoại - máy tính bảng') ||
+            sourceRoot.includes('thiết bị số - phụ kiện số')
+        ) {
+            return 'Điện Thoại & Phụ Kiện';
+        }
+        if (sourceRoot.includes('cross border') && productText.includes('sữa')) {
+            return 'Mẹ & Bé';
+        }
+        if (sourceRoot.includes('làm đẹp - sức khỏe')) {
+            const beautyKeywords = [
+                'mỹ phẩm',
+                'kem',
+                'serum',
+                'son ',
+                'nước hoa',
+                'dầu gội',
+            ];
+            return beautyKeywords.some((keyword) =>
+                productText.includes(keyword),
+            )
+                ? 'Sắc Đẹp'
+                : 'Sức Khỏe';
+        }
+        if (sourceRoot.includes('ô tô - xe máy - xe đạp')) {
+            return productText.includes('ô tô') ||
+                productText.includes('honda')
+                ? 'Ô tô'
+                : 'Mô tô, xe máy';
+        }
+        if (sourceRoot.includes('voucher - dịch vụ')) return 'Khác';
+        if (sourceRoot.includes('sách')) return 'Sách & Tạp Chí';
+
+        return null;
     }
 
     // Fallback riêng cho batch laptop: nếu nguồn crawl có chữ laptop nhưng taxonomy chi tiết không khớp, gắn vào category Laptop có sẵn.
@@ -162,13 +298,17 @@ export class ProductServiceImportRepository implements ProductImportRepository {
                 description, source_url, rating_avg, review_count,
                 follower_count, metadata
             )
-            VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL, 0, 0, '{}'::jsonb)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, '{}'::jsonb)
             ON CONFLICT (source_platform, external_shop_id)
             DO UPDATE SET
                 name = EXCLUDED.name,
                 slug = EXCLUDED.slug,
                 avatar_url = EXCLUDED.avatar_url,
                 description = EXCLUDED.description,
+                source_url = EXCLUDED.source_url,
+                rating_avg = EXCLUDED.rating_avg,
+                review_count = EXCLUDED.review_count,
+                follower_count = EXCLUDED.follower_count,
                 updated_at = NOW()
             RETURNING id
             `,
@@ -179,6 +319,10 @@ export class ProductServiceImportRepository implements ProductImportRepository {
                 shop.slug,
                 shop.avatarUrl,
                 shop.description,
+                shop.sourceUrl,
+                shop.ratingAverage,
+                shop.reviewCount,
+                shop.followerCount,
             ],
         );
 
