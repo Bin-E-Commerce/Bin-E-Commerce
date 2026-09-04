@@ -35,3 +35,6 @@
 [submodule "services/shipping-service"]
 	path = services/shipping-service
 	url = https://github.com/Bin-E-Commerce/Bin-Ecommerce-Shipping-Service.git
+[submodule "services/recommendation-service"]
+	path = services/recommendation-service
+	url = https://github.com/Bin-E-Commerce/Bin-E-Commerce-Recommendation-Service.git
