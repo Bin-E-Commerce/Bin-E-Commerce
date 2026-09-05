@@ -1,6 +1,6 @@
 version: "3.9"
 
-# This compose file runs ALL 10 NestJS services + Nginx.
+# This compose file runs the application NestJS services + Nginx.
 # Infra (Postgres, Mongo, Redis, Kafka, Keycloak) must be started separately:
 #   docker compose -f infra/docker/docker-compose.infra.yml up -d
 # Copy .env.example to .env before starting this application stack.
@@ -42,6 +42,7 @@ services:
       KEYCLOAK_REALM: bin-ecommerce
       AUTH_SERVICE_URL: http://auth-service:3001
       PRODUCT_SERVICE_URL: http://product-service:3008
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:3006
       CART_SERVICE_URL: http://cart-service:3003
       ORDER_SERVICE_URL: http://order-service:3004
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
@@ -115,6 +116,31 @@ services:
       KAFKA_BROKERS: kafka:9092
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3008/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # —— Recommendation Service ——
+  recommendation-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/recommendation-service/Dockerfile
+    image: bin-ecommerce/recommendation-service:local
+    container_name: recommendation-service
+    environment:
+      PORT: 3006
+      NODE_ENV: development
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: bin_ecommerce_recommendation
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_CLIENT_ID: recommendation-service
+      KAFKA_CONSUMER_GROUP: recommendation-interactions-v1
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3006/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 5
