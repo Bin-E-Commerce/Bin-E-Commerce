@@ -1,0 +1,426 @@
+<!doctype html>
+<!-- Trang mô phỏng kiến trúc Recommendation; chỉ trình bày flow, không gọi API thật. -->
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Flow tương tác mô tả hệ thống gợi ý sản phẩm adaptive của Bin E-Commerce.">
+  <title>Adaptive Recommendation Flow</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+  <main class="page-shell">
+    <header class="hero-card">
+      <div class="hero-copy">
+        <p class="eyebrow"><img class="brand-logo" src="../../../web/public/images/logo/logo_no_background.png"
+            alt="Bin E-Commerce"><span>ADAPTIVE RECOMMENDATION</span></p>
+        <h1>Cá nhân hóa từng<br><span>lần khám phá sản phẩm.</span></h1>
+        <p class="hero-lead">Hệ thống lắng nghe từng lượt xem, tìm kiếm và thêm giỏ hàng để hiểu nhu cầu hiện tại, kết
+          nối sản phẩm phù hợp và liên tục học từ phản hồi thực tế.</p>
+      </div>
+      <div class="hero-pipeline" aria-label="Tóm tắt pipeline Recommendation">
+        <div class="pipeline-header"><span>PIPELINE OVERVIEW</span><strong>24 bước · 5 phase</strong></div>
+        <div class="pipeline-list">
+          <div class="pipeline-item"><span>01</span>
+            <div><strong>Behavior</strong><small>Thu nhận tín hiệu mua sắm</small></div>
+          </div>
+          <div class="pipeline-item"><span>02</span>
+            <div><strong>Profile + intent</strong><small>Hiểu user và session hiện tại</small></div>
+          </div>
+          <div class="pipeline-item"><span>03</span>
+            <div><strong>Candidate pool</strong><small>Semantic · behavior · explore</small></div>
+          </div>
+          <div class="pipeline-item"><span>04</span>
+            <div><strong>Rank + diversify</strong><small>Chọn đúng và không lặp lại</small></div>
+          </div>
+          <div class="pipeline-item"><span>05</span>
+            <div><strong>Feedback</strong><small>Đo lường để cải thiện tiếp</small></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="control-card" aria-label="Điều khiển mô phỏng">
+      <div>
+        <p class="section-kicker">MÔ PHỎNG LUỒNG</p>
+        <p id="stage-status" class="stage-status" aria-live="polite">Sẵn sàng bắt đầu · Bước 01 / 24</p>
+      </div>
+      <div class="control-actions">
+        <button class="button button-primary" id="play-button" type="button"><span aria-hidden="true">▶</span> Chạy
+          luồng</button>
+        <button class="button" id="pause-button" type="button"><span aria-hidden="true">Ⅱ</span> Tạm dừng</button>
+        <button class="button" id="replay-button" type="button"><span aria-hidden="true">↻</span> Chạy lại</button>
+        <button class="button button-icon" id="previous-button" type="button" aria-label="Bước trước">←</button>
+        <button class="button button-icon" id="next-button" type="button" aria-label="Bước tiếp theo">→</button>
+        <label class="speed-control">Tốc độ
+          <select id="speed-select" aria-label="Tốc độ mô phỏng">
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.5">1.5x</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="architecture-card" aria-labelledby="architecture-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">TARGET ARCHITECTURE</p>
+          <h2 id="architecture-title">Một tín hiệu mua sắm đi qua những boundary nào?</h2>
+          <p>Luồng đen là đường dữ liệu chính. Luồng xám là nhánh tạo candidate. Luồng đỏ là fallback khi một dependency
+            không sẵn sàng.</p>
+        </div>
+        <div class="legend" aria-label="Chú thích sơ đồ">
+          <span><i class="legend-dot legend-main"></i> Luồng chính</span>
+          <span><i class="legend-dot legend-branch"></i> Candidate / AI</span>
+          <span><i class="legend-dot legend-error"></i> Fallback</span>
+        </div>
+      </div>
+      <div class="architecture-map" id="architecture-map">
+        <svg class="flow-lines" viewBox="0 0 1400 520" role="img" aria-label="Sơ đồ luồng Recommendation">
+          <defs>
+            <marker id="arrow-main" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+              orient="auto">
+              <path d="M0 0L10 5L0 10z" fill="#17181c"></path>
+            </marker>
+            <marker id="arrow-branch" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+              orient="auto">
+              <path d="M0 0L10 5L0 10z" fill="#727780"></path>
+            </marker>
+            <marker id="arrow-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+              orient="auto">
+              <path d="M0 0L10 5L0 10z" fill="#c2414b"></path>
+            </marker>
+          </defs>
+          <path class="connector connector-main" d="M192 168H1253" marker-end="url(#arrow-main)"></path>
+          <path class="connector connector-branch" d="M610 230V300H566V330" marker-end="url(#arrow-branch)"></path>
+          <path class="connector connector-branch" d="M775 230V300H888V330" marker-end="url(#arrow-branch)"></path>
+          <path class="connector connector-branch" d="M775 230C775 355 720 355 720 410" marker-end="url(#arrow-branch)">
+          </path>
+          <path class="connector connector-error" d="M1253 168C1340 168 1340 454 1110 454H1000"
+            marker-end="url(#arrow-error)"></path>
+          <circle class="packet packet-main" r="6">
+            <animateMotion dur="7s" repeatCount="indefinite" path="M192 168H1253"></animateMotion>
+          </circle>
+          <circle class="packet packet-branch" r="5">
+            <animateMotion dur="5s" repeatCount="indefinite" path="M610 230V300H566V330"></animateMotion>
+          </circle>
+          <circle class="packet packet-branch" r="5">
+            <animateMotion dur="5s" begin="1.8s" repeatCount="indefinite" path="M775 230V300H888V330"></animateMotion>
+          </circle>
+          <circle class="packet packet-branch" r="5">
+            <animateMotion dur="5s" begin="3.2s" repeatCount="indefinite" path="M775 230C775 355 720 355 720 410">
+            </animateMotion>
+          </circle>
+          <circle class="packet packet-error" r="5">
+            <animateMotion dur="8s" repeatCount="indefinite" path="M1253 168C1340 168 1340 454 1110 454H1000">
+            </animateMotion>
+          </circle>
+        </svg>
+
+        <div class="lane lane-web"><span class="lane-label">Web App</span><button class="architecture-node"
+            data-stage="2" type="button"><span class="node-index">02</span><strong>Gửi behavior</strong><small>Guest
+              session · user context</small></button></div>
+        <div class="lane lane-gateway"><span class="lane-label">API Gateway</span><button class="architecture-node"
+            data-stage="3" type="button"><span class="node-index">03</span><strong>Trust boundary</strong><small>JWT ·
+              session · rate limit</small></button></div>
+        <div class="lane lane-kafka"><span class="lane-label">Kafka</span><button class="architecture-node"
+            data-stage="4" type="button"><span class="node-index">04</span><strong>Event stream</strong><small>Versioned
+              topic · partition</small></button></div>
+        <div class="lane lane-rec"><span class="lane-label">Recommendation Service</span><button
+            class="architecture-node" data-stage="7" type="button"><span class="node-index">07</span><strong>Profile +
+              intent</strong><small>Long-term · session context</small></button></div>
+        <div class="lane lane-candidate"><span class="lane-label">Candidate Layer</span><button
+            class="architecture-node" data-stage="16" type="button"><span class="node-index">16</span><strong>Hybrid
+              union</strong><small>Semantic · behavior · explore</small></button></div>
+        <div class="lane lane-ranker"><span class="lane-label">Ranker</span><button class="architecture-node"
+            data-stage="19" type="button"><span class="node-index">19</span><strong>Score +
+              diversity</strong><small>Weighted ranking · MMR</small></button></div>
+        <div class="lane lane-cache"><span class="lane-label">Redis</span><button class="architecture-node"
+            data-stage="21" type="button"><span class="node-index">21</span><strong>Serve nhanh</strong><small>TTL 5
+              phút · invalidate</small></button></div>
+        <div class="lane lane-web-result"><span class="lane-label">Web Experience</span><button
+            class="architecture-node" data-stage="23" type="button"><span class="node-index">23</span><strong>Hiển thị +
+              reason</strong><small>Impression · click</small></button></div>
+        <button class="branch-node branch-profile" data-stage="8" type="button"><span>PROFILE
+            STORE</span><strong>Long-term + session</strong><small>Projection · versioned profile</small></button>
+        <button class="branch-node branch-vector" data-stage="13" type="button"><span>VECTOR
+            INTELLIGENCE</span><strong>AI Service · Qdrant</strong><small>Embedding · semantic
+            retrieval</small></button>
+        <button class="branch-node branch-catalog" data-stage="11" type="button"><span>CATALOG
+            CONTEXT</span><strong>Product read model</strong><small>Active · stock · attributes</small></button>
+        <div class="error-label">Dependency lỗi → newest / trending / category fallback</div>
+      </div>
+    </section>
+
+    <section class="phase-grid" aria-labelledby="phase-title">
+      <div class="section-heading section-heading-wide">
+        <div>
+          <p class="section-kicker">5 PHASES CỦA HỆ THỐNG</p>
+          <h2 id="phase-title">Mỗi phase giải quyết một lớp bài toán khác nhau</h2>
+          <p>Flow được tách theo trách nhiệm để hệ thống có thể phát triển từ rule-based minh bạch tới hybrid ranking mà
+            không phá vỡ data ownership.</p>
+        </div>
+      </div>
+      <article class="phase-card phase-card-dark"><span class="phase-number">01</span><span class="phase-chip">EVENT
+          FOUNDATION</span>
+        <h3>Gom đúng tín hiệu</h3>
+        <p>Tạo đường đi bền vững từ behavior event tới interaction ledger có idempotency, retry và DLQ.</p><span
+          class="phase-steps">Bước 01–06</span>
+      </article>
+      <article class="phase-card"><span class="phase-number">02</span><span class="phase-chip">PROFILE &amp;
+          INTENT</span>
+        <h3>Hiểu người dùng</h3>
+        <p>Biến hành vi rời rạc thành sở thích dài hạn và nhu cầu hiện tại của từng session.</p><span
+          class="phase-steps">Bước 07–10</span>
+      </article>
+      <article class="phase-card"><span class="phase-number">03</span><span class="phase-chip">CANDIDATE
+          GENERATION</span>
+        <h3>Mở rộng lựa chọn</h3>
+        <p>Kết hợp catalog context, embedding, co-behavior, trending và explore thành candidate pool.</p><span
+          class="phase-steps">Bước 11–16</span>
+      </article>
+      <article class="phase-card"><span class="phase-number">04</span><span class="phase-chip">RANKING &amp;
+          SERVING</span>
+        <h3>Chọn đúng thứ tự</h3>
+        <p>Lọc cứng, chấm điểm, tạo đa dạng và cache kết quả để trả về nhanh nhưng vẫn liên quan.</p><span
+          class="phase-steps">Bước 17–22</span>
+      </article>
+      <article class="phase-card"><span class="phase-number">05</span><span class="phase-chip">FEEDBACK &amp;
+          EVALUATION</span>
+        <h3>Học từ kết quả</h3>
+        <p>Đo impression, click, cart và purchase để so sánh baseline, thử nghiệm và cải thiện liên tục.</p><span
+          class="phase-steps">Bước 23–24</span>
+      </article>
+    </section>
+
+    <section class="timeline-card" aria-labelledby="timeline-title">
+      <div class="section-heading compact-heading">
+        <div>
+          <p class="section-kicker">24 BƯỚC EXHAUSTIVE</p>
+          <h2 id="timeline-title">Từ một tương tác đến một đề xuất có lý do</h2>
+          <p>Chọn từng bước để xem boundary, dữ liệu vào/ra, nguyên tắc bảo vệ và cách hệ thống phục hồi.</p>
+        </div>
+        <button class="mode-toggle" id="failure-toggle" type="button" aria-pressed="false"><span
+            class="toggle-indicator"></span> Hiện nhánh lỗi</button>
+      </div>
+      <div class="stage-progress" aria-hidden="true"><span id="stage-progress-bar"></span></div>
+      <div class="phase-divider"><span>PHASE 01</span><strong>Event Foundation</strong><small>Đưa tín hiệu vào hệ thống
+          một cách đáng tin cậy</small></div>
+      <ol class="stage-list" id="stage-list">
+        <li><button class="stage-node" data-stage="1" type="button"><span>01</span><strong>Người dùng tương
+              tác</strong><small>View · click · cart · purchase</small></button></li>
+        <li><button class="stage-node" data-stage="2" type="button"><span>02</span><strong>Web tạo
+              event</strong><small>Guest session · context</small></button></li>
+        <li><button class="stage-node" data-stage="3" type="button"><span>03</span><strong>Gateway xác
+              thực</strong><small>Trusted identity</small></button></li>
+        <li><button class="stage-node" data-stage="4" type="button"><span>04</span><strong>Kafka nhận
+              event</strong><small>Topic v1 · partition key</small></button></li>
+        <li><button class="stage-node" data-stage="5" type="button"><span>05</span><strong>Validate +
+              dedupe</strong><small>Allow-list · idempotency</small></button></li>
+        <li><button class="stage-node" data-stage="6" type="button"><span>06</span><strong>Lưu
+              interaction</strong><small>PostgreSQL · DLQ</small></button></li>
+      </ol>
+      <div class="phase-divider"><span>PHASE 02</span><strong>Behavioral Profile &amp; Session
+          Intent</strong><small>Hiểu cả sở thích lâu dài và nhu cầu đang diễn ra</small></div>
+      <ol class="stage-list" aria-label="Phase 2">
+        <li><button class="stage-node" data-stage="7" type="button"><span>07</span><strong>Normalize tín
+              hiệu</strong><small>Weight · time decay</small></button></li>
+        <li><button class="stage-node" data-stage="8" type="button"><span>08</span><strong>Long-term
+              profile</strong><small>Category · brand · price</small></button></li>
+        <li><button class="stage-node" data-stage="9" type="button"><span>09</span><strong>Session
+              intent</strong><small>Recent context · confidence</small></button></li>
+        <li><button class="stage-node" data-stage="10" type="button"><span>10</span><strong>Merge
+              anonymous</strong><small>Session + user profile</small></button></li>
+      </ol>
+      <div class="phase-divider"><span>PHASE 03</span><strong>Catalog Intelligence &amp; Candidate
+          Generation</strong><small>Không dùng một nguồn duy nhất để tạo lựa chọn</small></div>
+      <ol class="stage-list" aria-label="Phase 3">
+        <li><button class="stage-node" data-stage="11" type="button"><span>11</span><strong>Catalog read
+              model</strong><small>Product Service sync</small></button></li>
+        <li><button class="stage-node" data-stage="12" type="button"><span>12</span><strong>Tạo
+              embedding</strong><small>AI Service · content</small></button></li>
+        <li><button class="stage-node" data-stage="13" type="button"><span>13</span><strong>Index
+              Qdrant</strong><small>Vector + payload</small></button></li>
+        <li><button class="stage-node" data-stage="14" type="button"><span>14</span><strong>Semantic
+              retrieval</strong><small>Similar products</small></button></li>
+        <li><button class="stage-node" data-stage="15" type="button"><span>15</span><strong>Multi-source
+              candidates</strong><small>Co-view · trending · explore</small></button></li>
+        <li><button class="stage-node" data-stage="16" type="button"><span>16</span><strong>Union +
+              attribution</strong><small>Dedupe · reason</small></button></li>
+      </ol>
+      <div class="phase-divider"><span>PHASE 04</span><strong>Filtering, Ranking, Diversity &amp;
+          Serving</strong><small>Chọn danh sách hợp lệ, liên quan và không nhàm chán</small></div>
+      <ol class="stage-list" aria-label="Phase 4">
+        <li><button class="stage-node" data-stage="17" type="button"><span>17</span><strong>Hard
+              filtering</strong><small>Active · stock · cooldown</small></button></li>
+        <li><button class="stage-node" data-stage="18" type="button"><span>18</span><strong>Feature
+              extraction</strong><small>Normalize score</small></button></li>
+        <li><button class="stage-node" data-stage="19" type="button"><span>19</span><strong>Weighted
+              ranking</strong><small>Explainable score</small></button></li>
+        <li><button class="stage-node" data-stage="20" type="button"><span>20</span><strong>Diversity
+              rerank</strong><small>Caps · MMR · explore</small></button></li>
+        <li><button class="stage-node" data-stage="21" type="button"><span>21</span><strong>Redis
+              cache</strong><small>TTL · invalidation</small></button></li>
+        <li><button class="stage-node" data-stage="22" type="button"><span>22</span><strong>Recommendation
+              API</strong><small>Top-K · reason · metadata</small></button></li>
+      </ol>
+      <div class="phase-divider"><span>PHASE 05</span><strong>Feedback, Evaluation &amp; Production
+          Readiness</strong><small>Đo lường để biết hệ thống thật sự tốt hơn baseline</small></div>
+      <ol class="stage-list" aria-label="Phase 5">
+        <li><button class="stage-node" data-stage="23" type="button"><span>23</span><strong>Render +
+              impression</strong><small>Reason · position · click</small></button></li>
+        <li><button class="stage-node" data-stage="24" type="button"><span>24</span><strong>Feedback + A/B
+              test</strong><small>Metrics · baseline · rollout</small></button></li>
+      </ol>
+    </section>
+
+    <section class="intelligence-grid" aria-labelledby="intelligence-title">
+      <div class="section-heading section-heading-wide">
+        <div>
+          <p class="section-kicker">TƯ DUY HYBRID</p>
+          <h2 id="intelligence-title">Một recommendation tốt cần vừa hiểu, vừa khám phá</h2>
+          <p>Candidate generation mở rộng phạm vi; ranking chọn relevance; diversity giữ cho trải nghiệm không bị lặp
+            lại.</p>
+        </div>
+      </div>
+      <article class="intelligence-card">
+        <span class="card-label">CANDIDATE SOURCES</span>
+        <h3>11 nguồn tạo lựa chọn</h3>
+        <div class="tag-cloud">
+          <span>Semantic</span><span>Co-view</span><span>Co-cart</span><span>Co-purchase</span><span>Category</span><span>Brand</span><span>Price
+            fit</span><span>Trending</span><span>Newest</span><span>Recent</span><span>Explore 5–10%</span></div>
+        <p>Không để một model duy nhất quyết định toàn bộ danh sách. Mỗi source có provenance để đo hiệu quả và tạo
+          reason.</p>
+      </article>
+      <article class="intelligence-card intelligence-card-dark">
+        <span class="card-label">RANKING LOGIC</span>
+        <h3>Điểm số có thể giải thích</h3>
+        <div class="formula">
+          <span>semantic</span><b>+</b><span>affinity</span><b>+</b><span>behavior</span><b>+</b><span>freshness</span><b>−</b><span>negative
+            feedback</span></div>
+        <p>Giai đoạn đầu dùng weighted score minh bạch; khi đủ dữ liệu mới shadow-test Logistic Regression hoặc
+          LightGBM.</p>
+      </article>
+      <article class="intelligence-card">
+        <span class="card-label">DIVERSITY RULES</span>
+        <h3>Liên quan nhưng không trùng lặp</h3>
+        <ul class="clean-list">
+          <li>Giới hạn một brand hoặc shop chiếm toàn bộ kết quả.</li>
+          <li>Loại sản phẩm đang xem và sản phẩm vừa mua theo cooldown.</li>
+          <li>Dành một phần vị trí cho khám phá sản phẩm mới.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="context-grid" aria-labelledby="context-title">
+      <div class="section-heading section-heading-wide">
+        <div>
+          <p class="section-kicker">CONTEXT VÀ FALLBACK</p>
+          <h2 id="context-title">Không có profile vẫn phải có trải nghiệm tốt</h2>
+        </div>
+      </div>
+      <article class="context-card"><span class="context-number">01</span>
+        <div>
+          <h3>Guest mới</h3>
+          <p>Trending, newest, category phổ biến và session behavior vừa phát sinh.</p>
+        </div>
+      </article>
+      <article class="context-card"><span class="context-number">02</span>
+        <div>
+          <h3>User đã đăng nhập</h3>
+          <p>Kết hợp long-term profile, session intent và lịch sử mua hàng đáng tin cậy.</p>
+        </div>
+      </article>
+      <article class="context-card"><span class="context-number">03</span>
+        <div>
+          <h3>Qdrant hoặc AI lỗi</h3>
+          <p>Fallback về co-behavior, category, trending rồi newest active products.</p>
+        </div>
+      </article>
+      <article class="context-card"><span class="context-number">04</span>
+        <div>
+          <h3>Recommendation Service lỗi</h3>
+          <p>Web vẫn hiển thị fallback từ catalog hiện có; recommendation không được phép làm hỏng checkout.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="safety-grid" aria-labelledby="safety-title">
+      <div class="section-heading section-heading-wide">
+        <div>
+          <p class="section-kicker">SAFETY VÀ DATA OWNERSHIP</p>
+          <h2 id="safety-title">Cá nhân hóa mạnh nhưng boundary vẫn rõ ràng</h2>
+        </div>
+      </div>
+      <article class="safety-card"><span class="safety-icon safety-icon-dark">↔</span>
+        <div>
+          <h3>Không query DB chéo service</h3>
+          <p>Product, Cart, Order và Auth giữ source of truth riêng. Recommendation dùng event, API hoặc local read
+            model.</p><code>bounded context → explicit contract</code>
+        </div>
+      </article>
+      <article class="safety-card"><span class="safety-icon safety-icon-success">✓</span>
+        <div>
+          <h3>Purchase semantics rõ ràng</h3>
+          <p>Chỉ COMPLETED là positive purchase; CANCELLED không cộng điểm, RETURN_REFUND tạo negative signal.</p>
+          <code>COMPLETED → positive signal</code>
+        </div>
+      </article>
+      <article class="safety-card"><span class="safety-icon safety-icon-warning">↻</span>
+        <div>
+          <h3>Event có thể retry</h3>
+          <p>eventId, consumer idempotency, out-of-order handling và DLQ bảo vệ profile khỏi dữ liệu lặp hoặc hỏng.</p>
+          <code>duplicate → safe no-op</code>
+        </div>
+      </article>
+      <article class="safety-card"><span class="safety-icon safety-icon-error">!</span>
+        <div>
+          <h3>Fallback thay vì fail toàn bộ</h3>
+          <p>Thiếu profile, AI timeout, Qdrant down hoặc Redis lỗi đều có đường lui theo mức độ liên quan.</p>
+          <code>hybrid → baseline fallback</code>
+        </div>
+      </article>
+    </section>
+
+    <aside class="details-panel" id="details-panel" aria-labelledby="details-title" aria-hidden="true">
+      <div class="details-header">
+        <div>
+          <p class="section-kicker">CHI TIẾT BƯỚC</p>
+          <h2 id="details-title">Chọn một bước để xem</h2>
+        </div>
+        <button class="close-button" id="close-details" type="button" aria-label="Đóng chi tiết">×</button>
+      </div>
+      <div class="details-body">
+        <div class="detail-phase" id="details-phase">PHASE 01 · EVENT FOUNDATION</div>
+        <p id="details-summary" class="details-summary">Mỗi bước mô tả boundary, dữ liệu và quy tắc an toàn của
+          Recommendation.</p>
+        <div class="details-columns">
+          <div><span class="detail-label">INPUT</span>
+            <p id="details-input">—</p>
+          </div>
+          <div><span class="detail-label">OUTPUT</span>
+            <p id="details-output">—</p>
+          </div>
+        </div>
+        <div class="detail-block"><span class="detail-label">VÌ SAO CẦN BƯỚC NÀY</span>
+          <p id="details-reason">—</p>
+        </div>
+        <div class="detail-block"><span class="detail-label">BƯỚC NÀY GIẢI QUYẾT GÌ</span>
+          <p id="details-solves">—</p>
+        </div>
+        <div class="detail-block"><span class="detail-label">QUY TẮC BẢO VỆ</span>
+          <p id="details-safety">—</p>
+        </div>
+        <div class="detail-block detail-failure"><span class="detail-label">LỖI VÀ FALLBACK</span>
+          <p id="details-failure">—</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <script src="./flow.js" defer></script>
+</body>
+
+</html>
