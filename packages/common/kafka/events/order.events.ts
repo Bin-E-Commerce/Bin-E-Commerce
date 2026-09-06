@@ -18,6 +18,8 @@ export const OrderEvents = {
   RETURN_RECEIVED: "return.received",
   RETURN_INSPECTION_PASSED: "return.inspection.passed",
   RETURN_INSPECTION_FAILED: "return.inspection.failed",
+  PURCHASE_COMPLETED: "order.purchase.completed",
+  PURCHASE_RETURNED: "order.purchase.returned",
 } as const;
 
 export type OrderEventType = (typeof OrderEvents)[keyof typeof OrderEvents];
@@ -116,4 +118,25 @@ export type ReturnChangedEvent = IntegrationEventEnvelope<
   | typeof OrderEvents.RETURN_INSPECTION_PASSED
   | typeof OrderEvents.RETURN_INSPECTION_FAILED,
   ReturnChangedPayload
+>;
+
+// Payload dành riêng cho Recommendation, chỉ chứa item snapshot cần tính preference và không chứa dữ liệu thanh toán.
+export interface OrderPurchaseItem {
+  orderItemId: string;
+  productId: string;
+  variantId: string | null;
+  categoryId: string | null;
+  quantity: number;
+}
+
+export interface OrderPurchasePayload {
+  orderId: string;
+  customerUserId: string;
+  occurredAt: string;
+  items: OrderPurchaseItem[];
+}
+
+export type OrderPurchaseEvent = IntegrationEventEnvelope<
+  typeof OrderEvents.PURCHASE_COMPLETED | typeof OrderEvents.PURCHASE_RETURNED,
+  OrderPurchasePayload
 >;
