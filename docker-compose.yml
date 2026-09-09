@@ -139,11 +139,71 @@ services:
       KAFKA_BROKERS: kafka:9092
       KAFKA_CLIENT_ID: recommendation-service
       KAFKA_CONSUMER_GROUP: recommendation-interactions-v1
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION_ALIAS: recommendation_product_embeddings_current
+      QDRANT_COLLECTION_VERSION: ${QDRANT_COLLECTION_VERSION:-1}
+      QDRANT_VECTOR_SIZE: ${EMBEDDING_DIMENSIONS:-1536}
+      EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      CANDIDATE_PIPELINE_V3_ENABLED: ${CANDIDATE_PIPELINE_V3_ENABLED:-false}
+      SEMANTIC_CANDIDATES_ENABLED: ${SEMANTIC_CANDIDATES_ENABLED:-false}
+      CO_BEHAVIOR_CANDIDATES_ENABLED: ${CO_BEHAVIOR_CANDIDATES_ENABLED:-false}
+    depends_on:
+      qdrant:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3006/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 5
+
+  # ── AI Service: HTTP image/content API và embedding worker dùng chung image ──
+  ai-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
+    image: bin-ecommerce/ai-service:local
+    container_name: ai-service
+    environment:
+      PORT: 3009
+      NODE_ENV: development
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DATABASE_URL: ${AI_DATABASE_URL:-postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/bin_ecommerce_ai}
+      REDIS_URL: ${AI_REDIS_URL:-redis://redis:6379/0}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3009/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  ai-embedding-worker:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
+    image: bin-ecommerce/ai-service:local
+    container_name: ai-embedding-worker
+    command: ["python", "-m", "app.entrypoints.embedding_worker"]
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - bin_app_net
 
   # ── Cart Service ─────────────────────────────────────────────────────────────
   cart-service:
@@ -366,3 +426,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+
+volumes:
+  qdrant_data:

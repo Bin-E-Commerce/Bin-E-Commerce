@@ -72,7 +72,21 @@ export interface RecommendationCatalogProductPayload {
   isInStock: boolean;
   createdAt: string;
   updatedAt: string;
-  catalogVersion: number;
+  catalogRevision: string;
+  /** @deprecated Chỉ giữ để replay event Phase 2 cũ. */
+  catalogVersion?: string;
+  semanticContent: RecommendationSemanticProductContent;
+}
+
+// Snapshot ngữ nghĩa tối thiểu để Recommendation tạo embedding mà không đọc database Product Service.
+export interface RecommendationSemanticProductContent {
+  title: string;
+  shortDescription: string | null;
+  description: string | null;
+  brandName: string | null;
+  categoryPath: string | null;
+  attributes: Array<{ key: string; value: string }>;
+  contentHash: string;
 }
 
 export type RecommendationCatalogEvent = IntegrationEventEnvelope<
@@ -103,4 +117,40 @@ export interface RecommendationPurchasePayload {
 export type RecommendationPurchaseEvent = IntegrationEventEnvelope<
   (typeof RecommendationPurchaseEvents)[keyof typeof RecommendationPurchaseEvents],
   RecommendationPurchasePayload
+>;
+
+// Contract giữa Recommendation embedding dispatcher và AI Service worker.
+export const RecommendationEmbeddingEvents = {
+  REQUESTED: "recommendation.product_embedding.requested",
+  GENERATED: "recommendation.product_embedding.generated",
+  FAILED: "recommendation.product_embedding.failed",
+} as const;
+
+export interface RecommendationEmbeddingRequestedPayload {
+  jobId: string;
+  productId: string;
+  contentHash: string;
+  embeddingProfile: "product-content-v1";
+  modelVersion: string;
+  text: string;
+}
+
+export interface RecommendationEmbeddingGeneratedPayload {
+  jobId: string;
+  productId: string;
+  contentHash: string;
+  model: string;
+  modelVersion: string;
+  dimensions: number;
+  vector: number[];
+}
+
+export type RecommendationEmbeddingRequestedEvent = IntegrationEventEnvelope<
+  typeof RecommendationEmbeddingEvents.REQUESTED,
+  RecommendationEmbeddingRequestedPayload
+>;
+
+export type RecommendationEmbeddingGeneratedEvent = IntegrationEventEnvelope<
+  typeof RecommendationEmbeddingEvents.GENERATED,
+  RecommendationEmbeddingGeneratedPayload
 >;
