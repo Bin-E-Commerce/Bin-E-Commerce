@@ -36,6 +36,9 @@ export interface RecommendationInteractionPayload {
   recommendationSource?: string | null;
   recommendationRank?: number | null;
   surface?: "home" | "product_detail" | "recommendations_page" | null;
+  recommendationPolicyVersion?: string | null;
+  recommendationExperimentId?: string | null;
+  recommendationExperimentVariant?: "CONTROL" | "HYBRID" | null;
 }
 
 export type RecommendationInteractionRecordedEvent = IntegrationEventEnvelope<
