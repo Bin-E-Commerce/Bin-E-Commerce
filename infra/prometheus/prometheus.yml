@@ -47,3 +47,15 @@ scrape_configs:
     static_configs:
       - targets: [product-service:3008]
     metrics_path: /metrics
+
+  # Recommendation metrics are exposed under the Nest global api/version prefix.
+  - job_name: recommendation-service
+    static_configs:
+      - targets: [recommendation-service:3006]
+    metrics_path: /api/v1/health/metrics
+
+  # AI HTTP metrics stay at the root because the FastAPI app does not use the Nest prefix.
+  - job_name: ai-service
+    static_configs:
+      - targets: [ai-service:3009]
+    metrics_path: /metrics

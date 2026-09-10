@@ -1,0 +1,28 @@
+{
+  "title": "Recommendation Service Overview",
+  "uid": "recommendation-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Recommendation process uptime",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "recommendation_process_uptime_seconds", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Kafka DLQ events",
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (source) (rate(recommendation_kafka_messages_dlq_total[5m]))",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
