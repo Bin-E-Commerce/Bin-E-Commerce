@@ -1,6 +1,6 @@
 # This compose file runs the application NestJS services + Nginx.
 # Infra (Postgres, Mongo, Redis, Kafka, Keycloak, Qdrant) must be started separately:
-#   docker compose -f infra/docker/docker-compose.infra.yml up -d
+# docker compose -f infra/docker/docker-compose.infra.yml up -d
 # Copy .env.example to .env before starting this application stack.
 
 networks:
@@ -143,6 +143,8 @@ services:
       KAFKA_CLIENT_ID: recommendation-service
       KAFKA_CONSUMER_GROUP: recommendation-interactions-v1
       PRODUCT_SERVICE_URL: http://product-service:3008
+      AUTH_SERVICE_URL: http://auth-service:3001
+      AI_SERVICE_URL: http://ai-service:3009
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
       KAFKA_RETRY_BASE_DELAY_MS: ${KAFKA_RETRY_BASE_DELAY_MS:-250}
       KAFKA_RETRY_MAX_DELAY_MS: ${KAFKA_RETRY_MAX_DELAY_MS:-5000}
@@ -156,11 +158,31 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_ALIAS: recommendation_product_embeddings_current
       QDRANT_COLLECTION_VERSION: ${QDRANT_COLLECTION_VERSION:-1}
+      QDRANT_ALIAS_PROMOTION_ENABLED: ${QDRANT_ALIAS_PROMOTION_ENABLED:-false}
       QDRANT_VECTOR_SIZE: ${EMBEDDING_DIMENSIONS:-1536}
-      EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL:-text-embedding-3-small}
-      CANDIDATE_PIPELINE_V3_ENABLED: ${CANDIDATE_PIPELINE_V3_ENABLED:-false}
-      SEMANTIC_CANDIDATES_ENABLED: ${SEMANTIC_CANDIDATES_ENABLED:-false}
-      CO_BEHAVIOR_CANDIDATES_ENABLED: ${CO_BEHAVIOR_CANDIDATES_ENABLED:-false}
+      EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL_VERSION:-text-embedding-3-small}
+      CANDIDATE_PIPELINE_V3_ENABLED: ${CANDIDATE_PIPELINE_V3_ENABLED:-true}
+      SEMANTIC_CANDIDATES_ENABLED: ${SEMANTIC_CANDIDATES_ENABLED:-true}
+      CO_BEHAVIOR_CANDIDATES_ENABLED: ${CO_BEHAVIOR_CANDIDATES_ENABLED:-true}
+      RANKING_EXPERIMENT_ENABLED: ${RANKING_EXPERIMENT_ENABLED:-false}
+      RANKING_EXPERIMENT_ID: ${RANKING_EXPERIMENT_ID:-recommendation-standard-ai-v1}
+      RANKING_EXPERIMENT_TRAFFIC_PERCENT: ${RANKING_EXPERIMENT_TRAFFIC_PERCENT:-0}
+      ML_RANKING_ENABLED: ${ML_RANKING_ENABLED:-false}
+      ML_RANKING_BLEND: ${ML_RANKING_BLEND:-0.3}
+      ML_RANKING_POLICY_VERSION: ${ML_RANKING_POLICY_VERSION:-ml-hybrid-v1}
+      ML_RANKING_TIMEOUT_MS: ${ML_RANKING_TIMEOUT_MS:-150}
+      RECOMMENDATION_CACHE_TTL_SECONDS: ${RECOMMENDATION_CACHE_TTL_SECONDS:-300}
+      RECOMMENDATION_SESSION_TTL_SECONDS: ${RECOMMENDATION_SESSION_TTL_SECONDS:-86400}
+      RECOMMENDATION_SESSION_MAX_RECENT_ITEMS: ${RECOMMENDATION_SESSION_MAX_RECENT_ITEMS:-30}
+      RECOMMENDATION_RELATION_CO_VIEW_WEIGHT: ${RECOMMENDATION_RELATION_CO_VIEW_WEIGHT:-1}
+      RECOMMENDATION_RELATION_CO_CLICK_WEIGHT: ${RECOMMENDATION_RELATION_CO_CLICK_WEIGHT:-2}
+      RECOMMENDATION_RELATION_CO_IMPRESSION_WEIGHT: ${RECOMMENDATION_RELATION_CO_IMPRESSION_WEIGHT:-0.05}
+      RECOMMENDATION_RELATION_CO_CART_WEIGHT: ${RECOMMENDATION_RELATION_CO_CART_WEIGHT:-3}
+      RECOMMENDATION_RELATION_CO_PURCHASE_WEIGHT: ${RECOMMENDATION_RELATION_CO_PURCHASE_WEIGHT:-6}
+      RELATION_SCORE_HALF_LIFE_DAYS: ${RELATION_SCORE_HALF_LIFE_DAYS:-30}
+    depends_on:
+      product-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3006/api/v1/health/ready"]
       interval: 30s
@@ -175,9 +197,13 @@ services:
       dockerfile: services/ai-service/Dockerfile
     image: bin-ecommerce/ai-service:local
     container_name: ai-service
+    volumes:
+      - ./services/ai-service/artifacts:/app/artifacts:ro
     environment:
       PORT: 3009
       NODE_ENV: development
+      # Memory mode lets the local HTTP service boot without image-AI secrets; set service in production.
+      AI_RUNTIME_MODE: ${AI_RUNTIME_MODE:-memory}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DATABASE_URL: ${AI_DATABASE_URL:-postgresql+asyncpg://bin_ecommerce:changeme_postgres@postgres:5432/bin_ecommerce_ai}
@@ -185,8 +211,18 @@ services:
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
       EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL_VERSION:-text-embedding-3-small}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+      RANKING_MODEL_PATH: ${RANKING_MODEL_PATH:-}
+      RANKING_MODEL_VERSION: ${RANKING_MODEL_VERSION:-ranking-fallback-v1}
+      RANKING_EXPECTED_FEATURES: ${RANKING_EXPECTED_FEATURES:-9}
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3009/api/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:3009/api/health')",
+        ]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -198,13 +234,16 @@ services:
       dockerfile: services/ai-service/Dockerfile
     image: bin-ecommerce/ai-service:local
     container_name: ai-embedding-worker
-    command: ["python", "-m", "app.entrypoints.embedding_worker"]
+    command: ["python", "-m", "app.entrypoints.workers.embedding_worker"]
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
       EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL_VERSION:-text-embedding-3-small}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+      REDIS_URL: ${AI_REDIS_URL:-redis://redis:6379/0}
+      EMBEDDING_RESULT_CACHE_TTL_SECONDS: ${EMBEDDING_RESULT_CACHE_TTL_SECONDS:-600}
 
   # ── Cart Service ─────────────────────────────────────────────────────────────
   cart-service:
