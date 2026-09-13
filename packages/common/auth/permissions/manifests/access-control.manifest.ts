@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.09.03.1";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.09.10.1";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -82,6 +82,35 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
       "Cho phép bật hoặc tắt permission cho từng role trong Admin Center.",
     resource: "admin.access_control",
     action: "update",
+  },
+  {
+    code: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
+    name: "Xem phân tích Recommendation",
+    description:
+      "Theo dõi lượt hiển thị, click, thêm giỏ và hành vi theo tài khoản.",
+    resource: "admin.recommendation.analytics",
+    action: "read",
+  },
+  {
+    code: Permission.ADMIN_RECOMMENDATION_POLICY_READ,
+    name: "Xem policy Recommendation",
+    description: "Xem trọng số, feature flag và lịch sử cấu hình ranking.",
+    resource: "admin.recommendation.policy",
+    action: "read",
+  },
+  {
+    code: Permission.ADMIN_RECOMMENDATION_POLICY_WRITE,
+    name: "Chỉnh policy Recommendation",
+    description: "Thay đổi trọng số và flag ranking đang chạy.",
+    resource: "admin.recommendation.policy",
+    action: "write",
+  },
+  {
+    code: Permission.ADMIN_RECOMMENDATION_POLICY_ROLLBACK,
+    name: "Rollback policy Recommendation",
+    description: "Khôi phục một phiên bản policy đã lưu trong lịch sử.",
+    resource: "admin.recommendation.policy",
+    action: "rollback",
   },
   {
     code: Permission.CART_READ,
@@ -414,7 +443,8 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     code: Permission.SHOP_FOLLOW,
     name: "Theo dõi shop",
-    description: "Cho phép Customer hoặc Seller theo dõi và bỏ theo dõi shop công khai.",
+    description:
+      "Cho phép Customer hoặc Seller theo dõi và bỏ theo dõi shop công khai.",
     resource: "shop",
     action: "follow",
   },
@@ -752,6 +782,26 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
   },
   {
     roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_WRITE,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
+    permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_ROLLBACK,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    roleCode: UserRole.ADMIN,
     permissionCode: Permission.SELLER_APPLICATION_READ,
     scope: PermissionScope.GLOBAL,
   },
@@ -848,6 +898,19 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     icon: "FilePenLine",
     sortOrder: 20,
     requiredPermissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
+  },
+  {
+    area: "admin",
+    groupCode: "recommendation",
+    groupLabel: "Recommendation",
+    groupOrder: 30,
+    code: "admin.recommendation",
+    label: "Phân tích gợi ý",
+    description: "Hành vi người dùng và policy ranking",
+    href: "/admin/recommendation",
+    icon: "BarChart3",
+    sortOrder: 10,
+    requiredPermissionCode: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
   },
   {
     area: "admin",

@@ -38,7 +38,7 @@ export interface RecommendationInteractionPayload {
   surface?: "home" | "product_detail" | "recommendations_page" | null;
   recommendationPolicyVersion?: string | null;
   recommendationExperimentId?: string | null;
-  recommendationExperimentVariant?: "CONTROL" | "HYBRID" | null;
+  recommendationExperimentVariant?: "CONTROL" | "HYBRID" | "ML_HYBRID" | null;
 }
 
 export type RecommendationInteractionRecordedEvent = IntegrationEventEnvelope<

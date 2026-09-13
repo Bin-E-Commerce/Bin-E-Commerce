@@ -9,6 +9,14 @@ export enum Permission {
   // 3. Admin Access Control
   ADMIN_ACCESS_CONTROL_READ = "admin.access_control.read",
   ADMIN_ACCESS_CONTROL_UPDATE = "admin.access_control.update",
+  // Quyền xem dữ liệu hành vi và KPI của Recommendation Center.
+  ADMIN_RECOMMENDATION_ANALYTICS_READ = "admin.recommendation.analytics.read",
+  // Quyền xem policy ranking đang chạy và lịch sử policy.
+  ADMIN_RECOMMENDATION_POLICY_READ = "admin.recommendation.policy.read",
+  // Quyền thay đổi trọng số/flag ranking; endpoint vẫn ghi audit version immutable.
+  ADMIN_RECOMMENDATION_POLICY_WRITE = "admin.recommendation.policy.write",
+  // Quyền rollback policy về một version đã audit.
+  ADMIN_RECOMMENDATION_POLICY_ROLLBACK = "admin.recommendation.policy.rollback",
 
   // Cart dùng chung cho Customer và Seller
   CART_READ = "cart.read",
