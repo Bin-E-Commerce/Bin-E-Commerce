@@ -37,6 +37,7 @@ export interface RecommendationInteractionPayload {
   recommendationRank?: number | null;
   surface?: "home" | "product_detail" | "recommendations_page" | null;
   recommendationPolicyVersion?: string | null;
+  recommendationRankingMode?: "HYBRID" | "ML_HYBRID" | null;
   recommendationExperimentId?: string | null;
   recommendationExperimentVariant?: "CONTROL" | "HYBRID" | "ML_HYBRID" | null;
 }
