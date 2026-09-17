@@ -18,6 +18,13 @@ import { readFile } from 'node:fs/promises';
 const DEFAULT_OUTPUT_FILE = 'data/tiki-product-service-import.json';
 const DEFAULT_CHECKPOINT_FILE = 'data/tiki-product-service-checkpoint.json';
 
+// Bắt buộc nhận connection string từ môi trường để crawler không rơi về credential mặc định.
+function requireDatabaseUrl(name: string): string {
+    const value = process.env[name];
+    if (!value) throw new Error(`${name} is required to run the crawler.`);
+    return value;
+}
+
 interface ProductServiceImportOptions extends ProductCrawlOptions {
     inputFile?: string;
 }
@@ -102,12 +109,8 @@ function getNumberArg(
 async function main(): Promise<void> {
     const options = parseArgs(process.argv.slice(2));
     const logger = new ConsoleCrawlerLogger();
-    const productDatabaseUrl =
-        process.env['PRODUCT_DATABASE_URL'] ??
-        'postgres://bin_ecommerce:changeme_postgres@localhost:5432/bin_ecommerce_product';
-    const catalogDatabaseUrl =
-        process.env['CATALOG_DATABASE_URL'] ??
-        'postgres://bin_ecommerce:changeme_postgres@localhost:5432/bin_ecommerce_catalog';
+    const productDatabaseUrl = requireDatabaseUrl('PRODUCT_DATABASE_URL');
+    const catalogDatabaseUrl = requireDatabaseUrl('CATALOG_DATABASE_URL');
 
     const productDb = new PostgresClient(productDatabaseUrl);
     const catalogDb = new PostgresClient(catalogDatabaseUrl);

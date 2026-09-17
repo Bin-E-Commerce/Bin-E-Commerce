@@ -55,7 +55,7 @@ Copy-Item packages/crawl-tiki/.env.example packages/crawl-tiki/.env
 
 ```env
 TIKI_API_TOKEN=your-local-tiki-seller-token
-PRODUCT_DATABASE_URL=postgres://bin_ecommerce:changeme_postgres@localhost:5432/bin_ecommerce_product
+PRODUCT_DATABASE_URL=
 ```
 
 Không gửi token qua chat và không commit file `.env`.

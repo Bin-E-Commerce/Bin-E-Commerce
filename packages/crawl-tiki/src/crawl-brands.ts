@@ -18,6 +18,13 @@ import { assertBrandCatalog } from './brands/validators/brand-catalog.validator'
 import { PostgresClient } from './database/postgres-client';
 import { ConsoleCrawlerLogger } from './loggers/crawler.logger';
 
+// Bắt buộc nhận connection string từ môi trường để crawler không rơi về credential mặc định.
+function requireDatabaseUrl(name: string): string {
+    const value = process.env[name];
+    if (!value) throw new Error(`${name} is required to run the crawler.`);
+    return value;
+}
+
 // Nạp file .env của package khi chạy local; biến môi trường do CI hoặc runtime inject luôn được ưu tiên.
 function loadLocalEnvironment(): void {
     const candidates = [
@@ -71,9 +78,7 @@ async function importCatalog(
     catalog: BrandCrawlCatalog,
     logger: ConsoleCrawlerLogger,
 ): Promise<void> {
-    const databaseUrl =
-        process.env['PRODUCT_DATABASE_URL'] ??
-        'postgres://bin_ecommerce:changeme_postgres@localhost:5432/bin_ecommerce_product';
+    const databaseUrl = requireDatabaseUrl('PRODUCT_DATABASE_URL');
     const database = new PostgresClient(databaseUrl);
     await database.connect();
 
