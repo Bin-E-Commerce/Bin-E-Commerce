@@ -1,19 +1,49 @@
-# =============================================================================
-# Infra Services — EC2-B equivalents for local development
-# Includes: PostgreSQL, MongoDB, Redis, Kafka (KRaft), Keycloak, Prometheus, Grafana
+# ============================================================================
+# Khởi động theo thứ tự:
+#   1. docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml up -d
+#   2. docker compose --env-file .env up -d --build
 #
-# Usage (run from repo root):
-#   docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml up -d
-#   docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml down -v
-# =============================================================================
+# File này chỉ chạy các thành phần hạ tầng dùng chung cho Bin E-Commerce.
+# Application services được khai báo trong docker-compose.yml ở thư mục root.
+# ============================================================================
+
+# THÀNH PHẦN THAM GIA
+#
+# Hạ tầng dùng chung trong compose này:
+#   Service       | Container port | Host port | Chức năng
+#   PostgreSQL    | 5432           | 5432      | database cho các service nghiệp vụ
+#   MongoDB       | 27017          | 27017     | database document cho notification
+#   Redis         | 6379           | 6379      | cache, session, OTP và realtime state
+#   Kafka         | 9092/29092     | 9092/29092| message broker cho event/worker
+#   Keycloak      | 8080           | 8080      | xác thực và cấp token OAuth/OIDC
+#   Qdrant        | 6333/6334      | 6333/6334 | vector database cho recommendation
+#   Prometheus    | 9090           | 9090      | thu thập metrics
+#   Grafana       | 3030           | 3030      | dashboard quan sát hệ thống
+#   Kafka UI      | 8080           | 8081      | theo dõi topic và consumer group
+#
+# Database initializer là job chạy một lần sau khi PostgreSQL healthy; job này
+# không mở port và chỉ đảm bảo các database nghiệp vụ đã tồn tại.
+#
+# Dừng an toàn, không xóa dữ liệu:
+#   docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml stop
+#
+# Không dùng `down -v` hoặc `docker volume prune` nếu chưa có bản sao dữ liệu.
+# ============================================================================
 
 name: bin-ecommerce-infra
 
 services:
-  # ── PostgreSQL 16 ─────────────────────────────────────────────────────────
+
+  # --------------------------------------------------------------------------
+  # 01. Database dùng chung
+  # --------------------------------------------------------------------------
+
+  # Service: PostgreSQL
+  # Port: container 5432 -> host 5432
+  # Vai trò: Lưu dữ liệu quan hệ cho các service và Keycloak.
+  # Kết nối chính: Application services, db-init và Keycloak.
   postgres:
     image: postgres:16-alpine
-    container_name: bin_postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -32,10 +62,12 @@ services:
     networks:
       - infra_net
 
-  # ── DB Init — tạo databases cho tất cả services ──────────────────────────
+  # Service: Database initializer
+  # Port: Không có HTTP port
+  # Vai trò: Tạo các database PostgreSQL cần thiết sau khi PostgreSQL healthy.
+  # Kết nối chính: PostgreSQL.
   db-init:
     image: postgres:16-alpine
-    container_name: bin_db_init
     restart: "no"
     depends_on:
       postgres:
@@ -54,10 +86,12 @@ services:
     networks:
       - infra_net
 
-  # ── MongoDB 7 ─────────────────────────────────────────────────────────────
+  # Service: MongoDB
+  # Port: container 27017 -> host 27017
+  # Vai trò: Lưu dữ liệu document cho các service dùng MongoDB.
+  # Kết nối chính: Notification Service và các module document.
   mongodb:
     image: mongo:7-jammy
-    container_name: bin_mongodb
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
@@ -75,29 +109,40 @@ services:
     networks:
       - infra_net
 
-  # ── Redis 7 ───────────────────────────────────────────────────────────────
+  # Service: Redis
+  # Port: container 6379 -> host 6379
+  # Vai trò: Cache, session, OTP và realtime state; có bật xác thực bằng REDIS_PASSWORD.
+  # Kết nối chính: API Gateway, Auth, Recommendation, AI và Notification.
   redis:
     image: redis:7-alpine
-    container_name: bin_redis
     restart: unless-stopped
-    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in infra/docker/.env}
+    command: >-
+      sh -c 'exec redis-server --requirepass "$${REDIS_PASSWORD}" --maxmemory
+      64mb --maxmemory-policy allkeys-lru'
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
       interval: 10s
       timeout: 3s
       retries: 5
     networks:
       - infra_net
 
-  # ── Qdrant ────────────────────────────────────────────────────────────────
-  # Vector database dùng chung cho semantic retrieval của Recommendation Service.
+  # --------------------------------------------------------------------------
+  # 02. Vector database
+  # --------------------------------------------------------------------------
+
+  # Service: Qdrant
+  # Port: container 6333/6334 -> host 6333/6334
+  # Vai trò: Lưu và truy vấn vector embedding cho semantic recommendation.
+  # Kết nối chính: Recommendation Service và AI embedding pipeline.
   qdrant:
     image: qdrant/qdrant:v1.13.2
-    container_name: bin_qdrant
     restart: unless-stopped
     ports:
       - "6333:6333"
@@ -113,10 +158,16 @@ services:
     networks:
       - infra_net
 
-  # ── Kafka (KRaft — no ZooKeeper) ──────────────────────────────────────────
+  # --------------------------------------------------------------------------
+  # 03. Message broker
+  # --------------------------------------------------------------------------
+
+  # Service: Kafka (KRaft)
+  # Port: container 9092/29092 -> host 9092/29092
+  # Vai trò: Truyền event bất đồng bộ giữa các service, không dùng ZooKeeper.
+  # Kết nối chính: Producer/consumer của application services.
   kafka:
     image: apache/kafka:3.8.0
-    container_name: bin_kafka
     restart: unless-stopped
     environment:
       KAFKA_NODE_ID: "1"
@@ -153,27 +204,34 @@ services:
     networks:
       - infra_net
 
-  # ── Kafka UI ──────────────────────────────────────────────────────────────
+  # Service: Kafka UI
+  # Port: container 8080 -> host 8081
+  # Vai trò: Theo dõi topic, consumer group và message Kafka trong local/demo.
+  # Kết nối chính: Kafka.
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
-    container_name: bin_kafka_ui
     restart: unless-stopped
     ports:
       - "8081:8080"
     environment:
-      - KAFKA_CLUSTERS_0_NAME=Local-Cluster
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=host.docker.internal:9092
-      - DYNAMIC_CONFIG_ENABLED=true
+      KAFKA_CLUSTERS_0_NAME: Local-Cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: host.docker.internal:9092
+      DYNAMIC_CONFIG_ENABLED: "true"
     networks:
       - infra_net
     depends_on:
       - kafka
 
-  # ── Keycloak 24 ───────────────────────────────────────────────────────────
-  # Dùng PostgreSQL — config trên UI 1 lần, không mất khi restart
+  # --------------------------------------------------------------------------
+  # 04. Identity và access management
+  # --------------------------------------------------------------------------
+
+  # Service: Keycloak
+  # Port: container 8080 -> host 8080
+  # Vai trò: Cung cấp realm, user identity và OAuth/OIDC cho authentication.
+  # Kết nối chính: PostgreSQL và API Gateway/Auth Service.
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
-    container_name: bin_keycloak
     restart: unless-stopped
     command: start-dev
     depends_on:
@@ -206,10 +264,16 @@ services:
     networks:
       - infra_net
 
-  # ── Prometheus ────────────────────────────────────────────────────────────
+  # --------------------------------------------------------------------------
+  # 05. Observability
+  # --------------------------------------------------------------------------
+
+  # Service: Prometheus
+  # Port: container 9090 -> host 9090
+  # Vai trò: Thu thập và lưu time-series metrics của hệ thống.
+  # Kết nối chính: Prometheus configuration và các metrics endpoint.
   prometheus:
     image: prom/prometheus:v2.51.2
-    container_name: bin_prometheus
     restart: unless-stopped
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -224,10 +288,12 @@ services:
     networks:
       - infra_net
 
-  # ── Grafana ───────────────────────────────────────────────────────────────
+  # Service: Grafana
+  # Port: container 3030 -> host 3030
+  # Vai trò: Hiển thị dashboard metrics và health của hệ thống.
+  # Kết nối chính: Prometheus datasource và Grafana provisioning.
   grafana:
     image: grafana/grafana:10.4.2
-    container_name: bin_grafana
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
@@ -243,7 +309,9 @@ services:
     networks:
       - infra_net
 
-# ── Volumes ───────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
+# Volumes - dữ liệu bền vững
+# --------------------------------------------------------------------------
 volumes:
   postgres_data:
   mongodb_data:
@@ -252,10 +320,12 @@ volumes:
   prometheus_data:
   grafana_data:
   qdrant_data:
-    # Giữ lại vector đã tạo bởi compose ứng dụng trước đây khi chuyển Qdrant sang infra.
+    # Giữ lại volume vector cũ để không mất dữ liệu khi chuyển Qdrant sang infra Compose.
     name: e-commerce_qdrant_data
 
-# ── Networks ──────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
+# Network - mạng nội bộ cho toàn bộ infra services
+# --------------------------------------------------------------------------
 networks:
   infra_net:
     name: bin_infra_net
