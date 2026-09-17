@@ -190,7 +190,9 @@ services:
       - "9092:9092"
       - "29092:29092"
     volumes:
-      - kafka_data:/bitnami/kafka
+      # Apache Kafka image hiện dùng /tmp/kafka-logs làm log.dirs thực tế.
+      # Mount đúng thư mục này để topic và metadata không mất khi recreate container.
+      - kafka_data:/tmp/kafka-logs
     healthcheck:
       test:
         [
