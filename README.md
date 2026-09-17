@@ -440,7 +440,7 @@ Standard ranking ───────────────┐
 Optional AI ranking ────────────┘
 ```
 
-The runtime policy can control AI enablement, AI blend, experiment traffic and candidate-source flags. Environment variables remain appropriate for infrastructure-level master switches, service URLs, model paths, experiment identity and internal tokens.
+The runtime policy can control AI enablement and AI blend. When enabled, the compatible LightGBM model is applied to every request; an unavailable model or invalid response falls back to Standard/Hybrid ranking. Environment variables remain appropriate for infrastructure-level master switches, service URLs, model paths and internal tokens.
 
 Safety rules:
 
@@ -644,7 +644,7 @@ Deployment is environment-specific and must use the runtime configuration approp
 9. Monitor errors, latency, lag and business flow metrics.
 10. Roll back the changed service or policy when the evidence requires it.
 
-For AI ranking, deploy code with traffic at zero, verify model readiness, then increase traffic gradually. Standard ranking must remain available throughout the rollout.
+For AI ranking, deploy the compatible model artifact, verify model readiness, then enable AI for the service. Standard ranking must remain available as the baseline and emergency fallback.
 
 ## 21. Documentation map
 
