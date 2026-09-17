@@ -43,6 +43,7 @@ services:
   # Vai trò: Lưu dữ liệu quan hệ cho các service và Keycloak.
   # Kết nối chính: Application services, db-init và Keycloak.
   postgres:
+    container_name: bin-ecommerce-infra-postgres
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -67,6 +68,7 @@ services:
   # Vai trò: Tạo các database PostgreSQL cần thiết sau khi PostgreSQL healthy.
   # Kết nối chính: PostgreSQL.
   db-init:
+    container_name: bin-ecommerce-infra-db-init
     image: postgres:16-alpine
     restart: "no"
     depends_on:
@@ -91,6 +93,7 @@ services:
   # Vai trò: Lưu dữ liệu document cho các service dùng MongoDB.
   # Kết nối chính: Notification Service và các module document.
   mongodb:
+    container_name: bin-ecommerce-infra-mongodb
     image: mongo:7-jammy
     restart: unless-stopped
     environment:
@@ -114,6 +117,7 @@ services:
   # Vai trò: Cache, session, OTP và realtime state; có bật xác thực bằng REDIS_PASSWORD.
   # Kết nối chính: API Gateway, Auth, Recommendation, AI và Notification.
   redis:
+    container_name: bin-ecommerce-infra-redis
     image: redis:7-alpine
     restart: unless-stopped
     environment:
@@ -142,6 +146,7 @@ services:
   # Vai trò: Lưu và truy vấn vector embedding cho semantic recommendation.
   # Kết nối chính: Recommendation Service và AI embedding pipeline.
   qdrant:
+    container_name: bin-ecommerce-infra-qdrant
     image: qdrant/qdrant:v1.13.2
     restart: unless-stopped
     ports:
@@ -167,6 +172,7 @@ services:
   # Vai trò: Truyền event bất đồng bộ giữa các service, không dùng ZooKeeper.
   # Kết nối chính: Producer/consumer của application services.
   kafka:
+    container_name: bin-ecommerce-infra-kafka
     image: apache/kafka:3.8.0
     restart: unless-stopped
     environment:
@@ -211,6 +217,7 @@ services:
   # Vai trò: Theo dõi topic, consumer group và message Kafka trong local/demo.
   # Kết nối chính: Kafka.
   kafka-ui:
+    container_name: bin-ecommerce-infra-kafka-ui
     image: provectuslabs/kafka-ui:latest
     restart: unless-stopped
     ports:
@@ -233,6 +240,7 @@ services:
   # Vai trò: Cung cấp realm, user identity và OAuth/OIDC cho authentication.
   # Kết nối chính: PostgreSQL và API Gateway/Auth Service.
   keycloak:
+    container_name: bin-ecommerce-infra-keycloak
     image: quay.io/keycloak/keycloak:24.0
     restart: unless-stopped
     command: start-dev
@@ -275,6 +283,7 @@ services:
   # Vai trò: Thu thập và lưu time-series metrics của hệ thống.
   # Kết nối chính: Prometheus configuration và các metrics endpoint.
   prometheus:
+    container_name: bin-ecommerce-infra-prometheus
     image: prom/prometheus:v2.51.2
     restart: unless-stopped
     command:
@@ -295,6 +304,7 @@ services:
   # Vai trò: Hiển thị dashboard metrics và health của hệ thống.
   # Kết nối chính: Prometheus datasource và Grafana provisioning.
   grafana:
+    container_name: bin-ecommerce-infra-grafana
     image: grafana/grafana:10.4.2
     restart: unless-stopped
     environment:
