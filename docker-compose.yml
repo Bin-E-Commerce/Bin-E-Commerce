@@ -1,41 +1,76 @@
-# This compose file runs the application NestJS services + Nginx.
-# Infra (Postgres, Mongo, Redis, Kafka, Keycloak, Qdrant) must be started separately:
-# docker compose -f infra/docker/docker-compose.infra.yml up -d
-# Copy .env.example to .env before starting this application stack.
+# ============================================================================
+# Khởi động theo thứ tự:
+#   1. docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml up -d
+#   2. docker compose --env-file .env up -d --build
+#
+# Root .env file chứa các biến môi trường chung cho tất cả service
+# ============================================================================
+
+# THÀNH PHẦN THAM GIA
+#
+# Hạ tầng dùng chung (chạy ở infra/docker/docker-compose.infra.yml):
+#   PostgreSQL : 5432  | database cho các service nghiệp vụ
+#   MongoDB    : 27017 | database cho Notification Service
+#   Redis      : 6379  | cache và session
+#   Kafka      : 9092  | message broker cho event/worker
+#   Keycloak   : 8080  | xác thực và cấp token
+#   Qdrant     : 6333  | vector database cho semantic recommendation
+#
+# Application services trong compose này:
+#   Service               | Container port | Host port | Chức năng
+#   API Gateway           | 3000           | 3000      | cổng vào API
+#   Auth Service          | 3001           | nội bộ    | xác thực người dùng
+#   Catalog Service       | 3003           | nội bộ    | read model catalog
+#   Cart Service          | 3003           | nội bộ    | giỏ hàng
+#   Media Service         | 3004           | nội bộ    | upload và CDN
+#   Notification Service  | 3005           | nội bộ    | email/thông báo
+#   Recommendation Svc   | 3006           | nội bộ    | candidate và ranking
+#   Seller Service        | 3007           | nội bộ    | shop nội bộ
+#   Product Service       | 3008           | nội bộ    | sản phẩm
+#   AI Service            | 3009           | nội bộ    | AI và LightGBM
+#   Order Service         | 3011           | nội bộ    | đơn hàng
+#   Shipping Service      | 3012           | 3012      | vận chuyển/GHN
+#   AI Embedding Worker   | không có HTTP  | không có  | xử lý background qua Kafka
+#   Nginx                 | 80/443         | 80/443    | reverse proxy public
+#
+# Chỉ API Gateway, Shipping Service và Nginx publish port ra host; service còn
+# lại chỉ giao tiếp qua Docker network bằng tên service.
+
+# Tên project tạo prefix nhất quán cho container và resource do Compose quản lý.
+name: bin-ecommerce-app
 
 networks:
   bin_infra_net:
-    external: true # shared with infra compose
+    external: true
   bin_app_net:
     driver: bridge
 
 x-service-defaults: &service-defaults
   restart: unless-stopped
-  # Example file keeps compose config usable on a fresh checkout; .env overrides it when present.
-  env_file:
-    - path: .env.example
-      required: true
-    - path: .env
-      required: false
   networks:
     - bin_infra_net
     - bin_app_net
   deploy:
     resources:
       limits:
-        memory: 150m # 100m heap + 50m headroom
+        memory: 150m
       reservations:
         memory: 64m
 
 services:
-  # ── API Gateway ─────────────────────────────────────────────────────────────
+  # --------------------------------------------------------------------------
+  # 01. Điểm vào HTTP
+  # --------------------------------------------------------------------------
+  # Service: API Gateway
+  # Port: container 3000 -> host 3000
+  # Vai trò: điểm vào HTTP duy nhất cho frontend và client bên ngoài.
+  # Kết nối chính: Auth, Product, Catalog, Cart, Order, Recommendation, Shipping.
   api-gateway:
     <<: *service-defaults
     build:
       context: .
       dockerfile: services/api-gateway/Dockerfile
     image: bin-ecommerce/api-gateway:local
-    container_name: api-gateway
     ports:
       - "3000:3000"
     environment:
@@ -44,100 +79,241 @@ services:
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: bin-ecommerce
       AUTH_SERVICE_URL: http://auth-service:3001
+      CATALOG_SERVICE_URL: http://catalog-service:3003
+      MEDIA_SERVICE_URL: http://media-service:3004
       PRODUCT_SERVICE_URL: http://product-service:3008
       RECOMMENDATION_SERVICE_URL: http://recommendation-service:3006
       CART_SERVICE_URL: http://cart-service:3003
-      ORDER_SERVICE_URL: http://order-service:3004
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
-      INVENTORY_SERVICE_URL: http://inventory-service:3005
-      NOTIFICATION_SERVICE_URL: http://notification-service:3006
+      ORDER_SERVICE_URL: http://order-service:3011
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      REDIS_DB: 0
+      NOTIFICATION_SERVICE_URL: http://notification-service:3005
       SHIPPING_SERVICE_URL: http://shipping-service:3012
-      PROMOTION_SERVICE_URL: http://promotion-service:3008
-      RETURN_SERVICE_URL: http://return-service:3009
       ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
     depends_on:
       auth-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 3
 
-  # ── Auth Service ─────────────────────────────────────────────────────────────
+  # Service: Auth Service
+  # Port: container 3001 | host không publish
+  # Vai trò: đăng nhập, phiên người dùng, Keycloak và phân quyền.
+  # Kết nối chính: PostgreSQL, Keycloak và Kafka.
   auth-service:
     <<: *service-defaults
     build:
       context: .
       dockerfile: services/auth-service/Dockerfile
     image: bin-ecommerce/auth-service:local
-    container_name: auth-service
     environment:
       PORT: 3001
       NODE_ENV: development
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_postgres}
-      POSTGRES_DB: bin_auth
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: bin_ecommerce_auth
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: bin-ecommerce
       KEYCLOAK_CLIENT_ID: api-gateway
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme_keycloak_secret}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?Set KEYCLOAK_CLIENT_SECRET in .env}
       KEYCLOAK_WEB_CLIENT_ID: web-client
       KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_WEB_CLIENT_SECRET:-}
       FRONTEND_URL: http://localhost:5173
       SOCIAL_AUTH_CALLBACK_URL: http://localhost:5173/callback
       KAFKA_BROKERS: kafka:9092
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      REDIS_DB: 0
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 5
       start_period: 30s
 
-  # ── Product Service ──────────────────────────────────────────────────────────
+  # --------------------------------------------------------------------------
+  # 02. Dịch vụ thương mại cốt lõi
+  # --------------------------------------------------------------------------
+  # Service: Seller Service
+  # Port: container 3007 | host không publish
+  # Vai trò: quản lý hồ sơ shop và quy trình đăng ký người bán.
+  # Kết nối chính: PostgreSQL, Auth, Product, Catalog và Kafka.
+  seller-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/seller-service/Dockerfile
+    image: bin-ecommerce/seller-service:local
+    environment:
+      PORT: 3007
+      NODE_ENV: development
+      APP_VERSION: 1.0.0
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: bin_ecommerce_seller
+      AUTH_SERVICE_URL: http://auth-service:3001
+      PRODUCT_SERVICE_URL: http://product-service:3008
+      CATALOG_SERVICE_URL: http://catalog-service:3003
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_CLIENT_ID: seller-service
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3007/api/v1/health",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # Service: Product Service
+  # Port: container 3008 | host không publish
+  # Vai trò: quản lý sản phẩm, biến thể, trạng thái và dữ liệu bán hàng.
+  # Kết nối chính: PostgreSQL, Auth, Seller, Catalog, Media, Order và Kafka.
   product-service:
     <<: *service-defaults
     build:
       context: .
       dockerfile: services/product-service/Dockerfile
     image: bin-ecommerce/product-service:local
-    container_name: product-service
     environment:
       PORT: 3008
       NODE_ENV: development
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_product
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
-      ORDER_SERVICE_URL: http://order-service:3004
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      ORDER_SERVICE_URL: http://order-service:3011
       AUTH_SERVICE_URL: http://auth-service:3001
+      SELLER_SERVICE_URL: http://seller-service:3007
+      CATALOG_SERVICE_URL: http://catalog-service:3003
+      MEDIA_SERVICE_URL: http://media-service:3004
       KAFKA_BROKERS: kafka:9092
+      KAFKA_CLIENT_ID: product-service
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3008/api/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3008/api/v1/health",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # Service: Catalog Service
+  # Port: container 3003 | host không publish
+  # Vai trò: cung cấp read model catalog cho truy vấn nhanh.
+  # Kết nối chính: PostgreSQL.
+  catalog-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/catalog-service/Dockerfile
+    image: bin-ecommerce/catalog-service:local
+    environment:
+      PORT: 3003
+      NODE_ENV: development
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: bin_ecommerce_catalog
+      TYPEORM_LOGGING: ${CATALOG_TYPEORM_LOGGING:-false}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3003/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 5
 
-  # —— Recommendation Service ——
+  # Service: Media Service
+  # Port: container 3004 | host không publish
+  # Vai trò: tạo upload URL, quản lý asset và phân phối qua CDN.
+  # Kết nối chính: Auth, S3/CloudFront và internal service token.
+  media-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/media-service/Dockerfile
+    image: bin-ecommerce/media-service:local
+    environment:
+      PORT: 3004
+      NODE_ENV: development
+      APP_VERSION: 1.0.0
+      AUTH_SERVICE_URL: http://auth-service:3001
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      AWS_REGION: ${AWS_REGION:-ap-southeast-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-bin-ecommerce}
+      MEDIA_PUBLIC_CDN_URL: ${MEDIA_PUBLIC_CDN_URL:-https://dlmj9cgl5muim.cloudfront.net}
+      MEDIA_REQUEST_BODY_LIMIT: ${MEDIA_REQUEST_BODY_LIMIT:-12mb}
+      MEDIA_UPLOAD_EXPIRES_SECONDS: ${MEDIA_UPLOAD_EXPIRES_SECONDS:-300}
+      MEDIA_MAX_UPLOAD_SIZE_BYTES: ${MEDIA_MAX_UPLOAD_SIZE_BYTES:-5242880}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3004/api/v1/health/live",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  # --------------------------------------------------------------------------
+  # 03. Recommendation và AI
+  # --------------------------------------------------------------------------
+  # Service: Recommendation Service
+  # Port: container 3006 | host không publish
+  # Vai trò: thu thập candidate, ranking, cache, session và analytics.
+  # Kết nối chính: PostgreSQL, Kafka, Qdrant, Product và AI Service.
   recommendation-service:
     <<: *service-defaults
     build:
       context: .
       dockerfile: services/recommendation-service/Dockerfile
     image: bin-ecommerce/recommendation-service:local
-    container_name: recommendation-service
     environment:
       PORT: 3006
       NODE_ENV: development
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_recommendation
       KAFKA_BROKERS: kafka:9092
       KAFKA_CLIENT_ID: recommendation-service
@@ -145,7 +321,11 @@ services:
       PRODUCT_SERVICE_URL: http://product-service:3008
       AUTH_SERVICE_URL: http://auth-service:3001
       AI_SERVICE_URL: http://ai-service:3009
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      REDIS_DB: 1
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
       KAFKA_RETRY_BASE_DELAY_MS: ${KAFKA_RETRY_BASE_DELAY_MS:-250}
       KAFKA_RETRY_MAX_DELAY_MS: ${KAFKA_RETRY_MAX_DELAY_MS:-5000}
       EMBEDDING_JOB_MAX_ATTEMPTS: ${EMBEDDING_JOB_MAX_ATTEMPTS:-8}
@@ -164,7 +344,7 @@ services:
       CANDIDATE_PIPELINE_V3_ENABLED: ${CANDIDATE_PIPELINE_V3_ENABLED:-true}
       SEMANTIC_CANDIDATES_ENABLED: ${SEMANTIC_CANDIDATES_ENABLED:-true}
       CO_BEHAVIOR_CANDIDATES_ENABLED: ${CO_BEHAVIOR_CANDIDATES_ENABLED:-true}
-      ML_RANKING_ENABLED: ${ML_RANKING_ENABLED:-false}
+      ML_RANKING_ENABLED: ${ML_RANKING_ENABLED:-true}
       ML_RANKING_BLEND: ${ML_RANKING_BLEND:-0.3}
       ML_RANKING_POLICY_VERSION: ${ML_RANKING_POLICY_VERSION:-ml-hybrid-v1}
       ML_RANKING_TIMEOUT_MS: ${ML_RANKING_TIMEOUT_MS:-150}
@@ -186,32 +366,49 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── AI Service: HTTP image/content API và embedding worker dùng chung image ──
+  # Service: AI Service
+  # Port: container 3009 | host không publish
+  # Vai trò: cung cấp AI API, embedding và dự đoán LightGBM.
+  # Kết nối chính: PostgreSQL, Redis, Kafka, OpenAI và model artifact.
   ai-service:
     <<: *service-defaults
     build:
-      context: .
-      dockerfile: services/ai-service/Dockerfile
+      context: ./services/ai-service
+      dockerfile: Dockerfile
     image: bin-ecommerce/ai-service:local
-    container_name: ai-service
+    init: true
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     volumes:
       - ./services/ai-service/artifacts:/app/artifacts:ro
+      - bin_ecommerce_ai_u2net_cache:/home/aiworker/.u2net
     environment:
       PORT: 3009
       NODE_ENV: development
-      # Memory mode lets the local HTTP service boot without image-AI secrets; set service in production.
       AI_RUNTIME_MODE: ${AI_RUNTIME_MODE:-memory}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      DATABASE_URL: ${AI_DATABASE_URL:-postgresql+asyncpg://bin_ecommerce:changeme_postgres@postgres:5432/bin_ecommerce_ai}
-      REDIS_URL: ${AI_REDIS_URL:-redis://redis:6379/0}
+      DATABASE_URL: ${AI_DATABASE_URL:?Set AI_DATABASE_URL in .env}
+      REDIS_URL: ${AI_REDIS_URL:?Set AI_REDIS_URL in .env}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
       EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL_VERSION:-text-embedding-3-small}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
       RANKING_MODEL_PATH: ${RANKING_MODEL_PATH:-}
       RANKING_MODEL_VERSION: ${RANKING_MODEL_VERSION:-ranking-fallback-v1}
       RANKING_EXPECTED_FEATURES: ${RANKING_EXPECTED_FEATURES:-9}
+      U2NET_HOME: /home/aiworker/.u2net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768m
+        reservations:
+          cpus: "0.25"
+          memory: 256m
     healthcheck:
       test:
         [
@@ -223,74 +420,106 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
+  # Service: AI Embedding Worker
+  # Port: không có HTTP port | chạy background process
+  # Vai trò: nhận job embedding từ Kafka và ghi kết quả qua pipeline AI.
+  # Kết nối chính: Kafka, Redis, OpenAI và internal service token.
   ai-embedding-worker:
     <<: *service-defaults
     build:
-      context: .
-      dockerfile: services/ai-service/Dockerfile
+      context: ./services/ai-service
+      dockerfile: Dockerfile
     image: bin-ecommerce/ai-service:local
-    container_name: ai-embedding-worker
+    init: true
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     command: ["python", "-m", "app.entrypoints.workers.embedding_worker"]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512m
+        reservations:
+          cpus: "0.1"
+          memory: 128m
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
       EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL_VERSION:-text-embedding-3-small}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
-      REDIS_URL: ${AI_REDIS_URL:-redis://redis:6379/0}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      REDIS_URL: ${AI_REDIS_URL:?Set AI_REDIS_URL in .env}
       EMBEDDING_RESULT_CACHE_TTL_SECONDS: ${EMBEDDING_RESULT_CACHE_TTL_SECONDS:-600}
 
-  # ── Cart Service ─────────────────────────────────────────────────────────────
+  # --------------------------------------------------------------------------
+  # 04. Giỏ hàng và đơn hàng
+  # --------------------------------------------------------------------------
+  # Service: Cart Service
+  # Port: container 3003 | host không publish
+  # Vai trò: tạo, cập nhật và đọc giỏ hàng của người dùng.
+  # Kết nối chính: PostgreSQL, Product và internal service token.
   cart-service:
     <<: *service-defaults
     build:
-      context: ./services/cart-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/cart-service/Dockerfile
     image: bin-ecommerce/cart-service:local
-    container_name: cart-service
     environment:
       PORT: 3003
       NODE_ENV: development
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_cart
       PRODUCT_SERVICE_URL: http://product-service:3008
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
     depends_on:
       auth-service:
         condition: service_healthy
       product-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3003/api/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3003/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 3
 
-  # # ── Order Service ─────────────────────────────────────────────────────────────
+  # Service: Order Service
+  # Port: container 3011 | host không publish
+  # Vai trò: tạo đơn, xử lý trạng thái và đồng bộ vận chuyển.
+  # Kết nối chính: PostgreSQL, Cart, Auth, Product, Seller, Shipping và Kafka.
   order-service:
     <<: *service-defaults
     build:
       context: .
       dockerfile: services/order-service/Dockerfile
     image: bin-ecommerce/order-service:local
-    container_name: order-service
     environment:
-      PORT: 3004
+      PORT: 3011
       NODE_ENV: development
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_order
       CART_SERVICE_URL: http://cart-service:3003
       AUTH_SERVICE_URL: http://auth-service:3001
       PRODUCT_SERVICE_URL: http://product-service:3008
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
+      SELLER_SERVICE_URL: http://seller-service:3007
+      SHIPPING_SERVICE_URL: http://shipping-service:3012
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_CLIENT_ID: order-service
+      KAFKA_ORDER_GROUP_ID: order-service-shipment-sync-v3
+      KAFKA_PUBLISH_TIMEOUT_MS: ${KAFKA_PUBLISH_TIMEOUT_MS:-10000}
+      TYPEORM_LOGGING: ${ORDER_TYPEORM_LOGGING:-false}
     depends_on:
       cart-service:
         condition: service_healthy
@@ -299,80 +528,95 @@ services:
       product-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3004/api/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3011/api/v1/health",
+        ]
       interval: 30s
       timeout: 5s
+      start_period: 30s
       retries: 5
 
-  # # ── Inventory Service ─────────────────────────────────────────────────────────
-  # inventory-service:
-  #   <<: *service-defaults
-  #   build:
-  #     context: .
-  #     dockerfile: services/inventory-service/Dockerfile
-  #   image: bin-ecommerce/inventory-service:local
-  #   container_name: inventory-service
-  #   environment:
-  #     PORT: 3005
-  #     NODE_ENV: development
-  #     POSTGRES_HOST: postgres
-  #     POSTGRES_PORT: 5432
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_DB: bin_inventory
-  #     KAFKA_BROKERS: kafka:9092
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:3005/api/health"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 3
+  # --------------------------------------------------------------------------
+  # 05. Notification và shipping
+  # --------------------------------------------------------------------------
+  # Service: Notification Service
+  # Port: container 3005 | host không publish
+  # Vai trò: lưu thông báo và gửi email theo event nghiệp vụ.
+  # Kết nối chính: MongoDB, Redis, Kafka, Auth và SMTP.
+  notification-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    image: bin-ecommerce/notification-service:local
+    environment:
+      PORT: 3005
+      NODE_ENV: development
+      APP_VERSION: 1.0.0
+      MONGODB_URI: "${MONGODB_URI:?Set MONGODB_URI in .env}"
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_GROUP_ID: notification-service
+      AUTH_SERVICE_URL: http://auth-service:3001
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      REDIS_DB: 0
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@binecommerce.local}
+      WEB_BASE_URL: ${WEB_BASE_URL:-http://localhost:5173}
+      EMAIL_LOGO_PATH: assets/email/logo_background_white.png
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3005/api/v1/health",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
 
-  # # ── Notification Service ──────────────────────────────────────────────────────
-  # notification-service:
-  #   <<: *service-defaults
-  #   build:
-  #     context: .
-  #     dockerfile: services/notification-service/Dockerfile
-  #   image: bin-ecommerce/notification-service:local
-  #   container_name: notification-service
-  #   environment:
-  #     PORT: 3006
-  #     NODE_ENV: development
-  #     MONGODB_URI: mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@mongo:27017/bin_notification?authSource=admin
-  #     KAFKA_BROKERS: kafka:9092
-  #     SMTP_HOST: ${SMTP_HOST}
-  #     SMTP_PORT: ${SMTP_PORT}
-  #     SMTP_USER: ${SMTP_USER}
-  #     SMTP_PASSWORD: ${SMTP_PASSWORD}
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:3006/api/health"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 3
-
-  # ── Shipping Service ──────────────────────────────────────────────────────────
+  # Service: Shipping Service
+  # Port: container 3012 -> host 3012
+  # Vai trò: tính phí, tạo vận đơn và đồng bộ trạng thái giao hàng.
+  # Kết nối chính: PostgreSQL, Order, Seller, Kafka và GHN.
   shipping-service:
     <<: *service-defaults
     build:
       context: .
       dockerfile: services/shipping-service/Dockerfile
     image: bin-ecommerce/shipping-service:local
-    container_name: shipping-service
     ports:
       - "3012:3012"
     environment:
       PORT: 3012
       NODE_ENV: development
+      APP_VERSION: 1.0.0
+      TYPEORM_LOGGING: ${SHIPPING_TYPEORM_LOGGING:-false}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_shipping
       KAFKA_BROKERS: kafka:9092
       KAFKA_CLIENT_ID: shipping-service
       KAFKA_GROUP_ID: shipping-service
-      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-internal-token}
-      ORDER_SERVICE_URL: http://order-service:3004
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      ORDER_SERVICE_URL: http://order-service:3011
       SELLER_SERVICE_URL: http://seller-service:3007
       GHN_BASE_URL: ${GHN_BASE_URL:-https://dev-online-gateway.ghn.vn}
       GHN_TOKEN: ${GHN_TOKEN:-}
@@ -380,6 +624,9 @@ services:
       GHN_CLIENT_ID: ${GHN_CLIENT_ID:-}
       GHN_SERVICE_TYPE_ID: ${GHN_SERVICE_TYPE_ID:-2}
       GHN_REQUEST_TIMEOUT_MS: ${GHN_REQUEST_TIMEOUT_MS:-10000}
+      SHIPPING_DEMO_MODE: ${SHIPPING_DEMO_MODE:-true}
+      MAP_DEFAULT_LATITUDE: ${MAP_DEFAULT_LATITUDE:-10.7769}
+      MAP_DEFAULT_LONGITUDE: ${MAP_DEFAULT_LONGITUDE:-106.7009}
     depends_on:
       order-service:
         condition: service_healthy
@@ -389,63 +636,15 @@ services:
       timeout: 5s
       retries: 5
 
-  # # ── Promotion Service ─────────────────────────────────────────────────────────
-  # promotion-service:
-  #   <<: *service-defaults
-  #   build:
-  #     context: .
-  #     dockerfile: services/promotion-service/Dockerfile
-  #   image: bin-ecommerce/promotion-service:local
-  #   container_name: promotion-service
-  #   environment:
-  #     PORT: 3008
-  #     NODE_ENV: development
-  #     POSTGRES_HOST: postgres
-  #     POSTGRES_PORT: 5432
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_DB: bin_promotion
-  #     KAFKA_BROKERS: kafka:9092
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:3008/api/health"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 3
-
-  # # ── Return Service ────────────────────────────────────────────────────────────
-  # return-service:
-  #   <<: *service-defaults
-  #   build:
-  #     context: .
-  #     dockerfile: services/return-service/Dockerfile
-  #   image: bin-ecommerce/return-service:local
-  #   container_name: return-service
-  #   environment:
-  #     PORT: 3009
-  #     NODE_ENV: development
-  #     POSTGRES_HOST: postgres
-  #     POSTGRES_PORT: 5432
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_DB: bin_return
-  #     KAFKA_BROKERS: kafka:9092
-  #     CAMUNDA_ZEEBE_ADDRESS: ${CAMUNDA_ZEEBE_ADDRESS}
-  #     CAMUNDA_CLIENT_ID: ${CAMUNDA_CLIENT_ID}
-  #     CAMUNDA_CLIENT_SECRET: ${CAMUNDA_CLIENT_SECRET}
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:3009/api/health"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 3
-
-  # ── Nginx Reverse Proxy: Bảo vệ các service phía sau, xử lý SSL termination, CORS, rate limiting, v.v. ──────────────────────────────────────────────────────────────
-  # Lý do dùng Nginx: Thay vì expose tất cả các service trực tiếp ra ngoài, chúng ta chỉ expose Nginx trên cổng 80/443.
-  # Nginx sẽ làm nhiệm vụ reverse proxy, nhận request từ client và forward đến API Gateway hoặc các service khác dựa trên cấu hình.
-  # Điều này giúp tăng cường bảo mật (chỉ có một điểm vào), dễ dàng quản lý SSL, và có thể thêm các tính năng như rate limiting, caching, v.v. nếu cần trong tương lai.
-
+  # --------------------------------------------------------------------------
+  # 06. Public edge
+  # --------------------------------------------------------------------------
+  # Service: Nginx Reverse Proxy
+  # Port: host 80/443
+  # Vai trò: cổng public, reverse proxy và điểm kết thúc SSL.
+  # Kết nối chính: API Gateway trong application network.
   nginx:
     image: nginx:1.27-alpine
-    container_name: nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -463,3 +662,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+
+# --------------------------------------------------------------------------
+# 07. Volume dùng chung
+# --------------------------------------------------------------------------
+volumes:
+  bin_ecommerce_ai_u2net_cache:
