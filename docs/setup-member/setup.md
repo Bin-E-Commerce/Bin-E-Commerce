@@ -1,343 +1,166 @@
-# Bin E-Commerce - Basic Setup Guide
+# Bin E-Commerce — Setup cho thành viên
 
-This guide helps a new developer clone the main repository, initialize submodules, install dependencies, configure environment files, and run the current local development stack.
+Tài liệu này hướng dẫn chạy hệ thống local bằng Docker Compose và Web bằng Next.js.
 
-## 1. Prerequisites
+## 1. Yêu cầu
 
-Install these tools first:
+- Git và quyền truy cập các repository/submodule.
+- Node.js >= 20, npm >= 10.
+- Docker Desktop đang chạy.
+- Tối thiểu 8 GB RAM dành cho Docker Desktop.
 
-| Tool           | Required Version | Notes                                            |
-| -------------- | ---------------- | ------------------------------------------------ |
-| Git            | latest stable    | Needed for the main repo and submodules          |
-| Node.js        | `>= 20`          | Root `package.json` requires Node 20+            |
-| npm            | `>= 10`          | Used by root workspace and submodules            |
-| Docker Desktop | latest stable    | Needed for infrastructure and service containers |
+## 2. Clone và cài dependency
 
-If the repositories are private, make sure your GitHub account has access to the `Bin-E-Commerce` organization before cloning.
-
-## 2. Clone the Main Repository
-
-Recommended command:
-
-```bash
-git clone --recurse-submodules https://github.com/Bin-E-Commerce/Bin-E-Commerce.git
+~~~bash
+git clone --recurse-submodules <repository-url>
 cd E-commerce
-```
-
-If you already cloned without submodules:
-
-```bash
 git submodule update --init --recursive
-```
+npm ci
+cd web && npm ci && cd ..
+~~~
 
-If a submodule points to an old commit after pulling:
+Nếu submodule bị rỗng:
 
-```bash
-git pull
+~~~bash
 git submodule update --init --recursive
-```
+~~~
 
-## 3. Submodules Included
+## 3. Tạo file môi trường
 
-The main repository uses Git submodules for independently versioned apps/services.
+PowerShell:
 
-| Path                            | Repository                                                                  |
-| ------------------------------- | --------------------------------------------------------------------------- |
-| `web`                           | `https://github.com/Bin-E-Commerce/Bin-E-Commerce-UI-Web.git`               |
-| `services/api-gateway`          | `https://github.com/Bin-E-Commerce/Bin-E-Commerce-APIGateway.git`           |
-| `services/auth-service`         | `https://github.com/Bin-E-Commerce/Bin-E-Commerce-Auth-Service.git`         |
-| `services/notification-service` | `https://github.com/Bin-E-Commerce/Bin-E-Commerce-Notification-Service.git` |
-
-To pull latest code inside every submodule:
-
-```bash
-git submodule foreach git pull origin main
-```
-
-For `web`, check its current branch before pulling because it may use a feature branch:
-
-```bash
-cd web
-git branch --show-current
-git pull
-cd ..
-```
-
-## 4. Install Dependencies
-
-From the repository root:
-
-```bash
-npm install
-```
-
-Install web dependencies if needed:
-
-```bash
-cd web
-npm install
-cd ..
-```
-
-The backend services are npm workspaces under the root project, but each service also has its own `package.json`.
-
-## 5. Create Environment Files
-
-Copy the root env example:
-
-```bash
-cp .env.example .env
-```
-
-Copy service env examples:
-
-```bash
-cp services/api-gateway/.env.example services/api-gateway/.env
-cp services/auth-service/.env.example services/auth-service/.env
-cp services/notification-service/.env.example services/notification-service/.env
-```
-
-Copy frontend env example:
-
-```bash
-cp web/.env.example web/.env
-```
-
-On Windows PowerShell, use:
-
-```powershell
+~~~powershell
 Copy-Item .env.example .env
-Copy-Item services/api-gateway/.env.example services/api-gateway/.env
-Copy-Item services/auth-service/.env.example services/auth-service/.env
-Copy-Item services/notification-service/.env.example services/notification-service/.env
+Copy-Item infra/docker/.env.example infra/docker/.env
 Copy-Item web/.env.example web/.env
-```
+~~~
 
-## 6. Important Environment Values
+Bash:
 
-For local browser development, these values must line up:
+~~~bash
+cp .env.example .env
+cp infra/docker/.env.example infra/docker/.env
+cp web/.env.example web/.env
+~~~
 
-```env
-# web/.env
+Không commit các file .env thật.
+
+### Biến cần kiểm tra
+
+infra/docker/.env phải có đủ biến cho PostgreSQL, MongoDB, Redis, Keycloak và Grafana.
+
+Root .env cần kiểm tra tối thiểu:
+
+~~~env
+POSTGRES_PASSWORD=...
+MONGODB_URI=mongodb://...
+KEYCLOAK_CLIENT_SECRET=...
+INTERNAL_SERVICE_TOKEN=...
+AI_DATABASE_URL=postgresql+asyncpg://...
+AI_REDIS_URL=redis://:password@redis:6379/0
+REDIS_PASSWORD=password
+~~~
+
+REDIS_PASSWORD trong root .env phải giống infra/docker/.env và password bên trong AI_REDIS_URL.
+
+Các biến OPENAI_API_KEY, SMTP và GHN chỉ cần điền khi sử dụng chức năng tương ứng. RANKING_MODEL_PATH chỉ cần điền khi đã có model LightGBM trong services/ai-service/artifacts.
+
+Web dùng cấu hình local:
+
+~~~env
 NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_KEYCLOAK_URL=http://localhost:8080
+NEXT_PUBLIC_KEYCLOAK_REALM=bin-ecommerce
+NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=web-client
 NEXT_PUBLIC_APP_URL=http://localhost:5173
+~~~
 
-# services/api-gateway/.env
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
-AUTH_SERVICE_URL=http://localhost:3001
-NOTIFICATION_SERVICE_URL=http://localhost:3006
-```
+## 4. Khởi động hệ thống
 
-For auth-service:
+### Bước 1 — Hạ tầng
 
-```env
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=bin_auth
-REDIS_HOST=localhost
-REDIS_PORT=6379
-KAFKA_BROKERS=localhost:9092
-KEYCLOAK_URL=http://localhost:8080
-KEYCLOAK_REALM=bin-ecommerce
-FRONTEND_URL=http://localhost:5173
-```
+~~~bash
+docker compose --env-file infra/docker/.env \
+  -f infra/docker/docker-compose.infra.yml up -d
+~~~
 
-For notification-service:
+Hạ tầng gồm PostgreSQL, MongoDB, Redis, Kafka, Keycloak, Qdrant, Prometheus, Grafana và Kafka UI.
 
-```env
-MONGODB_URI=mongodb://localhost:27017/bin_notification
-KAFKA_BROKERS=localhost:9092
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@example.com
-SMTP_PASSWORD=replace-with-app-password
-```
+Kiểm tra:
 
-## 7. Start Infrastructure
+~~~bash
+docker compose --env-file infra/docker/.env \
+  -f infra/docker/docker-compose.infra.yml ps
+~~~
 
-Start shared infrastructure from the root:
+### Bước 2 — Application services
 
-```bash
-npm run infra:up
-```
+~~~bash
+docker compose --env-file .env up -d --build
+docker compose --env-file .env ps
+~~~
 
-View infra logs:
+### Bước 3 — Web
 
-```bash
-npm run infra:logs
-```
+Mở terminal mới:
 
-Stop infra:
+~~~bash
+cd web
+npm run dev
+~~~
 
-```bash
+Truy cập Web tại http://localhost:5173.
+
+## 5. Kiểm tra nhanh
+
+~~~bash
+curl http://localhost:3000/api/v1/health
+~~~
+
+| Thành phần | Địa chỉ |
+| --- | --- |
+| Web | http://localhost:5173 |
+| API Gateway | http://localhost:3000 |
+| Keycloak | http://localhost:8080 |
+| Kafka UI | http://localhost:8081 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3030 |
+| Qdrant | http://localhost:6333 |
+
+## 6. Lệnh thường dùng
+
+~~~bash
+# Xem log application
+docker compose --env-file .env logs -f <service-name>
+
+# Rebuild application images
+docker compose --env-file .env up -d --build
+
+# Dừng application services, không xóa volume
+docker compose --env-file .env stop
+
+# Dừng infra, không xóa volume
 npm run infra:down
-```
+~~~
 
-## 8. Build Services
+Không dùng down -v, docker volume prune hoặc docker system prune nếu chưa backup dữ liệu.
 
-Build all backend workspaces:
+## 7. Lỗi thường gặp
 
-```bash
-npm run build
-```
+### Web không gọi được API
 
-Build one service directly:
+Kiểm tra NEXT_PUBLIC_API_URL=http://localhost:3000 trong web/.env, sau đó restart Web.
 
-```bash
-cd services/api-gateway
-npm run build
-```
+### Service không kết nối được Redis
 
-```bash
-cd services/auth-service
-npm run build
-```
+Kiểm tra REDIS_PASSWORD trong root .env, infra/docker/.env và password trong AI_REDIS_URL phải giống nhau.
 
-```bash
-cd services/notification-service
-npm run build
-```
+### Container chưa healthy
 
-## 9. Run Backend Services Locally
+~~~bash
+docker compose --env-file infra/docker/.env \
+  -f infra/docker/docker-compose.infra.yml ps
+docker compose --env-file .env logs <service-name>
+~~~
 
-In separate terminals:
-
-```bash
-cd services/api-gateway
-npm run dev
-```
-
-```bash
-cd services/auth-service
-npm run dev
-```
-
-```bash
-cd services/notification-service
-npm run dev
-```
-
-Default ports:
-
-| Service              | Port   | Health Check                       |
-| -------------------- | ------ | ---------------------------------- |
-| API Gateway          | `3000` | `http://localhost:3000/api/health` |
-| Auth Service         | `3001` | `http://localhost:3001/api/health` |
-| Notification Service | `3006` | `http://localhost:3006/api/health` |
-| Web                  | `5173` | `http://localhost:5173`            |
-
-## 10. Run the Web App
-
-```bash
-cd web
-npm run dev
-```
-
-Open:
-
-```text
-http://localhost:5173
-```
-
-The web app calls the API Gateway using:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
-```
-
-## 11. Docker Commands
-
-Build service images:
-
-```bash
-npm run services:build
-```
-
-Start service containers:
-
-```bash
-npm run services:up
-```
-
-Stop service containers:
-
-```bash
-npm run services:down
-```
-
-## 12. Quick Smoke Tests
-
-Check API Gateway:
-
-```bash
-curl http://localhost:3000/api/health
-```
-
-Check Auth Service:
-
-```bash
-curl http://localhost:3001/api/health
-```
-
-Check Notification Service:
-
-```bash
-curl http://localhost:3006/api/health
-```
-
-Test login through the gateway:
-
-```bash
-curl -i -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"user@example.com\",\"password\":\"Password1\"}"
-```
-
-## 13. Common Issues
-
-### Submodule folder is empty
-
-Run:
-
-```bash
-git submodule update --init --recursive
-```
-
-### CORS error from web to API Gateway
-
-Make sure `services/api-gateway/.env` contains:
-
-```env
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
-```
-
-Then restart API Gateway.
-
-### Web type-check fails
-
-Run:
-
-```bash
-cd web
-npm run type-check
-```
-
-Fix the reported page/component export errors before treating the frontend as production-ready.
-
-### Docker cannot connect to a service
-
-Check whether you are using Docker network URLs or localhost URLs:
-
-- Inside Docker Compose: `http://auth-service:3001`
-- From host machine: `http://localhost:3001`
-
-## 14. Recommended Development Order
-
-1. Clone with submodules.
-2. Copy `.env.example` files.
-3. Start infra.
-4. Start `auth-service`.
-5. Start `notification-service`.
-6. Start `api-gateway`.
-7. Start `web`.
-8. Test login/register through `http://localhost:5173`.
+Chờ PostgreSQL, Kafka và Redis healthy trước khi đánh giá lỗi application service.
