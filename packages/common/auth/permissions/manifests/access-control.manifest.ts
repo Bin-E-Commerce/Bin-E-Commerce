@@ -7,7 +7,7 @@ import { PermissionScope } from "../contracts/permission-scope.enum";
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.09.10.1";
+export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.09.19.1";
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -761,6 +761,30 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     scope: PermissionScope.GLOBAL,
   },
   {
+    // Mở đúng khung Admin Center cho nhân sự hỗ trợ; quyền này không cấp quyền quản trị hệ thống.
+    roleCode: UserRole.SUPPORT_AGENT,
+    permissionCode: Permission.ADMIN_ACCESS,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    // Cho phép nhân sự hỗ trợ xem danh sách yêu cầu thay đổi hồ sơ shop để thực hiện quy trình review.
+    roleCode: UserRole.SUPPORT_AGENT,
+    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    // Cho phép duyệt thay đổi hồ sơ shop; seller-service vẫn kiểm tra lại permission ở lớp nghiệp vụ.
+    roleCode: UserRole.SUPPORT_AGENT,
+    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
+    // Cho phép từ chối thay đổi hồ sơ shop độc lập với quyền xem và quyền duyệt.
+    roleCode: UserRole.SUPPORT_AGENT,
+    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT,
+    scope: PermissionScope.GLOBAL,
+  },
+  {
     roleCode: UserRole.ADMIN,
     permissionCode: Permission.ADMIN_ACCESS,
     scope: PermissionScope.GLOBAL,
@@ -867,7 +891,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 10,
     code: "admin.dashboard",
     label: "Bảng điều khiển",
-    description: "Sức khỏe hệ thống và việc cần xử lý",
+    description: "Tình trạng hệ thống và việc cần xử lý",
     href: "/admin/dashboard",
     icon: "LayoutDashboard",
     sortOrder: 10,
@@ -880,7 +904,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 20,
     code: "admin.seller_applications",
     label: "Hồ sơ chờ duyệt",
-    description: "Danh sách đăng ký seller cần kiểm tra",
+    description: "Hồ sơ seller cần kiểm tra",
     href: "/admin/sellers/applications",
     icon: "ClipboardCheck",
     sortOrder: 10,
@@ -893,7 +917,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 20,
     code: "admin.shop_profile_changes",
     label: "Thay đổi hồ sơ shop",
-    description: "Duyệt thay đổi thuế, thanh toán và định danh",
+    description: "Duyệt thay đổi hồ sơ shop",
     href: "/admin/sellers/profile-changes",
     icon: "FilePenLine",
     sortOrder: 20,
@@ -906,7 +930,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 30,
     code: "admin.recommendation",
     label: "Phân tích gợi ý",
-    description: "Hành vi người dùng và policy ranking",
+    description: "Hành vi người dùng và ranking",
     href: "/admin/recommendation",
     icon: "BarChart3",
     sortOrder: 10,
@@ -919,7 +943,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 90,
     code: "admin.access_control",
     label: "Phân quyền",
-    description: "Vai trò, quyền, scope và menu",
+    description: "Vai trò, quyền và menu",
     href: "/admin/access-control",
     icon: "ShieldCheck",
     sortOrder: 10,
@@ -932,7 +956,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 10,
     code: "seller.dashboard",
     label: "Bảng điều khiển",
-    description: "Doanh thu, đơn cần xử lý và sức khỏe shop",
+    description: "Doanh thu và đơn cần xử lý",
     href: "/seller",
     icon: "LayoutDashboard",
     sortOrder: 10,
@@ -945,8 +969,8 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 20,
     code: "seller.ai.image_optimization",
     label: "Tối ưu hình ảnh AI",
-    description: "Tạo ảnh nền trắng và ảnh lifestyle cho sản phẩm",
-    href: "/seller/ai/optimization",
+    description: "Nền trắng và lifestyle",
+    href: "/seller/ai/image-optimization",
     icon: "AiAssistant",
     sortOrder: 5,
     requiredPermissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
@@ -959,7 +983,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 26,
     code: "seller.shipping.settings",
     label: "Thiết lập giao nhận",
-    description: "Địa chỉ lấy hàng, khung giờ và đơn vị vận chuyển",
+    description: "Địa chỉ và lịch giao nhận",
     href: "/seller/shipping/settings",
     icon: "Settings2",
     sortOrder: 20,
@@ -973,7 +997,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 26,
     code: "seller.shipping.providers",
     label: "Đơn vị vận chuyển",
-    description: "Quản lý nhà vận chuyển và lịch bàn giao",
+    description: "Quản lý đơn vị vận chuyển",
     href: "/seller/shipping/providers",
     icon: "Truck",
     sortOrder: 30,
@@ -987,7 +1011,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 20,
     code: "seller.products",
     label: "Tất cả sản phẩm",
-    description: "Theo dõi sản phẩm, giá bán, tồn kho và trạng thái hiển thị",
+    description: "Sản phẩm, giá bán và tồn kho",
     href: "/seller/products",
     icon: "PackageSearch",
     sortOrder: 10,
@@ -1000,7 +1024,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 20,
     code: "seller.products.create",
     label: "Thêm sản phẩm",
-    description: "Tạo sản phẩm, phân loại, giá bán và tồn kho",
+    description: "Tạo sản phẩm và quản lý giá",
     href: "/seller/products/new",
     icon: "PackagePlus",
     sortOrder: 20,
@@ -1013,7 +1037,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 25,
     code: "seller.orders",
     label: "Đơn hàng",
-    description: "Theo dõi đơn hàng có sản phẩm thuộc shop",
+    description: "Theo dõi đơn hàng của shop",
     href: "/seller/orders",
     icon: "ClipboardList",
     sortOrder: 10,
@@ -1027,7 +1051,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 30,
     code: "seller.shop_profile",
     label: "Hồ sơ shop",
-    description: "Thông tin công khai, thuế và định danh của shop",
+    description: "Thông tin và cài đặt shop",
     href: "/seller/shop",
     icon: "Store",
     sortOrder: 10,
@@ -1040,7 +1064,7 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     groupOrder: 25,
     code: "seller.returns",
     label: "Xử lý hoàn hàng",
-    description: "Duyệt yêu cầu, nhận hàng hoàn và kiểm tra hoàn tiền",
+    description: "Duyệt và xử lý hàng hoàn",
     href: "/seller/returns",
     icon: "RotateCcw",
     sortOrder: 20,
