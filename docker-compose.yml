@@ -24,13 +24,15 @@
 #   Cart Service          | 3003           | nội bộ    | giỏ hàng
 #   Media Service         | 3004           | nội bộ    | upload và CDN
 #   Notification Service  | 3005           | nội bộ    | email/thông báo
-#   Recommendation Svc   | 3006           | nội bộ    | candidate và ranking
+#   Recommendation Svc    | 3006           | nội bộ    | candidate và ranking
 #   Seller Service        | 3007           | nội bộ    | shop nội bộ
 #   Product Service       | 3008           | nội bộ    | sản phẩm
 #   AI Service            | 3009           | nội bộ    | AI và LightGBM
 #   Order Service         | 3011           | nội bộ    | đơn hàng
 #   Shipping Service      | 3012           | 3012      | vận chuyển/GHN
+#   AI Image Worker       | không có HTTP  | nội bộ    | xử lý tối ưu ảnh nền
 #   AI Embedding Worker   | không có HTTP  | không có  | xử lý background qua Kafka
+#   AI Outbox Relay       | không có HTTP  | nội bộ    | đẩy outbox sang Kafka
 #   Nginx                 | 80/443         | 80/443    | reverse proxy public
 #
 # Chỉ API Gateway, Shipping Service và Nginx publish port ra host; service còn
@@ -66,6 +68,7 @@ services:
   # Vai trò: điểm vào HTTP duy nhất cho frontend và client bên ngoài.
   # Kết nối chính: Auth, Product, Catalog, Cart, Order, Recommendation, Shipping.
   api-gateway:
+    container_name: bin-ecommerce-app-api-gateway
     <<: *service-defaults
     build:
       context: .
@@ -75,8 +78,9 @@ services:
       - "3000:3000"
     environment:
       PORT: 3000
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL:-http://localhost:8080}
       KEYCLOAK_REALM: bin-ecommerce
       AUTH_SERVICE_URL: http://auth-service:3001
       CATALOG_SERVICE_URL: http://catalog-service:3003
@@ -107,6 +111,7 @@ services:
   # Vai trò: đăng nhập, phiên người dùng, Keycloak và phân quyền.
   # Kết nối chính: PostgreSQL, Keycloak và Kafka.
   auth-service:
+    container_name: bin-ecommerce-app-auth-service
     <<: *service-defaults
     build:
       context: .
@@ -114,16 +119,19 @@ services:
     image: bin-ecommerce/auth-service:local
     environment:
       PORT: 3001
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_auth
       KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL:-http://localhost:8080}
       KEYCLOAK_REALM: bin-ecommerce
-      KEYCLOAK_CLIENT_ID: api-gateway
+      KEYCLOAK_CLIENT_ID: auth-service
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?Set KEYCLOAK_CLIENT_SECRET in .env}
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-auth-service-admin}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
       KEYCLOAK_WEB_CLIENT_ID: web-client
       KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_WEB_CLIENT_SECRET:-}
       FRONTEND_URL: http://localhost:5173
@@ -149,6 +157,7 @@ services:
   # Vai trò: quản lý hồ sơ shop và quy trình đăng ký người bán.
   # Kết nối chính: PostgreSQL, Auth, Product, Catalog và Kafka.
   seller-service:
+    container_name: bin-ecommerce-app-seller-service
     <<: *service-defaults
     build:
       context: .
@@ -156,7 +165,7 @@ services:
     image: bin-ecommerce/seller-service:local
     environment:
       PORT: 3007
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       APP_VERSION: 1.0.0
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -196,6 +205,7 @@ services:
   # Vai trò: quản lý sản phẩm, biến thể, trạng thái và dữ liệu bán hàng.
   # Kết nối chính: PostgreSQL, Auth, Seller, Catalog, Media, Order và Kafka.
   product-service:
+    container_name: bin-ecommerce-app-product-service
     <<: *service-defaults
     build:
       context: .
@@ -203,7 +213,7 @@ services:
     image: bin-ecommerce/product-service:local
     environment:
       PORT: 3008
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
@@ -237,6 +247,7 @@ services:
   # Vai trò: cung cấp read model catalog cho truy vấn nhanh.
   # Kết nối chính: PostgreSQL.
   catalog-service:
+    container_name: bin-ecommerce-app-catalog-service
     <<: *service-defaults
     build:
       context: .
@@ -244,7 +255,7 @@ services:
     image: bin-ecommerce/catalog-service:local
     environment:
       PORT: 3003
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
@@ -262,6 +273,7 @@ services:
   # Vai trò: tạo upload URL, quản lý asset và phân phối qua CDN.
   # Kết nối chính: Auth, S3/CloudFront và internal service token.
   media-service:
+    container_name: bin-ecommerce-app-media-service
     <<: *service-defaults
     build:
       context: .
@@ -269,12 +281,15 @@ services:
     image: bin-ecommerce/media-service:local
     environment:
       PORT: 3004
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       APP_VERSION: 1.0.0
       AUTH_SERVICE_URL: http://auth-service:3001
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
       AWS_REGION: ${AWS_REGION:-ap-southeast-1}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-bin-ecommerce}
+      # Credential local/demo để AWS SDK ký presigned upload; production nên dùng IAM Role.
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?Set AWS_ACCESS_KEY_ID in .env}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?Set AWS_SECRET_ACCESS_KEY in .env}
       MEDIA_PUBLIC_CDN_URL: ${MEDIA_PUBLIC_CDN_URL:-https://dlmj9cgl5muim.cloudfront.net}
       MEDIA_REQUEST_BODY_LIMIT: ${MEDIA_REQUEST_BODY_LIMIT:-12mb}
       MEDIA_UPLOAD_EXPIRES_SECONDS: ${MEDIA_UPLOAD_EXPIRES_SECONDS:-300}
@@ -302,6 +317,7 @@ services:
   # Vai trò: thu thập candidate, ranking, cache, session và analytics.
   # Kết nối chính: PostgreSQL, Kafka, Qdrant, Product và AI Service.
   recommendation-service:
+    container_name: bin-ecommerce-app-recommendation-service
     <<: *service-defaults
     build:
       context: .
@@ -309,7 +325,7 @@ services:
     image: bin-ecommerce/recommendation-service:local
     environment:
       PORT: 3006
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
@@ -371,6 +387,7 @@ services:
   # Vai trò: cung cấp AI API, embedding và dự đoán LightGBM.
   # Kết nối chính: PostgreSQL, Redis, Kafka, OpenAI và model artifact.
   ai-service:
+    container_name: bin-ecommerce-app-ai-service
     <<: *service-defaults
     build:
       context: ./services/ai-service
@@ -387,9 +404,10 @@ services:
       - bin_ecommerce_ai_u2net_cache:/home/aiworker/.u2net
     environment:
       PORT: 3009
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       AI_RUNTIME_MODE: ${AI_RUNTIME_MODE:-memory}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      MEDIA_PUBLIC_CDN_URL: ${MEDIA_PUBLIC_CDN_URL:?Set MEDIA_PUBLIC_CDN_URL in .env}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DATABASE_URL: ${AI_DATABASE_URL:?Set AI_DATABASE_URL in .env}
       REDIS_URL: ${AI_REDIS_URL:?Set AI_REDIS_URL in .env}
@@ -397,6 +415,19 @@ services:
       EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL_VERSION:-text-embedding-3-small}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      MEDIA_SERVICE_URL: http://media-service:3004
+      PRODUCT_SERVICE_URL: http://product-service:3008
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:3006
+      AI_IMAGE_BACKGROUND_ENCRYPTION_KEY: ${AI_IMAGE_BACKGROUND_ENCRYPTION_KEY:?Set AI_IMAGE_BACKGROUND_ENCRYPTION_KEY in .env}
+      AI_IMAGE_RATE_LIMIT_REQUESTS: ${AI_IMAGE_RATE_LIMIT_REQUESTS:-3}
+      AI_IMAGE_RATE_LIMIT_WINDOW_SECONDS: ${AI_IMAGE_RATE_LIMIT_WINDOW_SECONDS:-3600}
+      AI_IMAGE_PREVIEW_QUALITY: ${AI_IMAGE_PREVIEW_QUALITY:-low}
+      AI_IMAGE_PREVIEW_SIZE: ${AI_IMAGE_PREVIEW_SIZE:-1024x1024}
+      AI_IMAGE_PREVIEW_FORMAT: ${AI_IMAGE_PREVIEW_FORMAT:-jpeg}
+      AI_IMAGE_PREVIEW_COMPRESSION: ${AI_IMAGE_PREVIEW_COMPRESSION:-65}
+      AI_IMAGE_PREVIEW_MAX_DIMENSION: ${AI_IMAGE_PREVIEW_MAX_DIMENSION:-768}
+      AI_IMAGE_PREVIEW_INPUT_FIDELITY: ${AI_IMAGE_PREVIEW_INPUT_FIDELITY:-high}
+      AI_IMAGE_PREVIEW_TIMEOUT_SECONDS: ${AI_IMAGE_PREVIEW_TIMEOUT_SECONDS:-120}
       RANKING_MODEL_PATH: ${RANKING_MODEL_PATH:-}
       RANKING_MODEL_VERSION: ${RANKING_MODEL_VERSION:-ranking-fallback-v1}
       RANKING_EXPECTED_FEATURES: ${RANKING_EXPECTED_FEATURES:-9}
@@ -421,24 +452,34 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    depends_on:
+      media-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
 
   # Service: AI Embedding Worker
   # Port: không có HTTP port | chạy background process
   # Vai trò: nhận job embedding từ Kafka và ghi kết quả qua pipeline AI.
   # Kết nối chính: Kafka, Redis, OpenAI và internal service token.
   ai-embedding-worker:
+    container_name: bin-ecommerce-app-ai-embedding-worker
     <<: *service-defaults
     build:
       context: ./services/ai-service
       dockerfile: Dockerfile
-    image: bin-ecommerce/ai-service:local
+    image: bin-ecommerce/ai-embedding-worker:local
     init: true
     stop_grace_period: 30s
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    command: ["python", "-m", "app.entrypoints.workers.embedding_worker"]
+    entrypoint: ["python"]
+    command: ["-m", "app.entrypoints.workers.embedding_worker"]
+    # Worker không mở HTTP port nên không dùng healthcheck /api/health của API image.
+    healthcheck:
+      disable: true
     deploy:
       resources:
         limits:
@@ -448,6 +489,7 @@ services:
           cpus: "0.1"
           memory: 128m
     environment:
+      NODE_ENV: ${NODE_ENV:-development}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
@@ -457,6 +499,129 @@ services:
       REDIS_URL: ${AI_REDIS_URL:?Set AI_REDIS_URL in .env}
       EMBEDDING_RESULT_CACHE_TTL_SECONDS: ${EMBEDDING_RESULT_CACHE_TTL_SECONDS:-600}
 
+  # Service: AI Image Optimization Worker
+  # Port: không có HTTP port | chạy background process
+  # Vai trò: đọc job tối ưu ảnh từ Kafka, gọi provider và lưu kết quả qua Media Service.
+  # Kết nối chính: PostgreSQL, Kafka, Media Service, Redis và OpenAI.
+  ai-image-optimization-worker:
+    container_name: bin-ecommerce-app-ai-image-optimization-worker
+    <<: *service-defaults
+    build:
+      context: ./services/ai-service
+      dockerfile: Dockerfile
+    image: bin-ecommerce/ai-image-optimization-worker:local
+    init: true
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    entrypoint: ["python"]
+    command: ["-m", "app.entrypoints.workers.image_optimization_worker"]
+    # Worker chạy nền qua Kafka, trạng thái sống được theo dõi bằng process/container.
+    healthcheck:
+      disable: true
+    volumes:
+      - ./services/ai-service/artifacts:/app/artifacts:ro
+      - bin_ecommerce_ai_u2net_cache:/home/aiworker/.u2net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768m
+        reservations:
+          cpus: "0.25"
+          memory: 256m
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      AI_RUNTIME_MODE: service
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DATABASE_URL: ${AI_DATABASE_URL:?Set AI_DATABASE_URL in .env}
+      REDIS_URL: ${AI_REDIS_URL:?Set AI_REDIS_URL in .env}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      MEDIA_SERVICE_URL: http://media-service:3004
+      PRODUCT_SERVICE_URL: http://product-service:3008
+      AI_IMAGE_OPTIMIZATION_ENABLED: ${AI_IMAGE_OPTIMIZATION_ENABLED:-false}
+      AI_IMAGE_BACKGROUND_ENCRYPTION_KEY: ${AI_IMAGE_BACKGROUND_ENCRYPTION_KEY:-}
+      KAFKA_IMAGE_OPTIMIZATION_TOPIC: ${KAFKA_IMAGE_OPTIMIZATION_TOPIC:-ai.image-optimization.requested.v1}
+      KAFKA_IMAGE_OPTIMIZATION_DLQ_TOPIC: ${KAFKA_IMAGE_OPTIMIZATION_DLQ_TOPIC:-ai.image-optimization.dlq.v1}
+      KAFKA_CONSUMER_GROUP: ${KAFKA_CONSUMER_GROUP:-ai-service.image-optimization-worker.v1}
+      AI_IMAGE_MAX_RETRY_ATTEMPTS: ${AI_IMAGE_MAX_RETRY_ATTEMPTS:-3}
+      AI_IMAGE_JOB_LEASE_SECONDS: ${AI_IMAGE_JOB_LEASE_SECONDS:-300}
+      AI_IMAGE_REVIEW_RETENTION_DAYS: ${AI_IMAGE_REVIEW_RETENTION_DAYS:-30}
+      AI_IMAGE_WORKER_CONCURRENCY: ${AI_IMAGE_WORKER_CONCURRENCY:-2}
+      AI_IMAGE_KAFKA_POLL_TIMEOUT_MS: ${AI_IMAGE_KAFKA_POLL_TIMEOUT_MS:-250}
+      AI_IMAGE_MAX_DIMENSION: ${AI_IMAGE_MAX_DIMENSION:-2048}
+      AI_IMAGE_WEBP_QUALITY: ${AI_IMAGE_WEBP_QUALITY:-88}
+      AI_IMAGE_PROVIDER_MAX_CONCURRENCY: ${AI_IMAGE_PROVIDER_MAX_CONCURRENCY:-2}
+      AI_IMAGE_GENERATED_MAX_BYTES: ${AI_IMAGE_GENERATED_MAX_BYTES:-20000000}
+      AI_IMAGE_PREVIEW_QUALITY: ${AI_IMAGE_PREVIEW_QUALITY:-low}
+      AI_IMAGE_PREVIEW_SIZE: ${AI_IMAGE_PREVIEW_SIZE:-1024x1024}
+      AI_IMAGE_PREVIEW_FORMAT: ${AI_IMAGE_PREVIEW_FORMAT:-jpeg}
+      AI_IMAGE_PREVIEW_COMPRESSION: ${AI_IMAGE_PREVIEW_COMPRESSION:-65}
+      AI_IMAGE_PREVIEW_MAX_DIMENSION: ${AI_IMAGE_PREVIEW_MAX_DIMENSION:-768}
+      AI_IMAGE_PREVIEW_INPUT_FIDELITY: ${AI_IMAGE_PREVIEW_INPUT_FIDELITY:-high}
+      AI_IMAGE_PREVIEW_TIMEOUT_SECONDS: ${AI_IMAGE_PREVIEW_TIMEOUT_SECONDS:-120}
+      AI_IMAGE_FINAL_QUALITY: ${AI_IMAGE_FINAL_QUALITY:-medium}
+      AI_IMAGE_FINAL_SIZE: ${AI_IMAGE_FINAL_SIZE:-1024x1024}
+      AI_IMAGE_FINAL_FORMAT: ${AI_IMAGE_FINAL_FORMAT:-jpeg}
+      AI_IMAGE_FINAL_COMPRESSION: ${AI_IMAGE_FINAL_COMPRESSION:-85}
+      AI_IMAGE_FINAL_MAX_DIMENSION: ${AI_IMAGE_FINAL_MAX_DIMENSION:-1024}
+      AI_IMAGE_FINAL_INPUT_FIDELITY: ${AI_IMAGE_FINAL_INPUT_FIDELITY:-high}
+      AI_IMAGE_FINAL_TIMEOUT_SECONDS: ${AI_IMAGE_FINAL_TIMEOUT_SECONDS:-120}
+      OPENAI_IMAGE_MODEL: ${OPENAI_IMAGE_MODEL:-gpt-image-2}
+      OPENAI_IMAGE_TIMEOUT_SECONDS: ${OPENAI_IMAGE_TIMEOUT_SECONDS:-120}
+      OPENAI_IMAGE_OUTPUT_HOSTS: ${OPENAI_IMAGE_OUTPUT_HOSTS:-oaidalleapiprodscus.blob.core.windows.net,cdn.openai.com}
+      U2NET_HOME: /home/aiworker/.u2net
+    depends_on:
+      media-service:
+        condition: service_healthy
+
+  # Service: AI Outbox Relay
+  # Port: không có HTTP port | chạy background process
+  # Vai trò: đọc bản ghi outbox PostgreSQL và publish event sang Kafka.
+  # Kết nối chính: PostgreSQL và Kafka; không gọi provider AI trực tiếp.
+  ai-outbox-relay:
+    container_name: bin-ecommerce-app-ai-outbox-relay
+    <<: *service-defaults
+    build:
+      context: ./services/ai-service
+      dockerfile: Dockerfile
+    image: bin-ecommerce/ai-outbox-relay:local
+    init: true
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    entrypoint: ["python"]
+    command: ["-m", "app.entrypoints.workers.outbox_relay"]
+    # Relay không cung cấp HTTP endpoint nên không chạy probe của API service.
+    healthcheck:
+      disable: true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384m
+        reservations:
+          cpus: "0.1"
+          memory: 128m
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      AI_RUNTIME_MODE: service
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DATABASE_URL: ${AI_DATABASE_URL:?Set AI_DATABASE_URL in .env}
+      REDIS_URL: ${AI_REDIS_URL:?Set AI_REDIS_URL in .env}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
+      AI_IMAGE_OPTIMIZATION_ENABLED: ${AI_IMAGE_OPTIMIZATION_ENABLED:-false}
+      AI_IMAGE_BACKGROUND_ENCRYPTION_KEY: ${AI_IMAGE_BACKGROUND_ENCRYPTION_KEY:-}
+      KAFKA_IMAGE_OPTIMIZATION_TOPIC: ${KAFKA_IMAGE_OPTIMIZATION_TOPIC:-ai.image-optimization.requested.v1}
+      KAFKA_IMAGE_OPTIMIZATION_DLQ_TOPIC: ${KAFKA_IMAGE_OPTIMIZATION_DLQ_TOPIC:-ai.image-optimization.dlq.v1}
+      AI_IMAGE_OUTBOX_MAX_ATTEMPTS: ${AI_IMAGE_OUTBOX_MAX_ATTEMPTS:-8}
+      AI_IMAGE_OUTBOX_POLL_INTERVAL_MS: ${AI_IMAGE_OUTBOX_POLL_INTERVAL_MS:-250}
   # --------------------------------------------------------------------------
   # 04. Giỏ hàng và đơn hàng
   # --------------------------------------------------------------------------
@@ -465,6 +630,7 @@ services:
   # Vai trò: tạo, cập nhật và đọc giỏ hàng của người dùng.
   # Kết nối chính: PostgreSQL, Product và internal service token.
   cart-service:
+    container_name: bin-ecommerce-app-cart-service
     <<: *service-defaults
     build:
       context: .
@@ -472,7 +638,7 @@ services:
     image: bin-ecommerce/cart-service:local
     environment:
       PORT: 3003
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
@@ -496,6 +662,7 @@ services:
   # Vai trò: tạo đơn, xử lý trạng thái và đồng bộ vận chuyển.
   # Kết nối chính: PostgreSQL, Cart, Auth, Product, Seller, Shipping và Kafka.
   order-service:
+    container_name: bin-ecommerce-app-order-service
     <<: *service-defaults
     build:
       context: .
@@ -503,7 +670,7 @@ services:
     image: bin-ecommerce/order-service:local
     environment:
       PORT: 3011
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
@@ -550,6 +717,7 @@ services:
   # Vai trò: lưu thông báo và gửi email theo event nghiệp vụ.
   # Kết nối chính: MongoDB, Redis, Kafka, Auth và SMTP.
   notification-service:
+    container_name: bin-ecommerce-app-notification-service
     <<: *service-defaults
     build:
       context: .
@@ -557,7 +725,7 @@ services:
     image: bin-ecommerce/notification-service:local
     environment:
       PORT: 3005
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       APP_VERSION: 1.0.0
       MONGODB_URI: "${MONGODB_URI:?Set MONGODB_URI in .env}"
       KAFKA_BROKERS: kafka:9092
@@ -595,6 +763,7 @@ services:
   # Vai trò: tính phí, tạo vận đơn và đồng bộ trạng thái giao hàng.
   # Kết nối chính: PostgreSQL, Order, Seller, Kafka và GHN.
   shipping-service:
+    container_name: bin-ecommerce-app-shipping-service
     <<: *service-defaults
     build:
       context: .
@@ -604,7 +773,7 @@ services:
       - "3012:3012"
     environment:
       PORT: 3012
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       APP_VERSION: 1.0.0
       TYPEORM_LOGGING: ${SHIPPING_TYPEORM_LOGGING:-false}
       POSTGRES_HOST: postgres
@@ -644,6 +813,7 @@ services:
   # Vai trò: cổng public, reverse proxy và điểm kết thúc SSL.
   # Kết nối chính: API Gateway trong application network.
   nginx:
+    container_name: bin-ecommerce-app-nginx
     image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
