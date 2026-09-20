@@ -14,10 +14,12 @@ out/
 .env
 .env.*
 !.env.example
+!.env.cloud.example
 
 # ─── Local backups ────────────────────────────────────────────────
 # Dump database và Docker volume chỉ lưu cục bộ, không đưa lên Git.
 backup/
+backups/
 
 # ─── Logs ────────────────────────────────────────────────────────
 logs/

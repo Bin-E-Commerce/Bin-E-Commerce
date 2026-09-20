@@ -1,6 +1,6 @@
 # ============================================================================
 # Khởi động theo thứ tự:
-#   1. docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml up -d
+#   1. docker compose --env-file infra/docker/.env --env-file .env -f infra/docker/docker-compose.infra.yml up -d
 #   2. docker compose --env-file .env up -d --build
 #
 # Root .env file chứa các biến môi trường chung cho tất cả service
@@ -8,13 +8,11 @@
 
 # THÀNH PHẦN THAM GIA
 #
-# Hạ tầng dùng chung (chạy ở infra/docker/docker-compose.infra.yml):
-#   PostgreSQL : 5432  | database cho các service nghiệp vụ
-#   MongoDB    : 27017 | database cho Notification Service
-#   Redis      : 6379  | cache và session
-#   Kafka      : 9092  | message broker cho event/worker
-#   Keycloak   : 8080  | xác thực và cấp token
-#   Qdrant     : 6333  | vector database cho semantic recommendation
+# Hạ tầng dùng chung:
+#   PostgreSQL, MongoDB, Redis, Qdrant   | managed cloud, lấy từ .env
+#   Kafka                                | chạy local trong infra compose
+#   Keycloak                             | chạy local, dùng PostgreSQL cloud
+#   Prometheus/Grafana/Kafka UI          | observability local
 #
 # Application services trong compose này:
 #   Service               | Container port | Host port | Chức năng
@@ -90,10 +88,11 @@ services:
       CART_SERVICE_URL: http://cart-service:3003
       ORDER_SERVICE_URL: http://order-service:3011
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      REDIS_URL: ${REDIS_URL:?Set REDIS_URL in .env}
+      REDIS_HOST: ${REDIS_HOST:-}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
-      REDIS_DB: 0
+      REDIS_DB: ${REDIS_DB:-0}
       NOTIFICATION_SERVICE_URL: http://notification-service:3005
       SHIPPING_SERVICE_URL: http://shipping-service:3012
       ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
@@ -120,8 +119,13 @@ services:
     environment:
       PORT: 3001
       NODE_ENV: ${NODE_ENV:-development}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
+      POSTGRES_HOST: ${POSTGRES_HOST:?Set POSTGRES_HOST in .env}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_SSL: ${POSTGRES_SSL:-true}
+      POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-1}
+      POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-5}
+      POSTGRES_IDLE_TIMEOUT_MS: ${POSTGRES_IDLE_TIMEOUT_MS:-30000}
+      POSTGRES_CONNECTION_TIMEOUT_MS: ${POSTGRES_CONNECTION_TIMEOUT_MS:-10000}
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_auth
@@ -137,10 +141,11 @@ services:
       FRONTEND_URL: http://localhost:5173
       SOCIAL_AUTH_CALLBACK_URL: http://localhost:5173/callback
       KAFKA_BROKERS: kafka:9092
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      REDIS_URL: ${REDIS_URL:?Set REDIS_URL in .env}
+      REDIS_HOST: ${REDIS_HOST:-}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
-      REDIS_DB: 0
+      REDIS_DB: ${REDIS_DB:-0}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/v1/health"]
@@ -167,8 +172,13 @@ services:
       PORT: 3007
       NODE_ENV: ${NODE_ENV:-development}
       APP_VERSION: 1.0.0
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
+      POSTGRES_HOST: ${POSTGRES_HOST:?Set POSTGRES_HOST in .env}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_SSL: ${POSTGRES_SSL:-true}
+      POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-1}
+      POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-5}
+      POSTGRES_IDLE_TIMEOUT_MS: ${POSTGRES_IDLE_TIMEOUT_MS:-30000}
+      POSTGRES_CONNECTION_TIMEOUT_MS: ${POSTGRES_CONNECTION_TIMEOUT_MS:-10000}
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_seller
@@ -214,8 +224,13 @@ services:
     environment:
       PORT: 3008
       NODE_ENV: ${NODE_ENV:-development}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
+      POSTGRES_HOST: ${POSTGRES_HOST:?Set POSTGRES_HOST in .env}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_SSL: ${POSTGRES_SSL:-true}
+      POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-1}
+      POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-5}
+      POSTGRES_IDLE_TIMEOUT_MS: ${POSTGRES_IDLE_TIMEOUT_MS:-30000}
+      POSTGRES_CONNECTION_TIMEOUT_MS: ${POSTGRES_CONNECTION_TIMEOUT_MS:-10000}
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_product
@@ -256,8 +271,13 @@ services:
     environment:
       PORT: 3003
       NODE_ENV: ${NODE_ENV:-development}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
+      POSTGRES_HOST: ${POSTGRES_HOST:?Set POSTGRES_HOST in .env}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_SSL: ${POSTGRES_SSL:-true}
+      POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-1}
+      POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-5}
+      POSTGRES_IDLE_TIMEOUT_MS: ${POSTGRES_IDLE_TIMEOUT_MS:-30000}
+      POSTGRES_CONNECTION_TIMEOUT_MS: ${POSTGRES_CONNECTION_TIMEOUT_MS:-10000}
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_catalog
@@ -326,8 +346,13 @@ services:
     environment:
       PORT: 3006
       NODE_ENV: ${NODE_ENV:-development}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
+      POSTGRES_HOST: ${POSTGRES_HOST:?Set POSTGRES_HOST in .env}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_SSL: ${POSTGRES_SSL:-true}
+      POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-1}
+      POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-5}
+      POSTGRES_IDLE_TIMEOUT_MS: ${POSTGRES_IDLE_TIMEOUT_MS:-30000}
+      POSTGRES_CONNECTION_TIMEOUT_MS: ${POSTGRES_CONNECTION_TIMEOUT_MS:-10000}
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_recommendation
@@ -337,10 +362,11 @@ services:
       PRODUCT_SERVICE_URL: http://product-service:3008
       AUTH_SERVICE_URL: http://auth-service:3001
       AI_SERVICE_URL: http://ai-service:3009
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      REDIS_URL: ${REDIS_URL:?Set REDIS_URL in .env}
+      REDIS_HOST: ${REDIS_HOST:-}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
-      REDIS_DB: 1
+      REDIS_DB: ${REDIS_DB_RECOMMENDATION:-1}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
       KAFKA_RETRY_BASE_DELAY_MS: ${KAFKA_RETRY_BASE_DELAY_MS:-250}
       KAFKA_RETRY_MAX_DELAY_MS: ${KAFKA_RETRY_MAX_DELAY_MS:-5000}
@@ -351,11 +377,15 @@ services:
       RECOMMENDATION_RELATION_SAFETY_DAYS: ${RECOMMENDATION_RELATION_SAFETY_DAYS:-7}
       RECOMMENDATION_EMBEDDING_JOB_RETENTION_DAYS: ${RECOMMENDATION_EMBEDDING_JOB_RETENTION_DAYS:-90}
       RECOMMENDATION_REPLAY_JOB_RETENTION_DAYS: ${RECOMMENDATION_REPLAY_JOB_RETENTION_DAYS:-30}
-      QDRANT_URL: http://qdrant:6333
+      QDRANT_URL: ${QDRANT_URL:?Set QDRANT_URL in .env}
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
       QDRANT_COLLECTION_ALIAS: recommendation_product_embeddings_current
       QDRANT_COLLECTION_VERSION: ${QDRANT_COLLECTION_VERSION:-1}
       QDRANT_ALIAS_PROMOTION_ENABLED: ${QDRANT_ALIAS_PROMOTION_ENABLED:-false}
       QDRANT_VECTOR_SIZE: ${EMBEDDING_DIMENSIONS:-1536}
+      QDRANT_DISTANCE: ${QDRANT_DISTANCE:-Cosine}
+      QDRANT_TIMEOUT_MS: ${QDRANT_TIMEOUT_MS:-3000}
+      QDRANT_INIT_RETRY_MS: ${QDRANT_INIT_RETRY_MS:-5000}
       EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL_VERSION:-text-embedding-3-small}
       CANDIDATE_PIPELINE_V3_ENABLED: ${CANDIDATE_PIPELINE_V3_ENABLED:-true}
       SEMANTIC_CANDIDATES_ENABLED: ${SEMANTIC_CANDIDATES_ENABLED:-true}
@@ -639,8 +669,13 @@ services:
     environment:
       PORT: 3003
       NODE_ENV: ${NODE_ENV:-development}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
+      POSTGRES_HOST: ${POSTGRES_HOST:?Set POSTGRES_HOST in .env}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_SSL: ${POSTGRES_SSL:-true}
+      POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-1}
+      POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-5}
+      POSTGRES_IDLE_TIMEOUT_MS: ${POSTGRES_IDLE_TIMEOUT_MS:-30000}
+      POSTGRES_CONNECTION_TIMEOUT_MS: ${POSTGRES_CONNECTION_TIMEOUT_MS:-10000}
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_cart
@@ -671,8 +706,13 @@ services:
     environment:
       PORT: 3011
       NODE_ENV: ${NODE_ENV:-development}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
+      POSTGRES_HOST: ${POSTGRES_HOST:?Set POSTGRES_HOST in .env}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_SSL: ${POSTGRES_SSL:-true}
+      POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-1}
+      POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-5}
+      POSTGRES_IDLE_TIMEOUT_MS: ${POSTGRES_IDLE_TIMEOUT_MS:-30000}
+      POSTGRES_CONNECTION_TIMEOUT_MS: ${POSTGRES_CONNECTION_TIMEOUT_MS:-10000}
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_ecommerce_order
@@ -732,10 +772,11 @@ services:
       KAFKA_GROUP_ID: notification-service
       AUTH_SERVICE_URL: http://auth-service:3001
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      REDIS_URL: ${REDIS_URL:?Set REDIS_URL in .env}
+      REDIS_HOST: ${REDIS_HOST:-}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
-      REDIS_DB: 0
+      REDIS_DB: ${REDIS_DB:-0}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
@@ -776,8 +817,13 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       APP_VERSION: 1.0.0
       TYPEORM_LOGGING: ${SHIPPING_TYPEORM_LOGGING:-false}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
+      POSTGRES_HOST: ${POSTGRES_HOST:?Set POSTGRES_HOST in .env}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_SSL: ${POSTGRES_SSL:-true}
+      POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-1}
+      POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-5}
+      POSTGRES_IDLE_TIMEOUT_MS: ${POSTGRES_IDLE_TIMEOUT_MS:-30000}
+      POSTGRES_CONNECTION_TIMEOUT_MS: ${POSTGRES_CONNECTION_TIMEOUT_MS:-10000}
       POSTGRES_USER: ${POSTGRES_USER:-bin_ecommerce}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: bin_shipping
@@ -817,8 +863,8 @@ services:
     image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "${PUBLIC_HTTP_PORT:-8088}:80"
+      - "${PUBLIC_HTTPS_PORT:-8443}:443"
     volumes:
       - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./infra/nginx/ssl:/etc/nginx/ssl:ro

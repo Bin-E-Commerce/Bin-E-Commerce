@@ -1,6 +1,6 @@
 # ============================================================================
 # Khởi động theo thứ tự:
-#   1. docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml up -d
+#   1. docker compose --env-file infra/docker/.env --env-file .env -f infra/docker/docker-compose.infra.yml up -d
 #   2. docker compose --env-file .env up -d --build
 #
 # File này chỉ chạy các thành phần hạ tầng dùng chung cho Bin E-Commerce.
@@ -11,21 +11,18 @@
 #
 # Hạ tầng dùng chung trong compose này:
 #   Service       | Container port | Host port | Chức năng
-#   PostgreSQL    | 5432           | 5432      | database cho các service nghiệp vụ
-#   MongoDB       | 27017          | 27017     | database document cho notification
-#   Redis         | 6379           | 6379      | cache, session, OTP và realtime state
 #   Kafka         | 9092/29092     | 9092/29092| message broker cho event/worker
 #   Keycloak      | 8080           | 8080      | xác thực và cấp token OAuth/OIDC
-#   Qdrant        | 6333/6334      | 6333/6334 | vector database cho recommendation
 #   Prometheus    | 9090           | 9090      | thu thập metrics
 #   Grafana       | 3030           | 3030      | dashboard quan sát hệ thống
 #   Kafka UI      | 8080           | 8081      | theo dõi topic và consumer group
 #
-# Database initializer là job chạy một lần sau khi PostgreSQL healthy; job này
-# không mở port và chỉ đảm bảo các database nghiệp vụ đã tồn tại.
+# PostgreSQL, MongoDB, Redis và Qdrant là dịch vụ managed cloud; application
+# services nhận endpoint từ root .env. Compose này chỉ giữ runtime local và
+# observability nên không tạo database container hoặc database volume.
 #
 # Dừng an toàn, không xóa dữ liệu:
-#   docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.infra.yml stop
+#   docker compose --env-file infra/docker/.env --env-file .env -f infra/docker/docker-compose.infra.yml stop
 #
 # Không dùng `down -v` hoặc `docker volume prune` nếu chưa có bản sao dữ liệu.
 # ============================================================================
@@ -34,140 +31,7 @@ name: bin-ecommerce-infra
 
 services:
   # --------------------------------------------------------------------------
-  # 01. Database dùng chung
-  # --------------------------------------------------------------------------
-
-  # Service: PostgreSQL
-  # Port: container 5432 -> host 5432
-  # Vai trò: Lưu dữ liệu quan hệ cho các service và Keycloak.
-  # Kết nối chính: Application services, db-init và Keycloak.
-  postgres:
-    container_name: bin-ecommerce-infra-postgres
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./postgres-init:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD", "pg_isready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - infra_net
-
-  # Service: Database initializer
-  # Port: Không có HTTP port
-  # Vai trò: Tạo các database PostgreSQL cần thiết sau khi PostgreSQL healthy.
-  # Kết nối chính: PostgreSQL.
-  db-init:
-    container_name: bin-ecommerce-infra-db-init
-    image: postgres:16-alpine
-    restart: "no"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-      PGUSER: ${POSTGRES_USER}
-      PGHOST: postgres
-    command: >
-      sh -c "
-        for db in keycloak bin_ecommerce_auth bin_ecommerce_catalog bin_ecommerce_seller bin_ecommerce_product bin_ecommerce_cart bin_ecommerce_order bin_shipping bin_ecommerce_recommendation; do
-        psql -tc \"SELECT 1 FROM pg_database WHERE datname = '$$db'\" | grep -q 1 ||
-        psql -c \"CREATE DATABASE $$db\" || true;
-        echo \"[db-init] $$db ensured\";
-      done"
-    networks:
-      - infra_net
-
-  # Service: MongoDB
-  # Port: container 27017 -> host 27017
-  # Vai trò: Lưu dữ liệu document cho các service dùng MongoDB.
-  # Kết nối chính: Notification Service và các module document.
-  mongodb:
-    container_name: bin-ecommerce-infra-mongodb
-    image: mongo:7-jammy
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: bin_ecommerce
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - infra_net
-
-  # Service: Redis
-  # Port: container 6379 -> host 6379
-  # Vai trò: Cache, session, OTP và realtime state; có bật xác thực bằng REDIS_PASSWORD.
-  # Kết nối chính: API Gateway, Auth, Recommendation, AI và Notification.
-  redis:
-    container_name: bin-ecommerce-infra-redis
-    image: redis:7-alpine
-    restart: unless-stopped
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in infra/docker/.env}
-    command: >-
-      sh -c 'exec redis-server --requirepass "$${REDIS_PASSWORD}" --maxmemory
-      64mb --maxmemory-policy allkeys-lru'
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          'redis-cli --no-auth-warning -a "$${REDIS_PASSWORD}" ping | grep PONG',
-        ]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks:
-      - infra_net
-
-  # --------------------------------------------------------------------------
-  # 02. Vector database
-  # --------------------------------------------------------------------------
-
-  # Service: Qdrant
-  # Port: container 6333/6334 -> host 6333/6334
-  # Vai trò: Lưu và truy vấn vector embedding cho semantic recommendation.
-  # Kết nối chính: Recommendation Service và AI embedding pipeline.
-  qdrant:
-    container_name: bin-ecommerce-infra-qdrant
-    image: qdrant/qdrant:v1.13.2
-    restart: unless-stopped
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:6333/healthz"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-    networks:
-      - infra_net
-
-  # --------------------------------------------------------------------------
-  # 03. Message broker
+  # 01. Message broker
   # --------------------------------------------------------------------------
 
   # Service: Kafka (KRaft)
@@ -226,8 +90,8 @@ services:
     ports:
       - "8081:8080"
     environment:
-      KAFKA_CLUSTERS_0_NAME: Local-Cluster
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: host.docker.internal:9092
+      KAFKA_CLUSTERS_0_NAME: Bin-Ecommerce-Local-Kafka
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       DYNAMIC_CONFIG_ENABLED: "true"
     networks:
       - infra_net
@@ -235,7 +99,7 @@ services:
       - kafka
 
   # --------------------------------------------------------------------------
-  # 04. Identity và access management
+  # 02. Identity và access management
   # --------------------------------------------------------------------------
 
   # Service: Keycloak
@@ -247,16 +111,13 @@ services:
     image: quay.io/keycloak/keycloak:24.0
     restart: unless-stopped
     command: start-dev --import-realm
-    depends_on:
-      db-init:
-        condition: service_completed_successfully
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: ${POSTGRES_USER}
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB_URL: jdbc:postgresql://${POSTGRES_HOST:?Set POSTGRES_HOST in .env}:${POSTGRES_PORT:-5432}/${KEYCLOAK_POSTGRES_DB:-bin_ecommerce_auth}
+      KC_DB_USERNAME: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER:?Set KEYCLOAK_ADMIN_USER in infra/docker/.env}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD in infra/docker/.env}
       JAVA_OPTS_APPEND: "-Xmx256m -Xms128m"
       KC_HTTP_PORT: "8080"
       KC_HOSTNAME: localhost
@@ -270,11 +131,9 @@ services:
       # Realm export khôi phục client, role và cấu hình OIDC sau khi reset Keycloak.
       - ../keycloak:/opt/keycloak/data/import:ro
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "exec 3<>/dev/tcp/localhost/8080 2>/dev/null && echo -ne 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && timeout 3 cat <&3 | grep -q '\"status\":\"UP\"'",
-        ]
+      # Keycloak 24 chạy HTTP ở 8080; health endpoint không nằm trên port này
+      # trong profile start-dev, nên kiểm tra TCP để tránh báo unhealthy giả.
+      test: ["CMD-SHELL", "(echo > /dev/tcp/localhost/8080) >/dev/null 2>&1"]
       interval: 20s
       timeout: 10s
       retries: 10
@@ -283,7 +142,7 @@ services:
       - infra_net
 
   # --------------------------------------------------------------------------
-  # 05. Observability
+  # 03. Observability
   # --------------------------------------------------------------------------
 
   # Service: Prometheus
@@ -333,14 +192,9 @@ services:
 # Volumes - dữ liệu bền vững
 # --------------------------------------------------------------------------
 volumes:
-  postgres_data:
-  mongodb_data:
-  redis_data:
   kafka_data:
   prometheus_data:
   grafana_data:
-  qdrant_data:
-    name: e-commerce_qdrant_data
 
 # --------------------------------------------------------------------------
 # Network - mạng nội bộ cho toàn bộ infra services
