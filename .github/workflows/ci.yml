@@ -3,10 +3,10 @@ name: CI
 on:
   pull_request:
     branches: [main]
-  # Chạy lại trên commit đã merge để Build Images có một kết quả CI tin cậy
-  # đúng với tree production, không phụ thuộc merge commit của Pull Request.
+  # dev là nhánh tích hợp nên mọi push vào dev phải được kiểm tra sớm. main
+  # vẫn chạy lại CI sau merge để Build Images dùng đúng tree production.
   push:
-    branches: [main]
+    branches: [dev, main]
   workflow_dispatch:
 
 # CI chỉ đọc source. Không cấp quyền push package và tuyệt đối không deploy

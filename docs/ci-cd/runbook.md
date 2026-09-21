@@ -2,7 +2,10 @@
 
 ## Phạm vi
 
-Repository chỉ có hai môi trường:
+Repository chỉ có hai nhánh và hai môi trường:
+
+- **Branch `dev`:** nhánh tích hợp duy nhất cho phát triển hằng ngày.
+- **Branch `main`:** nhánh production, chỉ nhận Pull Request từ `dev`.
 
 - **Local:** Docker Compose, Keycloak local và database local.
 - **Production:** backend chạy tuần tự trên K3s/EC2; frontend deploy native trên Vercel từ `main`.
@@ -12,19 +15,21 @@ Không có staging. CI không đọc `.env`, không tạo secret và không depl
 ## Luồng release
 
 ```text
-feature branch -> Pull Request -> CI matrix -> merge main
-                                      |
-                                      v
-                           Build Images -> GHCR + Trivy + SBOM
-                                      |
-                                      v
-                          production approval -> K3s rollout
-                                      |
-                                      v
-                              smoke test / rollback
+push dev -> CI matrix -> Pull Request dev -> main -> CI main
+                                                        |
+                                                        v
+                                      Build Images -> GHCR + Trivy + SBOM
+                                                        |
+                                                        v
+                                      production approval -> K3s rollout
+                                                        |
+                                                        v
+                                                smoke test / rollback
 ```
 
-`CI` chạy trên Pull Request vào `main`. `Build Images` chỉ chạy sau khi CI của commit `main` thành công. `Deploy Production` chỉ chạy sau Build Images thành công và dừng ở GitHub Environment `production` để reviewer approve.
+`CI` chạy khi push vào `dev`, push vào `main` và Pull Request vào `main`. `Build Images` chỉ chạy sau khi CI của commit `main` thành công. `Deploy Production` chỉ chạy sau Build Images thành công và dừng ở GitHub Environment `production` để reviewer approve.
+
+Không push trực tiếp vào `main`. Mọi thay đổi đi qua `dev`, sau đó tạo Pull Request `dev -> main`.
 
 ## GitHub cấu hình một lần
 
@@ -84,11 +89,13 @@ Frontend không tạo image; Vercel tiếp tục deploy theo branch `main` và g
 
 ## Deploy production
 
-1. Merge Pull Request vào `main`.
-2. Chờ `CI` và `Build Images` xanh.
-3. Mở `Deploy Production`, kiểm tra commit SHA.
-4. Reviewer approve Environment `production`.
-5. Workflow SSH vào EC2 và deploy theo thứ tự:
+1. Push thay đổi vào `dev` và chờ CI xanh.
+2. Tạo Pull Request `dev -> main`.
+3. Merge Pull Request vào `main`.
+4. Chờ `CI` và `Build Images` xanh.
+5. Mở `Deploy Production`, kiểm tra commit SHA.
+6. Reviewer approve Environment `production`.
+7. Workflow SSH vào EC2 và deploy theo thứ tự:
 
    ```text
    auth-service
@@ -107,8 +114,8 @@ Frontend không tạo image; Vercel tiếp tục deploy theo branch `main` và g
 
    API Gateway để cuối nhằm tránh expose request tới upstream đang rollout trên node EC2 một-node.
 
-6. Mỗi service phải pass `rollout status` trong 180 giây.
-7. Smoke test kiểm tra API health, Keycloak OIDC discovery và frontend HTTPS.
+8. Mỗi service phải pass `rollout status` trong 180 giây.
+9. Smoke test kiểm tra API health, Keycloak OIDC discovery và frontend HTTPS.
 
 Nếu chỉ thay `web`, Vercel deploy theo cơ chế native và không tạo release backend.
 
