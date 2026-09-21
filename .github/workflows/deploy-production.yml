@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
   # OIDC cho phép đổi token GitHub ngắn hạn lấy AWS STS credentials.
   id-token: write
 
@@ -81,6 +82,8 @@ jobs:
       AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
       PROD_INSTANCE_ID: ${{ vars.PROD_INSTANCE_ID }}
       PROD_MANIFEST_PATH: ${{ vars.PROD_K3S_MANIFEST_PATH }}
+      GHCR_USERNAME: daongocanh25092004
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
     steps:
       - name: Checkout release commit and submodules
         uses: actions/checkout@v4
@@ -96,6 +99,7 @@ jobs:
           test -n "$AWS_DEPLOY_ROLE_ARN" || { echo 'Missing AWS_DEPLOY_ROLE_ARN.'; exit 1; }
           test -n "$PROD_INSTANCE_ID" || { echo 'Missing PROD_INSTANCE_ID.'; exit 1; }
           test -n "$PROD_MANIFEST_PATH" || { echo 'Missing production manifest path.'; exit 1; }
+          test -n "$GHCR_TOKEN" || { echo 'Missing GHCR_TOKEN production secret.'; exit 1; }
 
       - name: Create non-secret release environment file
         shell: bash
@@ -145,23 +149,29 @@ jobs:
 
           script_b64="$(base64 --wrap=0 scripts/deploy-production.sh)"
           release_b64="$(base64 --wrap=0 release.env)"
+          ghcr_token_b64="$(printf '%s' "$GHCR_TOKEN" | base64 --wrap=0)"
           namespace_b64="$(printf '%s' "$PROD_NAMESPACE" | base64 --wrap=0)"
           manifest_b64="$(printf '%s' "$PROD_MANIFEST_PATH" | base64 --wrap=0)"
 
           commands_json="$(jq -cn \
             --arg script "$script_b64" \
             --arg release "$release_b64" \
+            --arg ghcr_token "$ghcr_token_b64" \
+            --arg ghcr_username "$GHCR_USERNAME" \
             --arg namespace "$namespace_b64" \
             --arg manifest "$manifest_b64" \
             '{
               commands: [
                 "set -eu",
-                "trap \"sudo rm -f /tmp/bin-ecommerce-release.env /tmp/bin-ecommerce-deploy-production.sh\" EXIT",
+                "trap \"sudo rm -f /tmp/bin-ecommerce-release.env /tmp/bin-ecommerce-deploy-production.sh /tmp/bin-ecommerce-ghcr-token\" EXIT",
                 ("printf %s " + $script + " | base64 -d | sudo tee /tmp/bin-ecommerce-deploy-production.sh >/dev/null"),
                 ("printf %s " + $release + " | base64 -d | sudo tee /tmp/bin-ecommerce-release.env >/dev/null"),
+                ("printf %s " + $ghcr_token + " | base64 -d | sudo tee /tmp/bin-ecommerce-ghcr-token >/dev/null"),
                 "sudo chmod 0755 /tmp/bin-ecommerce-deploy-production.sh",
                 "sudo chmod 0600 /tmp/bin-ecommerce-release.env",
+                "sudo chmod 0600 /tmp/bin-ecommerce-ghcr-token",
                 "sudo install -m 0755 /tmp/bin-ecommerce-deploy-production.sh /opt/bin-ecommerce/deploy-production.sh",
+                ("sudo kubectl -n \"$(printf %s " + $namespace + " | base64 -d)\" create secret docker-registry ghcr-pull-secret --docker-server=ghcr.io --docker-username=" + $ghcr_username + " --docker-password=\"$(sudo cat /tmp/bin-ecommerce-ghcr-token)\" --dry-run=client -o yaml | sudo kubectl apply -f -"),
                 ("sudo env RELEASE_ENV_FILE=/tmp/bin-ecommerce-release.env NAMESPACE=\"$(printf %s " + $namespace + " | base64 -d)\" K3S_MANIFEST_PATH=\"$(printf %s " + $manifest + " | base64 -d)\" bash /opt/bin-ecommerce/deploy-production.sh")
               ]
             }')"
