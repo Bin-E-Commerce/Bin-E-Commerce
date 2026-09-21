@@ -33,7 +33,7 @@ Không push trực tiếp vào `main`. Mọi thay đổi đi qua `dev`, sau đó
 
 ## GitHub cấu hình một lần
 
-Tạo Environment tên `production`, bật **Required reviewers**, sau đó thêm các Secrets sau:
+Tạo Environment tên `production`, bật **Required reviewers**, sau đó thêm các Variables sau:
 
 Tạo thêm Repository Variable:
 
@@ -41,14 +41,17 @@ Tạo thêm Repository Variable:
 | --- | --- |
 | `PRODUCTION_ENVIRONMENT` | `production` |
 
-| Secret | Nội dung |
+| Variable | Giá trị |
 | --- | --- |
-| `PROD_HOST` | IP hoặc hostname EC2 |
-| `PROD_USER` | User SSH, thường là `ubuntu` |
-| `PROD_SSH_PRIVATE_KEY` | Private key chỉ dùng cho deploy |
-| `PROD_KNOWN_HOSTS` | Dòng host key lấy từ EC2, không dùng `StrictHostKeyChecking=no` |
-| `PROD_K3S_MANIFEST_PATH` | Ví dụ `/opt/bin-ecommerce/k8s` |
+| `AWS_DEPLOY_ROLE_ARN` | `arn:aws:iam::<account-id>:role/bin-ecommerce-github-deploy-role` |
+| `AWS_REGION` | `ap-southeast-1` |
+| `PROD_INSTANCE_ID` | Instance ID EC2, ví dụ `i-xxxxxxxxxxxxxxxxx` |
+| `PROD_K3S_MANIFEST_PATH` | `/opt/bin-ecommerce/k8s` |
 | `GHCR_TOKEN` | Tuỳ chọn; nếu không có workflow dùng `GITHUB_TOKEN` |
+
+GitHub Actions không SSH trực tiếp vào EC2. Workflow dùng OIDC để nhận AWS credentials ngắn hạn, sau đó gửi `AWS-RunShellScript` qua Systems Manager. Role `bin-ecommerce-github-deploy-role` chỉ được trust bởi Environment `production` của repository này và chỉ được phép gửi command đến instance production.
+
+Không cần các secret `PROD_HOST`, `PROD_USER`, `PROD_SSH_PRIVATE_KEY`, `PROD_KNOWN_HOSTS`. Nếu chúng vẫn còn trong Environment, chỉ xóa sau khi đã test thành công workflow SSM một lần.
 
 `GITHUB_TOKEN` được ưu tiên về nguyên tắc least privilege cho GHCR. Nếu tổ chức yêu cầu PAT riêng thì tạo `GHCR_TOKEN` có quyền package tối thiểu, không dùng token admin.
 
@@ -95,7 +98,7 @@ Frontend không tạo image; Vercel tiếp tục deploy theo branch `main` và g
 4. Chờ `CI` và `Build Images` xanh.
 5. Mở `Deploy Production`, kiểm tra commit SHA.
 6. Reviewer approve Environment `production`.
-7. Workflow SSH vào EC2 và deploy theo thứ tự:
+7. Sau khi được approve, workflow kiểm tra node Online trong SSM, gửi script deploy đến EC2 và deploy theo thứ tự:
 
    ```text
    auth-service
