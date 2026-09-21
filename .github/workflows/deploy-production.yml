@@ -155,7 +155,7 @@ jobs:
             --arg manifest "$manifest_b64" \
             '{
               commands: [
-                "set -Eeuo pipefail",
+                "set -eu",
                 "trap \"sudo rm -f /tmp/bin-ecommerce-release.env /tmp/bin-ecommerce-deploy-production.sh\" EXIT",
                 ("printf %s " + $script + " | base64 -d | sudo tee /tmp/bin-ecommerce-deploy-production.sh >/dev/null"),
                 ("printf %s " + $release + " | base64 -d | sudo tee /tmp/bin-ecommerce-release.env >/dev/null"),
