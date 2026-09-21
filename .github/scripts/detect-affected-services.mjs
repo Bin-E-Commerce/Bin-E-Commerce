@@ -27,8 +27,13 @@ const serviceDefinitions = [
     name,
     kind: name === "ai-service" ? "python" : "node",
     workspace: `services/${name}`,
+    // Buildx chạy từ root repository. Vì AI dùng context riêng nên Dockerfile
+    // vẫn phải là path từ root; nếu chỉ dùng "Dockerfile", Buildx sẽ không tìm
+    // thấy file dù context đã trỏ vào services/ai-service.
     dockerfile:
-      name === "ai-service" ? "Dockerfile" : `services/${name}/Dockerfile`,
+      name === "ai-service"
+        ? "services/ai-service/Dockerfile"
+        : `services/${name}/Dockerfile`,
     // Node image cần root context để copy packages/common; AI Dockerfile có
     // pyproject.toml ngay trong service nên dùng context riêng.
     context: name === "ai-service" ? `services/${name}` : ".",
