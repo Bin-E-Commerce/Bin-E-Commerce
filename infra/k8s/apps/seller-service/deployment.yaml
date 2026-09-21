@@ -1,0 +1,83 @@
+# Seller Service quản lý shop và nghiệp vụ người bán.
+# Service chỉ mở trong cluster; API Gateway gọi qua DNS seller-service.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bin-ecommerce-seller-service
+  namespace: bin-ecommerce-app
+  labels:
+    app.kubernetes.io/name: bin-ecommerce-seller-service
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bin-ecommerce-seller-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bin-ecommerce-seller-service
+        app.kubernetes.io/part-of: bin-ecommerce
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: seller-service
+          image: ghcr.io/daongocanh25092004/bin-ecommerce-seller-service:c5aebdb5942a
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3007
+          env:
+            - name: PORT
+              value: "3007"
+            - name: NODE_ENV
+              value: production
+            - name: POSTGRES_DB
+              value: bin_ecommerce_seller
+            - name: KAFKA_GROUP_ID
+              value: seller-service
+          envFrom:
+            - secretRef:
+                name: bin-ecommerce-runtime-secrets
+            - configMapRef:
+                name: bin-ecommerce-internal-services
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 384Mi
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 45
+            timeoutSeconds: 5
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seller-service
+  namespace: bin-ecommerce-app
+  labels:
+    app.kubernetes.io/name: bin-ecommerce-seller-service
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: bin-ecommerce-seller-service
+  ports:
+    - name: http
+      port: 3007
+      targetPort: http

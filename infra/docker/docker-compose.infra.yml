@@ -102,6 +102,31 @@ services:
   # 02. Identity và access management
   # --------------------------------------------------------------------------
 
+  # Service: PostgreSQL local cho Keycloak
+  # Port: chỉ mở trong Docker network, không publish ra host
+  # Vai trò: lưu realm, client, user và session local; không dùng database production.
+  keycloak-db:
+    container_name: bin-ecommerce-infra-keycloak-db-local
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${KEYCLOAK_LOCAL_DB_NAME:-bin_ecommerce_auth_local}
+      POSTGRES_USER: ${KEYCLOAK_LOCAL_DB_USER:-keycloak_local}
+      POSTGRES_PASSWORD: ${KEYCLOAK_LOCAL_DB_PASSWORD:-local-keycloak-db-password}
+    volumes:
+      - bin_ecommerce_keycloak_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${KEYCLOAK_LOCAL_DB_USER:-keycloak_local} -d ${KEYCLOAK_LOCAL_DB_NAME:-bin_ecommerce_auth_local}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - infra_net
+
   # Service: Keycloak
   # Port: container 8080 -> host 8080
   # Vai trò: Cung cấp realm, user identity và OAuth/OIDC cho authentication.
@@ -111,11 +136,14 @@ services:
     image: quay.io/keycloak/keycloak:24.0
     restart: unless-stopped
     command: start-dev --import-realm
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://${POSTGRES_HOST:?Set POSTGRES_HOST in .env}:${POSTGRES_PORT:-5432}/${KEYCLOAK_POSTGRES_DB:-bin_ecommerce_auth}
-      KC_DB_USERNAME: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_LOCAL_DB_NAME:-bin_ecommerce_auth_local}
+      KC_DB_USERNAME: ${KEYCLOAK_LOCAL_DB_USER:-keycloak_local}
+      KC_DB_PASSWORD: ${KEYCLOAK_LOCAL_DB_PASSWORD:-local-keycloak-db-password}
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER:?Set KEYCLOAK_ADMIN_USER in infra/docker/.env}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD in infra/docker/.env}
       JAVA_OPTS_APPEND: "-Xmx256m -Xms128m"
@@ -195,6 +223,9 @@ volumes:
   kafka_data:
   prometheus_data:
   grafana_data:
+  # Volume local riêng cho Keycloak; không dùng chung với production.
+  bin_ecommerce_keycloak_local_data:
+    name: bin-ecommerce-keycloak-local-data
 
 # --------------------------------------------------------------------------
 # Network - mạng nội bộ cho toàn bộ infra services

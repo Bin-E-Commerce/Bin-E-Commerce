@@ -11,7 +11,7 @@
 # Hạ tầng dùng chung:
 #   PostgreSQL, MongoDB, Redis, Qdrant   | managed cloud, lấy từ .env
 #   Kafka                                | chạy local trong infra compose
-#   Keycloak                             | chạy local, dùng PostgreSQL cloud
+#   Keycloak                             | chạy local, dùng PostgreSQL local riêng
 #   Prometheus/Grafana/Kafka UI          | observability local
 #
 # Application services trong compose này:
@@ -95,7 +95,7 @@ services:
       REDIS_DB: ${REDIS_DB:-0}
       NOTIFICATION_SERVICE_URL: http://notification-service:3005
       SHIPPING_SERVICE_URL: http://shipping-service:3012
-      ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
     depends_on:
       auth-service:
         condition: service_healthy
@@ -138,8 +138,8 @@ services:
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
       KEYCLOAK_WEB_CLIENT_ID: web-client
       KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_WEB_CLIENT_SECRET:-}
-      FRONTEND_URL: http://localhost:5173
-      SOCIAL_AUTH_CALLBACK_URL: http://localhost:5173/callback
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      SOCIAL_AUTH_CALLBACK_URL: ${SOCIAL_AUTH_CALLBACK_URL:-http://localhost:5173/callback}
       KAFKA_BROKERS: kafka:9092
       REDIS_URL: ${REDIS_URL:?Set REDIS_URL in .env}
       REDIS_HOST: ${REDIS_HOST:-}

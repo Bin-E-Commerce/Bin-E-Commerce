@@ -1,0 +1,64 @@
+# Ingress public cho Keycloak.
+#
+# Keycloak đang chạy trong namespace `bin-ecommerce-data` và Service của nó là
+# `keycloak:8080`. Trình duyệt bên ngoài cluster không thể truy cập địa chỉ
+# `keycloak.bin-ecommerce-data.svc.cluster.local`, vì vậy Ingress này nhận
+# request từ `https://keycloak.binecommerce.site` rồi chuyển vào Service nội bộ.
+#
+# Ingress phải nằm cùng namespace với Service backend. Kubernetes Ingress
+# không tham chiếu trực tiếp đến Service ở namespace khác bằng cấu hình này.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  # Tên tài nguyên Ingress trong namespace bin-ecommerce-data.
+  name: bin-ecommerce-keycloak
+  namespace: bin-ecommerce-data
+
+  labels:
+    # Label giúp nhận diện tài nguyên khi xem bằng kubectl.
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/part-of: bin-ecommerce
+
+  annotations:
+    # Traefik nhận traffic HTTP ở entrypoint web và HTTPS ở websecure.
+    # Port 80 vẫn cần mở để cert-manager thực hiện ACME HTTP-01 challenge.
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+
+    # cert-manager dùng ClusterIssuer này để xin chứng chỉ TLS Let's Encrypt.
+    # ClusterIssuer đã được tạo trước đó trong cluster.
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+    # Cho phép cert-manager chèn route HTTP-01 vào Ingress hiện tại.
+    # Cách này tránh để route challenge bị Traefik chuyển nhầm vào Keycloak.
+    acme.cert-manager.io/http01-edit-in-place: "true"
+
+spec:
+  # Chọn Traefik làm Ingress Controller xử lý resource này.
+  ingressClassName: traefik
+
+  tls:
+    - hosts:
+        # Domain public người dùng và các OAuth client sẽ truy cập.
+        - keycloak.binecommerce.site
+
+      # cert-manager sẽ tự tạo Secret TLS sau khi xác minh domain thành công.
+      # Không tự tạo hoặc commit private key của chứng chỉ vào Git.
+      secretName: keycloak-binecommerce-site-tls
+
+  rules:
+    - host: keycloak.binecommerce.site
+      http:
+        paths:
+          - path: /
+            # Prefix chuyển toàn bộ các endpoint của Keycloak, bao gồm:
+            # /realms/bin-ecommerce/protocol/openid-connect/...
+            pathType: Prefix
+            backend:
+              service:
+                # Service ClusterIP của Keycloak trong cùng namespace.
+                name: keycloak
+                # Port 8080 là port HTTP mà container Keycloak đang lắng nghe.
+                port:
+                  number: 8080

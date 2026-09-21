@@ -1,0 +1,139 @@
+# Keycloak chạy nội bộ trong cluster và dùng PostgreSQL cloud làm database.
+# Không expose Keycloak bằng LoadBalancer/NodePort; API Gateway và Ingress nội bộ
+# sẽ là các thành phần duy nhất gọi tới Service này.
+
+apiVersion: v1
+kind: Service
+metadata:
+  # DNS nội bộ của Keycloak trong namespace data.
+  # Workload ở namespace khác dùng FQDN:
+  # keycloak.bin-ecommerce-data.svc.cluster.local:8080
+  name: keycloak
+  namespace: bin-ecommerce-data
+  labels:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: keycloak
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: bin-ecommerce-data
+  labels:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  # Một instance phù hợp với EC2 4 GiB. Keycloak HA cần nhiều tài nguyên hơn.
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: keycloak
+        app.kubernetes.io/part-of: bin-ecommerce
+    spec:
+      containers:
+        - name: keycloak
+          # Giữ phiên bản đã dùng trong cấu hình hạ tầng hiện tại.
+          image: quay.io/keycloak/keycloak:24.0
+          imagePullPolicy: IfNotPresent
+          args:
+            # start-dev phù hợp môi trường demo một node; production HA cần
+            # cấu hình start, TLS và các tùy chọn vận hành chặt chẽ hơn.
+            - start-dev
+            - --http-port=8080
+            - --http-enabled=true
+            # Traefik chấm dứt HTTPS ở bên ngoài rồi chuyển request HTTP vào Keycloak.
+            # Tham số này giúp Keycloak đọc đúng X-Forwarded-Proto và tạo URL HTTPS.
+            - --proxy-headers=xforwarded
+            # Cố định full public URL để token luôn có issuer thống nhất,
+            # kể cả khi Auth Service gọi token endpoint qua DNS nội bộ.
+            # Keycloak expects the hostname without a URL scheme; it builds the public issuer from proxy headers.
+            - --hostname=keycloak.binecommerce.site
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # Keycloak dùng PostgreSQL cloud thay vì lưu database trong container.
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_URL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-data-secrets
+                  key: POSTGRES_HOST
+            - name: KC_DB_URL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-data-secrets
+                  key: POSTGRES_PORT
+            - name: KC_DB_URL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-data-secrets
+                  key: KEYCLOAK_POSTGRES_DB
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-data-secrets
+                  key: POSTGRES_USER
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-data-secrets
+                  key: POSTGRES_PASSWORD
+            # Tài khoản này chỉ dùng để khởi tạo/quản trị Keycloak.
+            # Không hard-code password vào manifest; giá trị lấy từ Secret.
+            - name: KEYCLOAK_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-data-secrets
+                  key: KEYCLOAK_ADMIN_USER
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-data-secrets
+                  key: KEYCLOAK_ADMIN_PASSWORD
+            # Bật endpoint health nội bộ để có thể mở rộng probe sau này.
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+            # Giới hạn heap để Keycloak không chiếm toàn bộ RAM của EC2.
+            - name: JAVA_OPTS_APPEND
+              value: -Xms128m -Xmx384m
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          readinessProbe:
+            # TCP probe chỉ xác nhận Keycloak đã lắng nghe HTTP.
+            # Việc kiểm tra kết nối PostgreSQL sâu hơn sẽ thể hiện trong log/health.
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 18
+          livenessProbe:
+            # Nếu process bị treo, kubelet sẽ restart container.
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 90
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6

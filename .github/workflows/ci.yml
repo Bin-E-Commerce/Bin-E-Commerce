@@ -1,0 +1,196 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  # Chạy lại trên commit đã merge để Build Images có một kết quả CI tin cậy
+  # đúng với tree production, không phụ thuộc merge commit của Pull Request.
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# CI chỉ đọc source. Không cấp quyền push package và tuyệt đối không deploy
+# production từ Pull Request.
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  detect:
+    name: Detect affected services
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.affected.outputs.matrix }}
+      has_service_changes: ${{ steps.affected.outputs.has_service_changes }}
+      has_infra_changes: ${{ steps.affected.outputs.has_infra_changes }}
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Verify submodules are reproducible
+        shell: bash
+        run: |
+          # Dấu +/- ở submodule thường có nghĩa pointer chưa khớp working tree.
+          # CI phải build đúng commit được root repository tham chiếu.
+          if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+            echo 'Working tree is not clean after checkout.'
+            git status --short
+            exit 1
+          fi
+
+      - name: Detect changed files
+        id: affected
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          result="$(node .github/scripts/detect-affected-services.mjs --base "$BASE_SHA" --head "$HEAD_SHA")"
+          echo "matrix=$(node -e 'const x=JSON.parse(process.argv[1]); console.log(JSON.stringify(x.matrix))' "$result")" >> "$GITHUB_OUTPUT"
+          echo "has_service_changes=$(node -e 'console.log(JSON.parse(process.argv[1]).hasServiceChanges)' "$result")" >> "$GITHUB_OUTPUT"
+          echo "has_infra_changes=$(node -e 'console.log(JSON.parse(process.argv[1]).hasInfraChanges)' "$result")" >> "$GITHUB_OUTPUT"
+          echo "$result" | node -e 'let s=""; process.stdin.on("data", c => s += c).on("end", () => { const x=JSON.parse(s); console.log(`Affected services: ${x.services.join(", ") || "none"}`); console.log(`Changed files: ${x.changedFiles.length}`); })'
+
+  service-checks:
+    name: ${{ matrix.name }} checks
+    needs: detect
+    if: needs.detect.outputs.has_service_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.detect.outputs.matrix) }}
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Setup Node.js
+        if: matrix.kind == 'node' || matrix.kind == 'web'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+
+      - name: Install root workspace dependencies
+        if: matrix.kind == 'node'
+        shell: bash
+        run: npm ci --ignore-scripts
+
+      - name: Install web dependencies
+        if: matrix.kind == 'web'
+        working-directory: web
+        shell: bash
+        run: npm ci --ignore-scripts
+
+      - name: Lint Node.js service
+        if: matrix.kind == 'node'
+        shell: bash
+        run: npm run lint --workspace="${{ matrix.workspace }}"
+
+      - name: Type-check Node.js service
+        if: matrix.kind == 'node'
+        shell: bash
+        run: npm run type-check --workspace="${{ matrix.workspace }}"
+
+      - name: Unit test Node.js service
+        if: matrix.kind == 'node'
+        shell: bash
+        run: npm run test --workspace="${{ matrix.workspace }}" -- --passWithNoTests --runInBand
+
+      - name: Build Node.js service
+        if: matrix.kind == 'node'
+        shell: bash
+        run: npm run build --workspace="${{ matrix.workspace }}"
+
+      - name: Lint, type-check, test and build AI service
+        if: matrix.kind == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install AI service dependencies
+        if: matrix.kind == 'python'
+        working-directory: services/ai-service
+        shell: bash
+        run: python -m pip install --upgrade pip && python -m pip install -e '.[dev]'
+
+      - name: Run AI service quality checks
+        if: matrix.kind == 'python'
+        working-directory: services/ai-service
+        shell: bash
+        run: |
+          python -m ruff check app tests migrations
+          python -m mypy app
+          python -m pytest --cov=app --cov-report=term-missing -q
+
+      - name: Build web
+        if: matrix.kind == 'web'
+        working-directory: web
+        shell: bash
+        run: |
+          npm run lint
+          npm run type-check
+          npm run test -- --passWithNoTests --runInBand
+          npm run build
+
+      - name: Setup Docker Buildx
+        if: matrix.kind != 'web'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image and verify healthcheck
+        if: matrix.kind != 'web'
+        shell: bash
+        env:
+          IMAGE: local/bin-ecommerce-${{ matrix.name }}:${{ github.sha }}
+        run: |
+          docker buildx build \
+            --load \
+            --file "${{ matrix.dockerfile }}" \
+            --tag "$IMAGE" \
+            "${{ matrix.context }}"
+
+          # Mọi image production phải tự mô tả healthcheck; readiness/liveness
+          # của K3s là lớp kiểm tra tiếp theo ở thời điểm rollout.
+          healthcheck="$(docker inspect --format '{{json .Config.Healthcheck}}' "$IMAGE")"
+          if [[ "$healthcheck" == "null" ]]; then
+            echo "Image $IMAGE does not define a Docker HEALTHCHECK."
+            exit 1
+          fi
+
+  kubernetes-validation:
+    name: Validate Kubernetes manifests
+    needs: detect
+    if: needs.detect.outputs.has_infra_changes == 'true' || needs.detect.outputs.has_service_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Render production Kustomize overlay
+        shell: bash
+        run: |
+          kubectl kustomize --load-restrictor LoadRestrictionsNone infra/k8s/overlays/production > /tmp/bin-ecommerce-production.yaml
+
+      - name: Validate rendered Kubernetes YAML
+        shell: bash
+        run: |
+          docker run --rm -i ghcr.io/yannh/kubeconform:v0.6.7 \
+            -strict -summary -output text < /tmp/bin-ecommerce-production.yaml

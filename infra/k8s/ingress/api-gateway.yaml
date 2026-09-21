@@ -1,0 +1,36 @@
+# Ingress nhận traffic HTTP từ domain public và chuyển vào API Gateway.
+# Ingress nằm cùng namespace với Service backend vì Kubernetes không cho backend
+# Service tham chiếu trực tiếp sang namespace khác.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bin-ecommerce-api
+  namespace: bin-ecommerce-app
+  labels:
+    app.kubernetes.io/name: bin-ecommerce-api
+    app.kubernetes.io/part-of: bin-ecommerce
+  annotations:
+    # Traefik nhận cả HTTP-01 challenge trên web và traffic HTTPS trên websecure.
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    # cert-manager tự tạo Certificate và Secret TLS từ ClusterIssuer này.
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Chèn route HTTP-01 vào Ingress hiện tại để Traefik không chọn nhầm route /. 
+    acme.cert-manager.io/http01-edit-in-place: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - api.binecommerce.site
+      # Secret này sẽ được cert-manager tạo sau khi ACME challenge thành công.
+      secretName: api-binecommerce-site-tls
+  rules:
+    - host: api.binecommerce.site
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bin-ecommerce-api-gateway
+                port:
+                  number: 80

@@ -1,0 +1,77 @@
+# Catalog Service cung cấp danh mục và category cho storefront.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bin-ecommerce-catalog-service
+  namespace: bin-ecommerce-app
+  labels:
+    app.kubernetes.io/name: bin-ecommerce-catalog-service
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bin-ecommerce-catalog-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bin-ecommerce-catalog-service
+        app.kubernetes.io/part-of: bin-ecommerce
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: catalog-service
+          image: ghcr.io/daongocanh25092004/bin-ecommerce-catalog-service:c5aebdb5942a
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3003
+          env:
+            - name: PORT
+              value: "3003"
+            - name: NODE_ENV
+              value: production
+            - name: POSTGRES_DB
+              value: bin_ecommerce_catalog
+          envFrom:
+            - secretRef:
+                name: bin-ecommerce-runtime-secrets
+            - configMapRef:
+                name: bin-ecommerce-internal-services
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 384Mi
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 45
+            timeoutSeconds: 5
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-service
+  namespace: bin-ecommerce-app
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: bin-ecommerce-catalog-service
+  ports:
+    - name: http
+      port: 3003
+      targetPort: http

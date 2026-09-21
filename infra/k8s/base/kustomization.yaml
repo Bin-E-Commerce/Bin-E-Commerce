@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Base chỉ chứa workload ứng dụng và cấu hình public/non-secret. Kafka,
+# Keycloak cùng dữ liệu hạ tầng nằm ở base/data để CD ứng dụng không restart
+# hoặc thay đổi chúng trong mỗi lần release.
+resources:
+  - apps
+  - config
+  - ingress

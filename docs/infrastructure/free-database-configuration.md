@@ -47,11 +47,12 @@ AI_REDIS_URL=rediss://default:PASSWORD@HOST:6379
 Giữ Kafka, Keycloak và observability local trên EC2; application services sẽ kết nối database managed qua các biến trong `.env.cloud`:
 
 ```powershell
-docker compose --env-file infra/docker/.env --env-file .env -f infra/docker/docker-compose.infra.yml up -d
+docker compose --env-file infra/docker/.env --env-file .env \
+  -f infra/docker/docker-compose.infra.yml up -d
 docker compose --env-file .env -f docker-compose.yml up -d --build
 ```
 
-`infra/docker/docker-compose.infra.yml` không còn tạo PostgreSQL, MongoDB, Redis hoặc Qdrant local. File này chỉ chạy Kafka, Keycloak, Prometheus, Grafana và Kafka UI; các application service dùng endpoint managed cloud trong root `.env`.
+`infra/docker/docker-compose.infra.yml` không tạo PostgreSQL, MongoDB, Redis hoặc Qdrant cho application services. File này tạo PostgreSQL riêng cho Keycloak local; production Keycloak chạy trên K3s, không dùng Compose.
 
 ## Kiểm tra sau khi kết nối
 

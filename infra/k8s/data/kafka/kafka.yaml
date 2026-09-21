@@ -1,0 +1,149 @@
+# Kafka một broker chạy ở chế độ KRaft, không cần ZooKeeper.
+# Manifest này dành cho cluster một node nên ưu tiên cấu hình đơn giản và tiết kiệm RAM.
+
+apiVersion: v1
+kind: Service
+metadata:
+  # Tên DNS nội bộ mà các service sẽ dùng để kết nối tới Kafka.
+  # Từ namespace khác, địa chỉ đầy đủ là:
+  # kafka.bin-ecommerce-data.svc.cluster.local:9092
+  name: kafka
+  namespace: bin-ecommerce-data
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  # ClusterIP cho phép client trong cluster kết nối ổn định tới broker.
+  # Không tạo LoadBalancer/NodePort vì Kafka không được public ra Internet.
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: kafka
+  ports:
+    # Port client dùng để publish/consume event.
+    - name: broker
+      port: 9092
+      targetPort: broker
+      protocol: TCP
+    # Port controller nội bộ của KRaft; không dành cho application client.
+    - name: controller
+      port: 9093
+      targetPort: controller
+      protocol: TCP
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  # StatefulSet phù hợp hơn Deployment cho Kafka vì giữ định danh Pod và volume
+  # ổn định nếu Pod bị restart.
+  name: kafka
+  namespace: bin-ecommerce-data
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  # Service này cung cấp DNS ổn định cho StatefulSet.
+  serviceName: kafka
+  # Chỉ chạy một broker trên EC2 hiện tại để tiết kiệm CPU/RAM.
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kafka
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kafka
+        app.kubernetes.io/part-of: bin-ecommerce
+    spec:
+      containers:
+        - name: kafka
+          # Giữ cùng phiên bản đã dùng trong cấu hình hạ tầng hiện tại.
+          image: apache/kafka:3.8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: broker
+              containerPort: 9092
+              protocol: TCP
+            - name: controller
+              containerPort: 9093
+              protocol: TCP
+          env:
+            # Kafka 3.8 chạy KRaft nên broker đồng thời giữ vai trò controller.
+            - name: KAFKA_NODE_ID
+              value: "1"
+            - name: KAFKA_PROCESS_ROLES
+              value: controller,broker
+            # Một broker dùng localhost cho quorum controller; client vẫn kết nối
+            # qua DNS Service kafka ở port 9092.
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: 1@localhost:9093
+            - name: KAFKA_CONTROLLER_LISTENER_NAMES
+              value: CONTROLLER
+            - name: KAFKA_LISTENERS
+              value: PLAINTEXT://:9092,CONTROLLER://:9093
+            # Advertised listener là địa chỉ client nhận được từ broker.
+            # Dùng FQDN giúp workload ở namespace bin-ecommerce-app kết nối được.
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: PLAINTEXT://kafka.bin-ecommerce-data.svc.cluster.local:9092
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: PLAINTEXT
+            # Các giá trị replication bằng 1 phù hợp với một broker.
+            # Không dùng cấu hình này cho cluster Kafka nhiều broker production.
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+              value: "1"
+            - name: KAFKA_DEFAULT_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_NUM_PARTITIONS
+              value: "1"
+            - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+              value: "true"
+            # Giữ log event ngắn ngày để không chiếm hết EBS 30 GiB.
+            - name: KAFKA_LOG_RETENTION_HOURS
+              value: "24"
+            # Giới hạn heap JVM để chừa RAM cho k3s và application Pod.
+            - name: KAFKA_HEAP_OPTS
+              value: -Xms128m -Xmx256m
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          volumeMounts:
+            # Dữ liệu Kafka nằm trên PVC thay vì filesystem tạm của container.
+            - name: kafka-data
+              mountPath: /var/lib/kafka/data
+          readinessProbe:
+            # Kiểm tra cổng broker đã lắng nghe trước khi workload khác gửi event.
+            tcpSocket:
+              port: broker
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            # Nếu broker mất khả năng lắng nghe trong thời gian dài, kubelet restart Pod.
+            tcpSocket:
+              port: broker
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+  volumeClaimTemplates:
+    - metadata:
+        name: kafka-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: local-path
+        resources:
+          requests:
+            # 5 GiB đủ cho demo với retention 24 giờ; có thể tăng nếu event nhiều.
+            storage: 5Gi

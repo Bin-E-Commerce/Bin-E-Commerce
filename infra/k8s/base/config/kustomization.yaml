@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# ConfigMap không chứa secret. Secret runtime vẫn được tạo và quản lý trực
+# tiếp trên EC2, vì vậy repository không có quyền ghi đè dữ liệu nhạy cảm.
+resources:
+  - ../../config/internal-services.yaml

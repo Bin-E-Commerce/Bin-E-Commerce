@@ -1,0 +1,41 @@
+# ConfigMap chứa các địa chỉ nội bộ không nhạy cảm của hệ thống.
+# URL và tên service không phải password/token nên có thể lưu trong Git.
+# Secret runtime vẫn được giữ trong Kubernetes Secret, không đưa vào file này.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bin-ecommerce-internal-services
+  namespace: bin-ecommerce-app
+  labels:
+    app.kubernetes.io/part-of: bin-ecommerce
+data:
+  # Keycloak nằm ở namespace data nên phải dùng DNS liên namespace đầy đủ.
+  KEYCLOAK_URL: http://keycloak.bin-ecommerce-data.svc.cluster.local:8080
+  # URL public được đưa vào redirect đăng nhập và claim issuer của token.
+  # Trình duyệt bên ngoài cluster không thể truy cập DNS .svc.cluster.local.
+  KEYCLOAK_PUBLIC_URL: https://keycloak.binecommerce.site
+  KEYCLOAK_REALM: bin-ecommerce
+  # Client ID dùng bởi Auth Service khi gọi Keycloak.
+  # Đây là định danh công khai, không phải client secret.
+  KEYCLOAK_CLIENT_ID: auth-service
+  KEYCLOAK_ADMIN_CLIENT_ID: auth-service-admin
+  KEYCLOAK_WEB_CLIENT_ID: web-client
+  # Các URL public của frontend phải trùng với redirect URI đã khai báo trong Keycloak production.
+  FRONTEND_URL: https://www.binecommerce.site
+  SOCIAL_AUTH_CALLBACK_URL: https://www.binecommerce.site/callback
+  ALLOWED_ORIGINS: https://www.binecommerce.site,https://binecommerce.site
+  WEB_BASE_URL: https://www.binecommerce.site
+  # Các service application nằm cùng namespace nên có thể gọi bằng Service DNS ngắn.
+  AUTH_SERVICE_URL: http://auth-service:3002
+  NOTIFICATION_SERVICE_URL: http://notification-service:3005
+  CATALOG_SERVICE_URL: http://catalog-service:3003
+  MEDIA_SERVICE_URL: http://media-service:3004
+  RECOMMENDATION_SERVICE_URL: http://recommendation-service:3006
+  SELLER_SERVICE_URL: http://seller-service:3007
+  PRODUCT_SERVICE_URL: http://product-service:3008
+  AI_SERVICE_URL: http://ai-service:3009
+  CART_SERVICE_URL: http://cart-service:3003
+  ORDER_SERVICE_URL: http://order-service:3011
+  SHIPPING_SERVICE_URL: http://shipping-service:3012
+  # Kafka nằm ở namespace data nên application phải dùng FQDN liên namespace.
+  KAFKA_BROKERS: kafka.bin-ecommerce-data.svc.cluster.local:9092

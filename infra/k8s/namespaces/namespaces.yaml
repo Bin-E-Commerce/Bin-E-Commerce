@@ -1,0 +1,43 @@
+# Namespace là ranh giới logic để tách nhóm tài nguyên trong cùng một Kubernetes cluster.
+# Namespace không tạo ra node hay máy chủ mới; nó chỉ gom tài nguyên và giúp quản lý
+# quyền, quota, network policy và lệnh kubectl theo từng nhóm.
+
+# Namespace này chứa các Deployment/Service của ứng dụng thương mại.
+# Runtime Secret và imagePullSecret của application cũng được tạo trong namespace này.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bin-ecommerce-app
+  labels:
+    # Label chung để lọc tài nguyên của toàn bộ hệ thống bằng kubectl.
+    app.kubernetes.io/part-of: bin-ecommerce
+---
+
+# Namespace này dành cho Kafka, Keycloak và các thành phần data nội bộ nếu
+# cần chạy chung trên k3s. Database PostgreSQL/MongoDB/Redis cloud không nằm trong đây.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bin-ecommerce-data
+  labels:
+    app.kubernetes.io/part-of: bin-ecommerce
+---
+
+# Namespace riêng cho Job chạy một lần, đặc biệt là database migration.
+# Tách Job khỏi application namespace để dễ theo dõi lịch sử, log và rollout.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bin-ecommerce-jobs
+  labels:
+    app.kubernetes.io/part-of: bin-ecommerce
+---
+
+# Namespace dành cho monitoring/logging và các workload quan sát hệ thống.
+# Ví dụ: Prometheus, Grafana, Loki hoặc các exporter sẽ được đặt tại đây.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/part-of: bin-ecommerce

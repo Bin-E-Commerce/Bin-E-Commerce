@@ -488,7 +488,7 @@ Use the actual example filenames present in your checkout. Keep local values unc
 npm run infra:up
 ```
 
-This command starts the infrastructure composition defined in `infra/docker/docker-compose.infra.yml`. Inspect its services and health status before starting application containers.
+This command starts `infra/docker/docker-compose.infra.yml`, which includes a dedicated PostgreSQL database for local Keycloak. Production Keycloak is deployed separately on K3s.
 
 ### Start application services
 

@@ -1,0 +1,96 @@
+# Notification Service xử lý notification, MongoDB, Redis và Kafka.
+# Service chỉ mở trong cluster; API Gateway sẽ gọi qua DNS notification-service.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bin-ecommerce-notification-service
+  namespace: bin-ecommerce-app
+  labels:
+    app.kubernetes.io/name: bin-ecommerce-notification-service
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  # Một replica phù hợp với tài nguyên EC2 hiện tại.
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bin-ecommerce-notification-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bin-ecommerce-notification-service
+        app.kubernetes.io/part-of: bin-ecommerce
+    spec:
+      # Cho phép node pull image private từ GHCR.
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: notification-service
+          # Tag phải khớp image đã build/push từ cùng commit.
+          image: ghcr.io/daongocanh25092004/bin-ecommerce-notification-service:c5aebdb5942a
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3005
+              protocol: TCP
+          env:
+            # Port 3005 là port runtime của Notification Service.
+            - name: PORT
+              value: "3005"
+            - name: NODE_ENV
+              value: production
+            # Consumer group ổn định giúp Kafka quản lý offset sau restart.
+            - name: KAFKA_GROUP_ID
+              value: notification-service
+          envFrom:
+            # Chứa MONGODB_URI, REDIS_URL/password và các cấu hình nhạy cảm.
+            - secretRef:
+                name: bin-ecommerce-runtime-secrets
+            # Lấy KAFKA_BROKERS bằng DNS thật của Kafka trong namespace data.
+            - configMapRef:
+                name: bin-ecommerce-internal-services
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 384Mi
+          readinessProbe:
+            # Chỉ nhận request sau khi HTTP server đã sẵn sàng.
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 12
+          livenessProbe:
+            # Restart container nếu process bị treo lâu dài.
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 45
+            timeoutSeconds: 5
+            periodSeconds: 20
+            failureThreshold: 3
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: bin-ecommerce-app
+  labels:
+    app.kubernetes.io/name: bin-ecommerce-notification-service
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  # ClusterIP giữ Notification Service ở mạng nội bộ, không public trực tiếp.
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: bin-ecommerce-notification-service
+  ports:
+    - name: http
+      port: 3005
+      targetPort: http
+      protocol: TCP

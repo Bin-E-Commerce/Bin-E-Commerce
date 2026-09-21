@@ -1,0 +1,139 @@
+# -----------------------------------------------------------------------------
+# Deployment quản lý vòng đời Pod của API Gateway.
+# Kubernetes sẽ duy trì số lượng Pod theo `replicas`, tự khởi động lại Pod lỗi
+# và tạo Pod mới khi image/config thay đổi trong một lần rollout.
+# -----------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Tên Deployment phải ổn định vì các lệnh rollout/status và các resource khác
+  # có thể tham chiếu trực tiếp tới tên này.
+  name: bin-ecommerce-api-gateway
+  # Application namespace giúp tách workload thương mại khỏi Kafka, Job và monitoring.
+  namespace: bin-ecommerce-app
+  labels:
+    # `name` định danh workload cụ thể; `part-of` gom các thành phần cùng sản phẩm.
+    # Hai label này được dùng trong kubectl, monitoring và selector của Service.
+    app.kubernetes.io/name: bin-ecommerce-api-gateway
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  # EC2 chỉ có 4 GiB RAM nên môi trường hiện tại chạy một replica để tránh nhân đôi
+  # chi phí RAM. Có thể tăng lên sau khi có đủ tài nguyên và cơ chế cân bằng tải phù hợp.
+  replicas: 1
+  selector:
+    # Selector này là danh tính bất biến của Deployment; phải khớp chính xác
+    # với label trong `spec.template.metadata.labels` bên dưới.
+    matchLabels:
+      app.kubernetes.io/name: bin-ecommerce-api-gateway
+  template:
+    # Template là khuôn mẫu để Deployment tạo Pod mới.
+    metadata:
+      labels:
+        # Service sẽ dùng label `name` này để chọn đúng Pod nhận traffic.
+        app.kubernetes.io/name: bin-ecommerce-api-gateway
+        app.kubernetes.io/part-of: bin-ecommerce
+    spec:
+      # GHCR đang chứa image private. Secret này chỉ chứa thông tin registry
+      # và được Kubernetes dùng để xác thực khi pull image; không phải runtime .env.
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        # Một Pod hiện chỉ chạy một container API Gateway.
+        - name: api-gateway
+          # Tag là commit SHA ngắn đã dùng khi build/push image lên GHCR.
+          # Khi build commit mới, cần cập nhật tag này rồi apply lại manifest.
+          image: ghcr.io/daongocanh25092004/bin-ecommerce-api-gateway:c5aebdb5942a
+          # Chỉ pull lại khi node chưa có image cùng tag. Vì tag theo commit
+          # nên mỗi tag trỏ tới một nội dung cố định trong quy trình hiện tại.
+          imagePullPolicy: IfNotPresent
+          ports:
+            # API Gateway lắng nghe trong container ở port 3000.
+            # Đây là port nội bộ của Pod, chưa phải port public trên Internet.
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            # Ép process lắng nghe đúng port mà Dockerfile/probe khai báo.
+            # Giá trị trong `env` cụ thể này có độ ưu tiên cao hơn giá trị trùng
+            # tên được nạp qua `envFrom`.
+            - name: PORT
+              value: "3000"
+            # Production tắt các hành vi dành cho development như Swagger mở rộng.
+            - name: NODE_ENV
+              value: production
+          envFrom:
+            # Nạp các biến cấu hình runtime từ Secret đã tạo trên cluster.
+            # Secret thật không nằm trong Git và không được hard-code trong YAML.
+            # Đây là cấu hình smoke test ban đầu; sau khi ổn định nên thu hẹp
+            # thành các `secretKeyRef` đúng nhu cầu riêng của API Gateway.
+            - secretRef:
+                name: bin-ecommerce-runtime-secrets
+            # Ghi đè các URL local/Docker Compose bằng DNS Kubernetes nội bộ.
+            - configMapRef:
+                name: bin-ecommerce-internal-services
+          resources:
+            # Request là mức tài nguyên Kubernetes dùng để xếp Pod lên node.
+            # Giá trị nhỏ giúp Pod được xếp trên EC2 4 GiB trong giai đoạn demo.
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            # Limit ngăn API Gateway dùng hết RAM của node và làm ảnh hưởng
+            # tới k3s, Traefik hoặc các service khác. Vượt limit có thể bị OOMKilled.
+            limits:
+              cpu: 300m
+              memory: 384Mi
+          readinessProbe:
+            # Readiness quyết định Pod có nhận traffic từ Service hay chưa.
+            # Nếu probe lỗi, Pod vẫn tồn tại nhưng Service tạm thời không route request.
+            httpGet:
+              # API Gateway bật global prefix `api` và URI versioning `v1`.
+              path: /api/v1/health
+              port: http
+            # Chờ process khởi động trước lần kiểm tra đầu tiên.
+            initialDelaySeconds: 10
+            # Mỗi request probe không được treo quá thời gian này.
+            timeoutSeconds: 5
+            # Kiểm tra readiness định kỳ trong suốt vòng đời Pod.
+            periodSeconds: 10
+            # Cho phép một số lần lỗi tạm thời trước khi loại Pod khỏi traffic.
+            failureThreshold: 6
+          livenessProbe:
+            # Liveness phát hiện process bị treo. Nếu lỗi liên tiếp,
+            # kubelet sẽ restart container; probe này không kiểm tra toàn bộ downstream.
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 20
+            # Chỉ restart sau ba lần liveness liên tiếp thất bại.
+            failureThreshold: 3
+---
+# -----------------------------------------------------------------------------
+# Service tạo địa chỉ DNS ổn định trong cluster cho API Gateway.
+# Các service khác gọi `bin-ecommerce-api-gateway` thay vì gọi trực tiếp Pod IP,
+# vì Pod IP có thể thay đổi sau mỗi lần restart/rollout.
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: bin-ecommerce-api-gateway
+  namespace: bin-ecommerce-app
+  labels:
+    # Label giúp truy vấn và quan sát Service nhất quán với Deployment.
+    app.kubernetes.io/name: bin-ecommerce-api-gateway
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  # ClusterIP chỉ mở Service trong mạng Kubernetes.
+  # Chưa public trực tiếp; Traefik Ingress sẽ nhận traffic public ở bước sau.
+  type: ClusterIP
+  selector:
+    # Selector phải khớp label của Pod, nếu sai Service sẽ không có endpoint.
+    app.kubernetes.io/name: bin-ecommerce-api-gateway
+  ports:
+    # `port: 80` là port các workload khác gọi qua Service DNS.
+    # `targetPort: http` trỏ tới port có name `http` (containerPort 3000) ở trên.
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

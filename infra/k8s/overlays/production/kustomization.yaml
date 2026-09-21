@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Overlay này là nguồn render production và dùng cho validation/bootstrap.
+# Release workflow không apply toàn bộ overlay mỗi lần, vì làm vậy có thể
+# khiến service không liên quan bị quay về image cũ. Script deploy dùng
+# kubectl set image theo danh sách service đã build và rollout từng service.
+resources:
+  - ../../base
+
+images:
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-api-gateway
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-auth-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-cart-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-catalog-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-media-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-notification-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-order-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-product-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-recommendation-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-seller-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-shipping-service
+    newTag: c5aebdb5942a
+  - name: ghcr.io/daongocanh25092004/bin-ecommerce-ai-service
+    newTag: c5aebdb5942a

@@ -1,0 +1,20 @@
+# File này mô tả hợp đồng image của production cho người maintain.
+# Kustomize nhận image override trong kustomization.yaml; CI thay tag bằng SHA
+# trong release manifest, không sửa các deployment YAML gốc và không dùng
+# tag latest.
+registry: ghcr.io/daongocanh25092004
+tagPolicy: commit-sha
+frontendDeployment: vercel
+applicationImages:
+  - api-gateway
+  - auth-service
+  - cart-service
+  - catalog-service
+  - media-service
+  - notification-service
+  - order-service
+  - product-service
+  - recommendation-service
+  - seller-service
+  - shipping-service
+  - ai-service

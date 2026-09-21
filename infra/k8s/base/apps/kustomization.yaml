@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Các deployment hiện hữu được giữ nguyên để tránh thay đổi hành vi runtime.
+# CI render overlay production rồi chỉ thay image của service trong release.
+resources:
+  - ../../apps/api-gateway/deployment.yaml
+  - ../../apps/auth-service/deployment.yaml
+  - ../../apps/cart-service/deployment.yaml
+  - ../../apps/catalog-service/deployment.yaml
+  - ../../apps/media-service/deployment.yaml
+  - ../../apps/notification-service/deployment.yaml
+  - ../../apps/order-service/deployment.yaml
+  - ../../apps/product-service/deployment.yaml
+  - ../../apps/recommendation-service/deployment.yaml
+  - ../../apps/seller-service/deployment.yaml
+  - ../../apps/shipping-service/deployment.yaml
+  - ../../apps/ai-service/deployment.yaml

@@ -81,6 +81,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:5173
 
 ~~~bash
 docker compose --env-file infra/docker/.env \
+  --env-file .env \
   -f infra/docker/docker-compose.infra.yml up -d
 ~~~
 
@@ -90,6 +91,7 @@ Kiểm tra:
 
 ~~~bash
 docker compose --env-file infra/docker/.env \
+  --env-file .env \
   -f infra/docker/docker-compose.infra.yml ps
 ~~~
 
@@ -159,6 +161,7 @@ Kiểm tra REDIS_PASSWORD trong root .env, infra/docker/.env và password trong 
 
 ~~~bash
 docker compose --env-file infra/docker/.env \
+  --env-file .env \
   -f infra/docker/docker-compose.infra.yml ps
 docker compose --env-file .env logs <service-name>
 ~~~

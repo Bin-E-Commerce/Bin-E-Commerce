@@ -1,0 +1,153 @@
+name: Deploy Production
+
+on:
+  # Build Images chỉ phát hành khi CI đã pass; deploy nhận đúng SHA của run đó.
+  workflow_run:
+    workflows: [Build Images]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Full commit SHA cần deploy lại
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PROD_NAMESPACE: bin-ecommerce-app
+
+jobs:
+  detect:
+    name: Prepare production release
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      release_sha: ${{ steps.context.outputs.release_sha }}
+      deploy_services: ${{ steps.affected.outputs.deploy_services }}
+    steps:
+      - name: Resolve release commit
+        id: context
+        shell: bash
+        env:
+          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          MANUAL_SHA: ${{ inputs.release_sha }}
+        run: |
+          release_sha="${MANUAL_SHA:-$WORKFLOW_RUN_SHA}"
+          if [[ -z "$release_sha" ]]; then
+            release_sha="${GITHUB_SHA}"
+          fi
+          if [[ ! "$release_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'release_sha must be a full lowercase Git SHA.'
+            exit 1
+          fi
+          echo "release_sha=$release_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout release commit and submodules
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.context.outputs.release_sha }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Detect backend images in this release
+        id: affected
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ steps.context.outputs.release_sha }}
+        run: |
+          result="$(node .github/scripts/detect-affected-services.mjs --head "$RELEASE_SHA")"
+          services="$(node -e 'console.log(JSON.parse(process.argv[1]).deployServices.join(","))' "$result")"
+          echo "deploy_services=$services" >> "$GITHUB_OUTPUT"
+          echo "Services scheduled for production: ${services:-none}"
+
+  deploy:
+    name: Deploy approved release to K3s
+    needs: detect
+    if: needs.detect.outputs.deploy_services != ''
+    runs-on: ubuntu-latest
+    # Tạo Repository Variable PRODUCTION_ENVIRONMENT=production. Dùng vars
+    # giúp Environment name được cấu hình ngoài workflow và tránh IntelliSense
+    # của VS Code đánh dấu giá trị production tĩnh là invalid.
+    environment: ${{ vars.PRODUCTION_ENVIRONMENT }}
+    env:
+      RELEASE_SHA: ${{ needs.detect.outputs.release_sha }}
+      CHANGED_SERVICES: ${{ needs.detect.outputs.deploy_services }}
+      PROD_HOST: ${{ secrets.PROD_HOST }}
+      PROD_USER: ${{ secrets.PROD_USER }}
+      PROD_MANIFEST_PATH: ${{ secrets.PROD_K3S_MANIFEST_PATH }}
+    steps:
+      - name: Checkout release commit and submodules
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.detect.outputs.release_sha }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Verify required production configuration
+        shell: bash
+        run: |
+          test -n "$PROD_HOST" || { echo 'Missing production host.'; exit 1; }
+          test -n "$PROD_USER" || { echo 'Missing production user.'; exit 1; }
+          test -n "$PROD_MANIFEST_PATH" || { echo 'Missing production manifest path.'; exit 1; }
+
+      - name: Create non-secret release environment file
+        shell: bash
+        run: |
+          {
+            printf 'RELEASE_SHA=%s\n' "$RELEASE_SHA"
+            printf 'CHANGED_SERVICES=%s\n' "$CHANGED_SERVICES"
+            IFS=',' read -r -a services <<< "$CHANGED_SERVICES"
+            for service in "${services[@]}"; do
+              variable="IMAGE_${service//-/_}"
+              printf '%s=%s\n' "$variable" \
+                "ghcr.io/daongocanh25092004/bin-ecommerce-${service}:${RELEASE_SHA}"
+            done
+          } > release.env
+
+          # Chỉ chứa image reference và SHA; không đưa SSH key, database
+          # password, OAuth secret hay Kubernetes runtime Secret vào file này.
+          chmod 600 release.env
+
+      - name: Configure SSH host verification
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+
+      - name: Install known host key
+        shell: bash
+        env:
+          PROD_KNOWN_HOSTS: ${{ secrets.PROD_KNOWN_HOSTS }}
+        run: |
+          test -n "$PROD_KNOWN_HOSTS" || { echo 'Missing PROD_KNOWN_HOSTS.'; exit 1; }
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$PROD_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Upload deploy script and release metadata
+        shell: bash
+        run: |
+          target="$PROD_USER@$PROD_HOST"
+          scp scripts/deploy-production.sh "$target:/tmp/bin-ecommerce-deploy-production.sh"
+          scp release.env "$target:/tmp/bin-ecommerce-release.env"
+
+      - name: Deploy services in dependency order
+        shell: bash
+        run: |
+          target="$PROD_USER@$PROD_HOST"
+          ssh "$target" \
+            "sudo install -m 0755 /tmp/bin-ecommerce-deploy-production.sh /opt/bin-ecommerce/deploy-production.sh && \
+             sudo chmod 0600 /tmp/bin-ecommerce-release.env && \
+             sudo env RELEASE_ENV_FILE=/tmp/bin-ecommerce-release.env \
+               NAMESPACE=$PROD_NAMESPACE K3S_MANIFEST_PATH=$PROD_MANIFEST_PATH \
+               bash /opt/bin-ecommerce/deploy-production.sh"
+
+      - name: Remove temporary release metadata
+        if: always()
+        shell: bash
+        run: |
+          target="$PROD_USER@$PROD_HOST"
+          ssh "$target" \
+            'sudo rm -f /tmp/bin-ecommerce-release.env /tmp/bin-ecommerce-deploy-production.sh' || true
