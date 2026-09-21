@@ -3,11 +3,16 @@ name: CI
 on:
   pull_request:
     branches: [main]
-  # dev là nhánh tích hợp nên mọi push vào dev phải được kiểm tra sớm. main
-  # vẫn chạy lại CI sau merge để Build Images dùng đúng tree production.
+  # Push vào dev sẽ được kiểm tra qua pull_request khi mở PR vào main.
+  # main vẫn chạy lại CI sau merge để Build Images dùng đúng tree production.
   push:
-    branches: [dev, main]
+    branches: [main]
   workflow_dispatch:
+
+# Khi push commit mới vào cùng PR, hủy run cũ để tiết kiệm runner và tránh đọc kết quả cũ.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 # CI chỉ đọc source. Không cấp quyền push package và tuyệt đối không deploy
 # production từ Pull Request.
