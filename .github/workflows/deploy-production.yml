@@ -187,7 +187,7 @@ jobs:
 
           echo "SSM command submitted: $command_id"
 
-          for attempt in $(seq 1 72); do
+          for attempt in $(seq 1 180); do
             status="$(aws ssm get-command-invocation \
               --region "$AWS_REGION" \
               --command-id "$command_id" \
@@ -216,13 +216,13 @@ jobs:
                 exit 1
                 ;;
               *)
-                echo "SSM status: $status (attempt $attempt/72)"
+                echo "SSM status: $status (attempt $attempt/180)"
                 sleep 5
                 ;;
             esac
           done
 
-          echo 'SSM deploy timed out after 6 minutes.' >&2
+          echo 'SSM deploy timed out after 15 minutes.' >&2
           exit 1
 
       - name: Remove temporary release metadata
