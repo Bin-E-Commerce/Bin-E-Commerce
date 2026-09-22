@@ -114,6 +114,26 @@ data:
       // CRI parser tach timestamp/stream/flag khoi dong log cua containerd.
       stage.cri {}
 
+      // StructuredLogger/AI logger xuat JSON; chi trich label bounded de truy van nhanh.
+      // requestId va email van nam trong noi dung da redact, khong duoc dua vao label.
+      stage.json {
+        expressions = {
+          level   = "level",
+          service = "service",
+          context = "context",
+          event   = "event",
+        }
+      }
+
+      stage.labels {
+        values = {
+          level   = "",
+          service = "",
+          context = "",
+          event   = "",
+        }
+      }
+
       stage.static_labels {
         values = {
           cluster = "bin-ecommerce-production",

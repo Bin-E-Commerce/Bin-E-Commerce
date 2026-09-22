@@ -30,17 +30,72 @@ data:
         static_configs:
           - targets: [kube-state-metrics.bin-ecommerce-observability.svc.cluster.local:8080]
 
-      # Chỉ service đã có endpoint metrics ổn định được scrape ở giai đoạn đầu.
-      # Các service còn lại vẫn được theo dõi qua readiness, restart và trạng thái Pod.
+      # Tất cả service dùng cùng /metrics; route này nằm ngoài /api để scrape không phụ thuộc API version.
+      - job_name: api-gateway
+        metrics_path: /metrics
+        static_configs:
+          - targets: [bin-ecommerce-api-gateway.bin-ecommerce-app.svc.cluster.local:80]
+
+      - job_name: auth-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [auth-service.bin-ecommerce-app.svc.cluster.local:3002]
+
+      - job_name: cart-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [cart-service.bin-ecommerce-app.svc.cluster.local:3003]
+
+      - job_name: catalog-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [catalog-service.bin-ecommerce-app.svc.cluster.local:3003]
+
+      - job_name: media-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [media-service.bin-ecommerce-app.svc.cluster.local:3004]
+
+      - job_name: notification-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [notification-service.bin-ecommerce-app.svc.cluster.local:3005]
+
+      - job_name: order-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [order-service.bin-ecommerce-app.svc.cluster.local:3011]
+
+      - job_name: product-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [product-service.bin-ecommerce-app.svc.cluster.local:3008]
+
       - job_name: recommendation-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [recommendation-service.bin-ecommerce-app.svc.cluster.local:3006]
+
+      # Endpoint legacy giữ các metric Kafka/embedding riêng của Recommendation Service.
+      - job_name: recommendation-kafka
         metrics_path: /api/v1/health/metrics
         static_configs:
-          - targets: [bin-ecommerce-recommendation-service.bin-ecommerce-app.svc.cluster.local:80]
+          - targets: [recommendation-service.bin-ecommerce-app.svc.cluster.local:3006]
+
+      - job_name: seller-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [seller-service.bin-ecommerce-app.svc.cluster.local:3007]
+
+      - job_name: shipping-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [shipping-service.bin-ecommerce-app.svc.cluster.local:3012]
 
       - job_name: ai-service
         metrics_path: /metrics
         static_configs:
-          - targets: [bin-ecommerce-ai-service.bin-ecommerce-app.svc.cluster.local:80]
+          - targets: [ai-service.bin-ecommerce-app.svc.cluster.local:3009]
 
     alerting:
       # Chưa gửi notification ra ngoài; alert vẫn hiện trong Prometheus/Grafana.
@@ -95,6 +150,33 @@ data:
             annotations:
               summary: Monitoring target is down
               description: Prometheus cannot scrape {{ $labels.job }} at {{ $labels.instance }}.
+
+          - alert: ApplicationHttp5xxHigh
+            expr: sum by (job) (rate(http_responses_total{status_class="5xx"}[5m])) > 0.1
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Application 5xx responses are increasing
+              description: Service {{ $labels.job }} is returning more than 0.1 5xx responses per second.
+
+          - alert: KafkaConsumerUnavailable
+            expr: recommendation_kafka_consumer_available == 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: Recommendation Kafka consumer is unavailable
+              description: Consumer {{ $labels.consumer }} cannot consume topic {{ $labels.topic }}.
+
+          - alert: NodeFileDescriptorPressure
+            expr: node_filefd_allocated / node_filefd_maximum > 0.8
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Node file descriptor usage is high
+              description: File descriptor usage on {{ $labels.instance }} is above 80 percent.
 ---
 apiVersion: v1
 kind: Service
@@ -113,6 +195,22 @@ spec:
     - name: http
       port: 9090
       targetPort: http
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data
+  namespace: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -143,8 +241,8 @@ spec:
             # Retention theo cả thời gian và kích thước để bảo vệ RAM/EBS khi log/metric tăng.
             - --config.file=/etc/prometheus/prometheus.yml
             - --storage.tsdb.path=/prometheus
-            - --storage.tsdb.retention.time=3d
-            - --storage.tsdb.retention.size=512MB
+            - --storage.tsdb.retention.time=7d
+            - --storage.tsdb.retention.size=1536MB
             - --web.enable-lifecycle
           ports:
             - name: http
@@ -184,6 +282,6 @@ spec:
           configMap:
             name: prometheus-config
         - name: data
-          # Retention đã giới hạn 512 MB; sizeLimit là lớp bảo vệ thứ hai cho EBS.
-          emptyDir:
-            sizeLimit: 1Gi
+          # PVC giữ metrics qua Pod recreation; retention và giới hạn size bảo vệ EBS single-node.
+          persistentVolumeClaim:
+            claimName: prometheus-data
