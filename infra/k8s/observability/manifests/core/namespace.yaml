@@ -1,0 +1,8 @@
+# Tách monitoring/logging khỏi application và data để dễ cấp quyền, quota và truy vấn.
+# Namespace này không được expose public; Grafana/Prometheus chỉ truy cập qua port-forward.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/part-of: bin-ecommerce

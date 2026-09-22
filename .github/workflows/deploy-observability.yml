@@ -1,0 +1,128 @@
+name: Deploy Observability
+
+on:
+  # Monitoring thay doi cham hon application; deploy thu cong de tranh restart
+  # observability theo moi lan push image service.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy monitoring and logging to K3s
+    runs-on: ubuntu-latest
+    environment: ${{ vars.PRODUCTION_ENVIRONMENT }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+      PROD_INSTANCE_ID: ${{ vars.PROD_INSTANCE_ID }}
+      PROD_MANIFEST_PATH: ${{ vars.PROD_K3S_MANIFEST_PATH }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify required production configuration
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test -n "$AWS_REGION" || { echo 'Missing AWS_REGION.'; exit 1; }
+          test -n "$AWS_DEPLOY_ROLE_ARN" || { echo 'Missing AWS_DEPLOY_ROLE_ARN.'; exit 1; }
+          test -n "$PROD_INSTANCE_ID" || { echo 'Missing PROD_INSTANCE_ID.'; exit 1; }
+          test -n "$PROD_MANIFEST_PATH" || { echo 'Missing production manifest path.'; exit 1; }
+
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Verify production node is online in SSM
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ping_status="$(aws ssm describe-instance-information \
+            --region "$AWS_REGION" \
+            --filters "Key=InstanceIds,Values=$PROD_INSTANCE_ID" \
+            --query 'InstanceInformationList[0].PingStatus' \
+            --output text)"
+          test "$ping_status" = "Online" || {
+            echo "Production instance is not Online in SSM: $ping_status"
+            exit 1
+          }
+
+      - name: Deploy observability stack through SSM
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          # Gui ca manifest va script trong cung SSM command, khong phu thuoc node
+          # dang checkout dung branch hay co git credential tren EC2.
+          tar -czf observability.tar.gz -C infra/k8s observability
+          archive_b64="$(base64 --wrap=0 observability.tar.gz)"
+          script_b64="$(base64 --wrap=0 scripts/deploy-observability.sh)"
+          manifest_b64="$(printf '%s' "$PROD_MANIFEST_PATH" | base64 --wrap=0)"
+
+          # Base64 tranh loi quote khi nhung YAML vao tham so JSON cua SSM.
+          commands_json="$(jq -cn \
+            --arg archive "$archive_b64" \
+            --arg script "$script_b64" \
+            --arg manifest "$manifest_b64" \
+            '{commands: [
+              "set -eu",
+              "trap \"sudo rm -f /tmp/bin-ecommerce-observability.tar.gz /tmp/bin-ecommerce-deploy-observability.sh\" EXIT",
+              ("printf %s " + $archive + " | base64 -d | sudo tee /tmp/bin-ecommerce-observability.tar.gz >/dev/null"),
+              ("printf %s " + $script + " | base64 -d | sudo tee /tmp/bin-ecommerce-deploy-observability.sh >/dev/null"),
+              "sudo chmod 0755 /tmp/bin-ecommerce-deploy-observability.sh",
+              ("sudo mkdir -p \"$(printf %s " + $manifest + " | base64 -d)/observability\""),
+              ("sudo tar -xzf /tmp/bin-ecommerce-observability.tar.gz -C \"$(printf %s " + $manifest + " | base64 -d)\""),
+              ("sudo K3S_MANIFEST_PATH=\"$(printf %s " + $manifest + " | base64 -d)\" bash /tmp/bin-ecommerce-deploy-observability.sh")
+            ]}')"
+
+          command_id="$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --document-name AWS-RunShellScript \
+            --instance-ids "$PROD_INSTANCE_ID" \
+            --comment "Bin E-Commerce observability deploy" \
+            --parameters "$commands_json" \
+            --query 'Command.CommandId' \
+            --output text)"
+
+          echo "SSM command submitted: $command_id"
+          for attempt in $(seq 1 180); do
+            status="$(aws ssm get-command-invocation \
+              --region "$AWS_REGION" \
+              --command-id "$command_id" \
+              --instance-id "$PROD_INSTANCE_ID" \
+              --query 'Status' \
+              --output text 2>/dev/null || true)"
+            case "$status" in
+              Success)
+                aws ssm get-command-invocation \
+                  --region "$AWS_REGION" \
+                  --command-id "$command_id" \
+                  --instance-id "$PROD_INSTANCE_ID" \
+                  --query 'StandardOutputContent' \
+                  --output text
+                exit 0
+                ;;
+              Failed|Cancelled|TimedOut|Undeliverable|Terminated)
+                echo "SSM observability deploy failed with status: $status" >&2
+                aws ssm get-command-invocation \
+                  --region "$AWS_REGION" \
+                  --command-id "$command_id" \
+                  --instance-id "$PROD_INSTANCE_ID" \
+                  --query '{stdout:StandardOutputContent,stderr:StandardErrorContent}' \
+                  --output json
+                exit 1
+                ;;
+              *)
+                echo "SSM status: ${status:-Unknown} (attempt $attempt/180)"
+                sleep 5
+                ;;
+            esac
+          done
+
+          echo 'SSM observability deploy timed out after 15 minutes.' >&2
+          exit 1

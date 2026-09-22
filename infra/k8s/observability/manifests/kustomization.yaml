@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Đây là entrypoint của observability manifests. Thư mục cha chỉ dùng để nhóm tài nguyên;
+# CI/CD và script deploy trỏ trực tiếp vào thư mục này.
+# Các nhóm được tách theo trách nhiệm
+# để dễ review, dễ cập nhật độc lập và tránh một manifest phình to khó rollback.
+resources:
+  - core/namespace.yaml
+  - metrics/prometheus.yaml
+  - metrics/node-exporter.yaml
+  - metrics/kube-state-metrics.yaml
+  - grafana/grafana.yaml
+  - logging/loki.yaml
+  - logging/alloy.yaml

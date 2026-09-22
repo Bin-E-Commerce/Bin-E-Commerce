@@ -13,13 +13,11 @@
 #   Service       | Container port | Host port | Chức năng
 #   Kafka         | 9092/29092     | 9092/29092| message broker cho event/worker
 #   Keycloak      | 8080           | 8080      | xác thực và cấp token OAuth/OIDC
-#   Prometheus    | 9090           | 9090      | thu thập metrics
-#   Grafana       | 3030           | 3030      | dashboard quan sát hệ thống
 #   Kafka UI      | 8080           | 8081      | theo dõi topic và consumer group
 #
 # PostgreSQL, MongoDB, Redis và Qdrant là dịch vụ managed cloud; application
-# services nhận endpoint từ root .env. Compose này chỉ giữ runtime local và
-# observability nên không tạo database container hoặc database volume.
+# services nhận endpoint từ root .env. Compose này chỉ giữ runtime local cho
+# Kafka, Keycloak và Kafka UI; monitoring production chạy trên K3s.
 #
 # Dừng an toàn, không xóa dữ liệu:
 #   docker compose --env-file infra/docker/.env --env-file .env -f infra/docker/docker-compose.infra.yml stop
@@ -169,60 +167,11 @@ services:
     networks:
       - infra_net
 
-  # --------------------------------------------------------------------------
-  # 03. Observability
-  # --------------------------------------------------------------------------
-
-  # Service: Prometheus
-  # Port: container 9090 -> host 9090
-  # Vai trò: Thu thập và lưu time-series metrics của hệ thống.
-  # Kết nối chính: Prometheus configuration và các metrics endpoint.
-  prometheus:
-    container_name: bin-ecommerce-infra-prometheus
-    image: prom/prometheus:v2.51.2
-    restart: unless-stopped
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=15d
-      - --web.enable-lifecycle
-    ports:
-      - "9090:9090"
-    volumes:
-      - ../../infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    networks:
-      - infra_net
-
-  # Service: Grafana
-  # Port: container 3030 -> host 3030
-  # Vai trò: Hiển thị dashboard metrics và health của hệ thống.
-  # Kết nối chính: Prometheus datasource và Grafana provisioning.
-  grafana:
-    container_name: bin-ecommerce-infra-grafana
-    image: grafana/grafana:10.4.2
-    restart: unless-stopped
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-      GF_USERS_ALLOW_SIGN_UP: "false"
-      GF_SERVER_HTTP_PORT: "3030"
-    ports:
-      - "3030:3030"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ../../infra/grafana/provisioning:/etc/grafana/provisioning:ro
-    depends_on:
-      - prometheus
-    networks:
-      - infra_net
-
 # --------------------------------------------------------------------------
 # Volumes - dữ liệu bền vững
 # --------------------------------------------------------------------------
 volumes:
   kafka_data:
-  prometheus_data:
-  grafana_data:
   # Volume local riêng cho Keycloak; không dùng chung với production.
   bin_ecommerce_keycloak_local_data:
     name: bin-ecommerce-keycloak-local-data

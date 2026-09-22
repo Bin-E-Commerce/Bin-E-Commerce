@@ -216,9 +216,12 @@ jobs:
         shell: bash
         run: |
           kubectl kustomize --load-restrictor LoadRestrictionsNone infra/k8s/overlays/production > /tmp/bin-ecommerce-production.yaml
+          kubectl kustomize --load-restrictor LoadRestrictionsNone infra/k8s/observability/manifests > /tmp/bin-ecommerce-observability.yaml
 
       - name: Validate rendered Kubernetes YAML
         shell: bash
         run: |
           docker run --rm -i ghcr.io/yannh/kubeconform:v0.6.7 \
             -strict -summary -output text < /tmp/bin-ecommerce-production.yaml
+          docker run --rm -i ghcr.io/yannh/kubeconform:v0.6.7 \
+            -strict -summary -output text < /tmp/bin-ecommerce-observability.yaml
