@@ -3,8 +3,24 @@
 // không đọc request body và không thay thế guard/authentication của từng service.
 
 import { randomUUID } from "crypto";
-import type { INestApplication, LoggerService } from "@nestjs/common";
 import { MetricsRegistry } from "./metrics-registry";
+
+// Chỉ mô tả phần contract mà observability cần từ Nest để package common không
+// phải kéo dependency framework vào mọi Docker build compile trực tiếp source này.
+interface NestLoggerLike {
+  log(message: unknown, context?: string): void;
+  warn(message: unknown, context?: string): void;
+  error(message: unknown, trace?: string, context?: string): void;
+  debug(message: unknown, context?: string): void;
+  verbose(message: unknown, context?: string): void;
+}
+
+// Giữ boundary bootstrap tối thiểu để shared package không phụ thuộc declaration
+// của Nest; ứng dụng Nest thật vẫn tương thích nhờ structural typing của TypeScript.
+interface NestApplicationLike {
+  getHttpAdapter(): { getInstance(): unknown };
+  useLogger(logger: NestLoggerLike): void;
+}
 
 interface HttpRequest {
   method?: string;
@@ -122,7 +138,7 @@ function sanitizeFields(
 }
 
 // Logger JSON tối giản tương thích LoggerService của Nest và không in stack/secret ngoài ý muốn.
-export class StructuredLogger implements LoggerService {
+export class StructuredLogger implements NestLoggerLike {
   constructor(
     private readonly service: string,
     private readonly environment = process.env.NODE_ENV ?? "development",
@@ -186,7 +202,7 @@ export class StructuredLogger implements LoggerService {
 
 // Gắn request ID, access log và RED metrics vào HTTP adapter mà không đụng vào controller/business code.
 export function setupHttpObservability(
-  app: INestApplication,
+  app: NestApplicationLike,
   service: string,
 ): MetricsRegistry {
   const registry = new MetricsRegistry();
