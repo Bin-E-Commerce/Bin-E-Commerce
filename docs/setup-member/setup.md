@@ -47,7 +47,7 @@ Không commit các file .env thật.
 
 ### Biến cần kiểm tra
 
-infra/docker/.env phải có đủ biến cho PostgreSQL, MongoDB, Redis, Keycloak và Grafana.
+infra/docker/.env phải có đủ biến cho Keycloak và PostgreSQL local của Keycloak.
 
 Root .env cần kiểm tra tối thiểu:
 
@@ -85,7 +85,7 @@ docker compose --env-file infra/docker/.env \
   -f infra/docker/docker-compose.infra.yml up -d
 ~~~
 
-Hạ tầng gồm PostgreSQL, MongoDB, Redis, Kafka, Keycloak, Qdrant, Prometheus, Grafana và Kafka UI.
+Hạ tầng local gồm PostgreSQL cho Keycloak, Kafka, Keycloak và Kafka UI. Database ứng dụng dùng managed cloud; monitoring production chạy trên K3s.
 
 Kiểm tra:
 
@@ -125,8 +125,6 @@ curl http://localhost:3000/api/v1/health
 | API Gateway | http://localhost:3000 |
 | Keycloak | http://localhost:8080 |
 | Kafka UI | http://localhost:8081 |
-| Prometheus | http://localhost:9090 |
-| Grafana | http://localhost:3030 |
 | Qdrant | http://localhost:6333 |
 
 ## 6. Lệnh thường dùng

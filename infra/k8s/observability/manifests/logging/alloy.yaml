@@ -1,0 +1,108 @@
+# Alloy chạy DaemonSet để mỗi node đọc log Pod cục bộ rồi gửi về Loki.
+# Chỉ gắn /var/log/pods ở chế độ read-only; không mount Docker socket và không đọc secret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: bin-ecommerce-observability
+data:
+  config.alloy: |
+    // File path của K3s có namespace/pod/container; labels được giới hạn để tránh cardinality cao.
+    local.file_match "pod_logs" {
+      path_targets = [{"__path__" = "/var/log/pods/*/*/*.log", "job" = "kubernetes-pods"}]
+      sync_period = "10s"
+    }
+
+    loki.source.file "pod_logs" {
+      targets    = local.file_match.pod_logs.targets
+      forward_to = [loki.process.pod_logs.receiver]
+    }
+
+    loki.process "pod_logs" {
+      // Lấy nhãn ổn định từ filename; không đưa userId/requestId vào label Loki.
+      stage.regex {
+        expression = "/var/log/pods/(?P<namespace>[^_]+)_(?P<pod>[^_]+)_[^/]+/(?P<container>[^/]+)/[0-9]+[.]log"
+        source     = "filename"
+      }
+
+      stage.labels {
+        values = {
+          namespace = "namespace",
+          pod       = "pod",
+          container = "container",
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }
+
+    loki.write "default" {
+      endpoint {
+        url = "http://loki.bin-ecommerce-observability.svc.cluster.local:3100/loki/api/v1/push"
+      }
+    }
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  # Một Alloy trên mỗi node để đọc log local; mở rộng cluster sẽ tự có collector mới.
+  name: alloy
+  namespace: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alloy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: alloy
+        app.kubernetes.io/part-of: bin-ecommerce
+    spec:
+      # Alloy gửi log trực tiếp tới Loki bằng DNS nội bộ, không cần Kubernetes API.
+      automountServiceAccountToken: false
+      containers:
+        - name: alloy
+          image: grafana/alloy:v1.2.1
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/var/lib/alloy/data
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 15m
+              memory: 64Mi
+            limits:
+              cpu: 150m
+              memory: 192Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy/config.alloy
+              subPath: config.alloy
+              readOnly: true
+            - name: pod-logs
+              mountPath: /var/log/pods
+              readOnly: true
+            - name: alloy-data
+              mountPath: /var/lib/alloy/data
+      volumes:
+        - name: config
+          configMap:
+            name: alloy-config
+        - name: pod-logs
+          hostPath:
+            path: /var/log/pods
+            type: Directory
+        - name: alloy-data
+          # Chỉ lưu positions/checkpoint; mất file này chỉ khiến Alloy đọc lại log gần đây.
+          emptyDir:
+            sizeLimit: 128Mi

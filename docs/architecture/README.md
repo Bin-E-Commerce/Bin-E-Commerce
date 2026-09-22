@@ -304,7 +304,7 @@ EC2 / k3s / application
 - `Grafana`: dashboard và truy vấn metrics.
 - `Node Exporter`: CPU, RAM, disk và network của EC2.
 - `kube-state-metrics`: trạng thái Deployment, Pod, Service và Replica.
-- `Alertmanager`: cảnh báo khi có sự cố.
+- `Alertmanager`: có thể bổ sung khi cần gửi cảnh báo ra email/Slack; bản demo hiện giữ alert rules trong Prometheus để giảm RAM.
 
 ### Metrics cần theo dõi
 
@@ -317,7 +317,7 @@ EC2 / k3s / application
 - Qdrant health và vector coverage.
 - Recommendation fallback rate và model readiness.
 
-Prometheus hiện đã có trong cấu hình local với retention 15 ngày. Khi chuyển sang k3s, cần chuyển phần này thành chart/manifests trong namespace `observability` và rà soát lại toàn bộ scrape target/port.
+Prometheus/Grafana hiện có cấu hình local và production manifests trong `infra/k8s/observability/manifests`. Production dùng retention ngắn để phù hợp node 8 GiB; cần kiểm tra dashboard sau lần cài đầu tiên.
 
 ## 9. Logging tập trung
 
@@ -385,7 +385,7 @@ Thứ tự rollout:
 3. Chạy database migration Job.
 4. Deploy application services.
 5. Deploy AI service và workers.
-6. Deploy Prometheus, Grafana, Alertmanager, Loki và Alloy.
+6. Deploy Prometheus, Grafana, Loki và Alloy bằng workflow `Deploy Observability`; Alertmanager chỉ thêm khi cần kênh thông báo.
 7. Kiểm tra readiness, health endpoint, Kafka consumer và dashboard.
 8. Nếu rollout lỗi, rollback image/tag trước đó.
 

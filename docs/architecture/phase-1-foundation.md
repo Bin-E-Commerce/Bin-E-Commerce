@@ -909,7 +909,7 @@ kubectl logs -n bin-ecommerce-app deployment/<ranking-worker-name>
 Monitoring không được deploy trước application vì sẽ làm khó phân biệt lỗi nền tảng và lỗi ứng dụng. Sau khi application Ready mới deploy:
 
 ```bash
-kubectl apply -f infra/k8s/observability/
+sudo bash scripts/deploy-observability.sh
 kubectl get pods -n bin-ecommerce-observability
 kubectl get services -n bin-ecommerce-observability
 ```

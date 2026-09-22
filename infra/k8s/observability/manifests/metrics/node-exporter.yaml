@@ -1,0 +1,77 @@
+# Node Exporter đọc metric của chính EC2 node. Không dùng hostNetwork/hostPort:
+# Prometheus gọi qua ClusterIP, tránh mở thêm cổng 9100 trên network interface của EC2.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  # Mỗi node chỉ chạy một exporter để đọc CPU, RAM, filesystem và network của node đó.
+  name: node-exporter
+  namespace: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/name: node-exporter
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: node-exporter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: node-exporter
+        app.kubernetes.io/part-of: bin-ecommerce
+    spec:
+      automountServiceAccountToken: false
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: node-exporter
+          image: quay.io/prometheus/node-exporter:v1.8.1
+          args:
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+            - --path.rootfs=/host
+          ports:
+            - name: metrics
+              containerPort: 9100
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 96Mi
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            # Chỉ đọc host filesystem; không cho container sửa file hệ thống của EC2.
+            - name: root
+              mountPath: /host
+              readOnly: true
+      volumes:
+        - name: root
+          hostPath:
+            path: /
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # Prometheus scrape qua DNS Service thay vì truy cập trực tiếp Pod IP.
+  name: node-exporter
+  namespace: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/name: node-exporter
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: node-exporter
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: metrics

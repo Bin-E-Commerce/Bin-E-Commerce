@@ -1,0 +1,189 @@
+# Prometheus chỉ scrape các target có endpoint metrics ổn định. Trạng thái Pod/node
+# được lấy qua exporters; không scrape tuỳ tiện mọi Pod để tránh tạo tải và cardinality.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # Config và alert rules cùng được mount vào Pod. Script sẽ restart Prometheus
+  # sau apply để chắc chắn rule/config mới được nạp, không phụ thuộc reload tự động.
+  name: prometheus-config
+  namespace: bin-ecommerce-observability
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 30s
+      evaluation_interval: 30s
+
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+
+    scrape_configs:
+      # Self-scrape giúp kiểm tra Prometheus còn hoạt động và query được dữ liệu.
+      - job_name: prometheus
+        static_configs:
+          - targets: [127.0.0.1:9090]
+
+      - job_name: node-exporter
+        static_configs:
+          - targets: [node-exporter.bin-ecommerce-observability.svc.cluster.local:9100]
+
+      - job_name: kube-state-metrics
+        static_configs:
+          - targets: [kube-state-metrics.bin-ecommerce-observability.svc.cluster.local:8080]
+
+      # Chỉ service đã có endpoint metrics ổn định được scrape ở giai đoạn đầu.
+      # Các service còn lại vẫn được theo dõi qua readiness, restart và trạng thái Pod.
+      - job_name: recommendation-service
+        metrics_path: /api/v1/health/metrics
+        static_configs:
+          - targets: [bin-ecommerce-recommendation-service.bin-ecommerce-app.svc.cluster.local:80]
+
+      - job_name: ai-service
+        metrics_path: /metrics
+        static_configs:
+          - targets: [bin-ecommerce-ai-service.bin-ecommerce-app.svc.cluster.local:80]
+
+    alerting:
+      # Chưa gửi notification ra ngoài; alert vẫn hiện trong Prometheus/Grafana.
+      # Alertmanager sẽ được bổ sung khi cần email/Slack và có secret receiver.
+      alertmanagers: []
+
+  alerts.yml: |
+    groups:
+      - name: bin-ecommerce-platform
+        rules:
+          - alert: PodRestarting
+            expr: increase(kube_pod_container_status_restarts_total[15m]) > 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Pod restarted recently
+              description: A container in namespace {{ $labels.namespace }} has restarted.
+
+          - alert: PodNotReady
+            expr: kube_pod_status_ready{condition="true",namespace=~"bin-ecommerce-app|bin-ecommerce-data"} == 0
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Pod is not ready
+              description: Pod {{ $labels.namespace }}/{{ $labels.pod }} is not ready.
+
+          - alert: NodeMemoryAvailableLow
+            expr: 100 * node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 15
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Node memory is low
+              description: Available memory on {{ $labels.instance }} is below 15 percent.
+
+          - alert: NodeDiskAvailableLow
+            expr: 100 * node_filesystem_avail_bytes{mountpoint="/",fstype!="tmpfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!="tmpfs"} < 20
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Node disk is nearly full
+              description: Available root filesystem space is below 20 percent.
+
+          - alert: ScrapeTargetDown
+            expr: up == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Monitoring target is down
+              description: Prometheus cannot scrape {{ $labels.job }} at {{ $labels.instance }}.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # ClusterIP giữ Prometheus trong cluster, không mở cổng 9090 trên EC2.
+  name: prometheus
+  namespace: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: prometheus
+  ports:
+    - name: http
+      port: 9090
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Một replica đủ cho demo single-node; HA cần nhiều node và persistent storage.
+  name: prometheus
+  namespace: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prometheus
+        app.kubernetes.io/part-of: bin-ecommerce
+    spec:
+      # Prometheus dùng static targets nên không cần quyền gọi Kubernetes API.
+      automountServiceAccountToken: false
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.51.2
+          args:
+            # Retention theo cả thời gian và kích thước để bảo vệ RAM/EBS khi log/metric tăng.
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=3d
+            - --storage.tsdb.retention.size=512MB
+            - --web.enable-lifecycle
+          ports:
+            - name: http
+              containerPort: 9090
+          resources:
+            requests:
+              cpu: 25m
+              memory: 96Mi
+            limits:
+              cpu: 250m
+              memory: 384Mi
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+              readOnly: true
+            - name: config
+              mountPath: /etc/prometheus/rules/alerts.yml
+              subPath: alerts.yml
+              readOnly: true
+            - name: data
+              mountPath: /prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+        - name: data
+          # Retention đã giới hạn 512 MB; sizeLimit là lớp bảo vệ thứ hai cho EBS.
+          emptyDir:
+            sizeLimit: 1Gi

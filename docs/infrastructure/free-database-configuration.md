@@ -44,7 +44,7 @@ AI_REDIS_URL=rediss://default:PASSWORD@HOST:6379
 
 ## Chạy profile managed cloud
 
-Giữ Kafka, Keycloak và observability local trên EC2; application services sẽ kết nối database managed qua các biến trong `.env.cloud`:
+Giữ Kafka và Keycloak local trên EC2; monitoring/logging production chạy trên K3s. Application services sẽ kết nối database managed qua các biến trong `.env.cloud`:
 
 ```powershell
 docker compose --env-file infra/docker/.env --env-file .env \
