@@ -148,6 +148,12 @@ spec:
         app.kubernetes.io/part-of: bin-ecommerce
     spec:
       serviceAccountName: alloy
+      # Alloy chay non-root; fsGroup cho phep process ghi checkpoint vao emptyDir.
+      # Khong dung chmod/chown tren host va khong mo rong quyen container.
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 473
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: alloy
           image: grafana/alloy:v1.2.1
