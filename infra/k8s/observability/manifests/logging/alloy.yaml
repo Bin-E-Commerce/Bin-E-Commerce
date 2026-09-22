@@ -1,5 +1,38 @@
-# Alloy chạy DaemonSet để mỗi node đọc log Pod cục bộ rồi gửi về Loki.
-# Chỉ gắn /var/log/pods ở chế độ read-only; không mount Docker socket và không đọc secret.
+# Alloy chạy DaemonSet và đọc log Pod qua Kubernetes API.
+# Cách này tránh mount /var/log/pods và tránh chạy collector với quyền root trên host.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alloy
+  namespace: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/part-of: bin-ecommerce
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: bin-ecommerce-alloy
+rules:
+  # Alloy cần đọc Pod để discovery và đọc subresource log để stream stdout/stderr.
+  # Không cấp quyền tạo, sửa hoặc xoá bất kỳ resource nào.
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: bin-ecommerce-alloy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: bin-ecommerce-alloy
+subjects:
+  - kind: ServiceAccount
+    name: alloy
+    namespace: bin-ecommerce-observability
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,29 +40,82 @@ metadata:
   namespace: bin-ecommerce-observability
 data:
   config.alloy: |
-    // File path của K3s có namespace/pod/container; labels được giới hạn để tránh cardinality cao.
-    local.file_match "pod_logs" {
-      path_targets = [{"__path__" = "/var/log/pods/*/*/*.log", "job" = "kubernetes-pods"}]
-      sync_period = "10s"
+    // Discovery chi lay Pod tren cung node voi Alloy, tranh mot DaemonSet doc trung log.
+    discovery.kubernetes "pod" {
+      role = "pod"
+
+      selectors {
+        role  = "pod"
+        field = "spec.nodeName=" + sys.env("HOST_NODE_NAME")
+      }
     }
 
-    loki.source.file "pod_logs" {
-      targets    = local.file_match.pod_logs.targets
+    // Tao cac label co cardinality kiem soat tu metadata Kubernetes.
+    discovery.relabel "pod_logs" {
+      targets = discovery.kubernetes.pod.targets
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        action        = "replace"
+        target_label  = "namespace"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        action        = "replace"
+        target_label  = "pod"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        action        = "replace"
+        target_label  = "container"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+        action        = "replace"
+        target_label  = "app"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_container_name"]
+        action        = "replace"
+        target_label  = "job"
+        separator     = "/"
+        replacement   = "$1"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_id"]
+        action        = "replace"
+        target_label  = "container_runtime"
+        regex         = `^(\\S+):\\/\\/.+$`
+        replacement   = "$1"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+        action        = "replace"
+        target_label  = "__path__"
+        separator     = "/"
+        replacement   = "/var/log/pods/*$1/*.log"
+      }
+    }
+
+    // Stream log qua Kubernetes API, khong can doc host filesystem.
+    loki.source.kubernetes "pod_logs" {
+      targets    = discovery.relabel.pod_logs.output
       forward_to = [loki.process.pod_logs.receiver]
     }
 
     loki.process "pod_logs" {
-      // Lấy nhãn ổn định từ filename; không đưa userId/requestId vào label Loki.
-      stage.regex {
-        expression = "/var/log/pods/(?P<namespace>[^_]+)_(?P<pod>[^_]+)_[^/]+/(?P<container>[^/]+)/[0-9]+[.]log"
-        source     = "filename"
-      }
+      // CRI parser tach timestamp/stream/flag khoi dong log cua containerd.
+      stage.cri {}
 
-      stage.labels {
+      stage.static_labels {
         values = {
-          namespace = "namespace",
-          pod       = "pod",
-          container = "container",
+          cluster = "bin-ecommerce-production",
         }
       }
 
@@ -45,7 +131,7 @@ data:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  # Một Alloy trên mỗi node để đọc log local; mở rộng cluster sẽ tự có collector mới.
+  # Moi node chay mot Alloy; selector node trong config giu log dung node.
   name: alloy
   namespace: bin-ecommerce-observability
   labels:
@@ -61,20 +147,22 @@ spec:
         app.kubernetes.io/name: alloy
         app.kubernetes.io/part-of: bin-ecommerce
     spec:
-      # Alloy gửi log trực tiếp tới Loki bằng DNS nội bộ, không cần Kubernetes API.
-      automountServiceAccountToken: false
+      serviceAccountName: alloy
       containers:
         - name: alloy
           image: grafana/alloy:v1.2.1
+          env:
+            # HOSTNAME trong container la ten Pod; dung downward API de lay ten node.
+            - name: HOST_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           args:
             - run
             - /etc/alloy/config.alloy
             - --storage.path=/var/lib/alloy/data
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
             capabilities:
               drop: [ALL]
           resources:
@@ -89,20 +177,13 @@ spec:
               mountPath: /etc/alloy/config.alloy
               subPath: config.alloy
               readOnly: true
-            - name: pod-logs
-              mountPath: /var/log/pods
-              readOnly: true
             - name: alloy-data
               mountPath: /var/lib/alloy/data
       volumes:
         - name: config
           configMap:
             name: alloy-config
-        - name: pod-logs
-          hostPath:
-            path: /var/log/pods
-            type: Directory
         - name: alloy-data
-          # Chỉ lưu positions/checkpoint; mất file này chỉ khiến Alloy đọc lại log gần đây.
+          # Chi luu positions/checkpoint; mat file nay chi lam Alloy doc lai log gan day.
           emptyDir:
             sizeLimit: 128Mi

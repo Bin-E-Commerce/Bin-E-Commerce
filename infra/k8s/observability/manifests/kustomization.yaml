@@ -11,5 +11,6 @@ resources:
   - metrics/node-exporter.yaml
   - metrics/kube-state-metrics.yaml
   - grafana/grafana.yaml
+  - grafana/ingress.yaml
   - logging/loki.yaml
   - logging/alloy.yaml
