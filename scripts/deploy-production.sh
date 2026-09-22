@@ -13,6 +13,10 @@ RELEASE_ROOT="${RELEASE_ROOT:-/opt/bin-ecommerce/releases}"
 RELEASE_ENV_FILE="${RELEASE_ENV_FILE:-/tmp/bin-ecommerce-release.env}"
 K3S_MANIFEST_PATH="${K3S_MANIFEST_PATH:-/opt/bin-ecommerce/k8s}"
 ROLLOUT_TIMEOUT="${ROLLOUT_TIMEOUT:-180s}"
+SMOKE_MAX_TIME="${SMOKE_MAX_TIME:-20}"
+SMOKE_RETRY_COUNT="${SMOKE_RETRY_COUNT:-4}"
+SMOKE_RETRY_DELAY="${SMOKE_RETRY_DELAY:-2}"
+SMOKE_RETRY_MAX_TIME="${SMOKE_RETRY_MAX_TIME:-45}"
 
 if [[ ! -f "$RELEASE_ENV_FILE" ]]; then
   echo "Release env file not found: $RELEASE_ENV_FILE" >&2
@@ -161,12 +165,43 @@ done
 
 # Smoke test từ EC2 kiểm tra cả DNS/Ingress/public TLS mà người dùng thật sẽ
 # gặp. Không gửi credential và không in response body có thể chứa token.
-curl --fail --silent --show-error --max-time 20 \
-  https://api.binecommerce.site/api/v1/health >/dev/null
-curl --fail --silent --show-error --max-time 20 \
-  https://keycloak.binecommerce.site/realms/bin-ecommerce/.well-known/openid-configuration >/dev/null
-curl --fail --silent --show-error --max-time 20 \
-  https://www.binecommerce.site >/dev/null
+smoke_check() {
+  local name="$1"
+  local url="$2"
+  local response_code=""
+
+  echo "Smoke test: $name ($url)"
+  if response_code="$(curl \
+    --fail \
+    --silent \
+    --show-error \
+    --connect-timeout 5 \
+    --max-time "$SMOKE_MAX_TIME" \
+    --retry "$SMOKE_RETRY_COUNT" \
+    --retry-delay "$SMOKE_RETRY_DELAY" \
+    --retry-max-time "$SMOKE_RETRY_MAX_TIME" \
+    --retry-connrefused \
+    --output /dev/null \
+    --write-out '%{http_code}' \
+    "$url")"; then
+    echo "Smoke test passed: $name (HTTP ${response_code:-000})"
+    return 0
+  fi
+
+  echo "Smoke test failed: $name ($url), last HTTP status: ${response_code:-000}" >&2
+  return 1
+}
+
+smoke_check "API Gateway" \
+  "https://api.binecommerce.site/api/v1/health"
+smoke_check "Keycloak" \
+  "https://keycloak.binecommerce.site/realms/bin-ecommerce/.well-known/openid-configuration"
+
+# Frontend chay tren Vercel, doc lap voi rollout K3s; khong de loi edge tam thoi
+# cua frontend lam backend production bi rollback oan.
+if ! smoke_check "Frontend (warning only)" "https://www.binecommerce.site"; then
+  echo "Warning: frontend smoke test failed; backend deployment remains successful." >&2
+fi
 
 printf 'RELEASE_SHA=%s\nCHANGED_SERVICES=%s\n' "$RELEASE_SHA" "$CHANGED_SERVICES" \
   | sudo tee "$current_file" >/dev/null
