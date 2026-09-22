@@ -152,6 +152,8 @@ spec:
       # Khong dung chmod/chown tren host va khong mo rong quyen container.
       securityContext:
         runAsNonRoot: true
+        runAsUser: 473
+        runAsGroup: 473
         fsGroup: 473
         fsGroupChangePolicy: OnRootMismatch
       containers:
