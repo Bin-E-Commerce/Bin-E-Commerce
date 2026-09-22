@@ -21,6 +21,24 @@ kubectl() {
   sudo k3s kubectl "$@"
 }
 
+# In diagnostic chi tiet khi rollout fail de SSM tra ve pod/error that, thay vi chi bao timeout chung.
+diagnose_observability_failure() {
+  local failure_code=$?
+  trap - ERR
+  set +e
+  echo "Observability deploy failed with exit code $failure_code. Collecting diagnostics..." >&2
+  kubectl -n "$NAMESPACE" get pods -o wide >&2
+  kubectl -n "$NAMESPACE" get pvc >&2
+  kubectl -n "$NAMESPACE" get events --sort-by=.lastTimestamp | tail -40 >&2
+  for pod in $(kubectl -n "$NAMESPACE" get pods -o name 2>/dev/null); do
+    echo "--- $pod ---" >&2
+    kubectl -n "$NAMESPACE" logs "$pod" --tail=80 --all-containers 2>&1 | tail -80 >&2
+  done
+  exit "$failure_code"
+}
+
+trap diagnose_observability_failure ERR
+
 if ! kubectl -n "$NAMESPACE" get secret grafana-admin >/dev/null 2>&1; then
   password="$(openssl rand -hex 24)"
   kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
@@ -43,6 +61,9 @@ kubectl -n "$NAMESPACE" rollout status deployment/loki --timeout=180s
 kubectl -n "$NAMESPACE" rollout status deployment/kube-state-metrics --timeout=180s
 kubectl -n "$NAMESPACE" rollout status daemonset/node-exporter --timeout=180s
 kubectl -n "$NAMESPACE" rollout status daemonset/alloy --timeout=180s
+
+# Kiểm tra Alloy thực sự Ready sau rollout; CrashLoopBackOff không được che bởi rollout status cũ.
+kubectl -n "$NAMESPACE" wait --for=condition=ready pod -l app.kubernetes.io/name=alloy --timeout=30s
 
 echo
 echo "Observability stack is ready. Use these private tunnels:"

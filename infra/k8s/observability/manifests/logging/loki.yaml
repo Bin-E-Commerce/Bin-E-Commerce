@@ -1,5 +1,5 @@
-# Loki lưu log ngắn hạn trên node. Đây là cấu hình single-node cho demo, không phải
-# HA production; dữ liệu dùng emptyDir nên có thể mất khi Pod bị tạo lại.
+# Loki lưu log ngắn hạn trên PVC local-path. Đây là cấu hình single-node cho demo,
+# không phải HA production; PVC giữ dữ liệu qua Pod recreation trên cùng EC2.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -31,8 +31,8 @@ data:
             prefix: index_
             period: 24h
     limits_config:
-      # 72h giúp giới hạn disk; sizeLimit của emptyDir là lớp bảo vệ bổ sung.
-      retention_period: 72h
+      # 7 ngày giúp tra cứu sự cố vừa xảy ra mà vẫn giới hạn dung lượng EBS.
+      retention_period: 168h
       ingestion_rate_mb: 2
       ingestion_burst_size_mb: 4
       allow_structured_metadata: false
@@ -40,6 +40,22 @@ data:
       working_directory: /loki/compactor
       retention_enabled: true
       delete_request_store: filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loki-data
+  namespace: bin-ecommerce-observability
+  labels:
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -96,8 +112,8 @@ spec:
           configMap:
             name: loki-config
         - name: data
-          emptyDir:
-            sizeLimit: 2Gi
+          persistentVolumeClaim:
+            claimName: loki-data
 ---
 apiVersion: v1
 kind: Service

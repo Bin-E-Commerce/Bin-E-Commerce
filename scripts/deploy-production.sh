@@ -17,6 +17,9 @@ SMOKE_MAX_TIME="${SMOKE_MAX_TIME:-20}"
 SMOKE_RETRY_COUNT="${SMOKE_RETRY_COUNT:-4}"
 SMOKE_RETRY_DELAY="${SMOKE_RETRY_DELAY:-2}"
 SMOKE_RETRY_MAX_TIME="${SMOKE_RETRY_MAX_TIME:-45}"
+KAFKA_NAMESPACE="${KAFKA_NAMESPACE:-bin-ecommerce-data}"
+KAFKA_POD="${KAFKA_POD:-kafka-0}"
+KAFKA_CLI="${KAFKA_CLI:-/opt/kafka/bin/kafka-topics.sh}"
 
 if [[ ! -f "$RELEASE_ENV_FILE" ]]; then
   echo "Release env file not found: $RELEASE_ENV_FILE" >&2
@@ -94,9 +97,90 @@ validate_image() {
   fi
 }
 
+# Đảm bảo broker đã có leader cho các topic mà producer/consumer dùng trước khi rollout application.
+# Hàm chỉ tạo topic còn thiếu với cấu hình single-broker của demo; không xóa hoặc thay đổi topic đã có dữ liệu.
+ensure_kafka_topics() {
+  local topics=(
+    "notification.otp-requested"
+    "order.created"
+    "order.cancelled"
+    "order.delivery.awaiting_confirmation"
+    "order.delivery.confirmed"
+    "order.delivery.issue_reported"
+    "order.delivery.auto_confirmed"
+    "order.purchase.completed"
+    "order.purchase.returned"
+    "return.requested"
+    "return.approved"
+    "return.rejected"
+    "return.cancelled"
+    "return.in_transit"
+    "return.received"
+    "return.inspection.passed"
+    "return.inspection.failed"
+    "review.created"
+    "review.updated"
+    "seller.application-submitted"
+    "seller.application-approved"
+    "seller.application-rejected"
+    "seller.shop-profile-change-requested"
+    "seller.shop-profile-change-approved"
+    "seller.shop-profile-change-rejected"
+    "shipment.status.updated"
+    "recommendation.interaction.recorded"
+    "recommendation.product-embedding.requested.v1"
+    "recommendation.product-embedding.generated.v1"
+    "recommendation.product-embedding.dlq.v1"
+    "recommendation.interactions.v1"
+    "recommendation.interactions.dlq.v1"
+    "recommendation.catalog.dlq.v1"
+    "recommendation.purchase.dlq.v1"
+    "recommendation.relations.dlq.v1"
+    "ai.image-optimization.requested.v1"
+    "ai.image-optimization.dlq.v1"
+  )
+
+  echo "Checking Kafka broker readiness..."
+  kubectl -n "$KAFKA_NAMESPACE" wait --for=condition=ready "pod/$KAFKA_POD" --timeout=120s
+  if ! kubectl -n "$KAFKA_NAMESPACE" exec "$KAFKA_POD" -- test -x "$KAFKA_CLI"; then
+    echo "Kafka CLI not found or not executable: $KAFKA_CLI" >&2
+    kubectl -n "$KAFKA_NAMESPACE" exec "$KAFKA_POD" -- sh -c 'command -v kafka-topics.sh || true' >&2
+    return 1
+  fi
+
+  for topic in "${topics[@]}"; do
+    if kubectl -n "$KAFKA_NAMESPACE" exec "$KAFKA_POD" -- "$KAFKA_CLI" \
+      --bootstrap-server localhost:9092 --describe --topic "$topic" >/dev/null 2>&1; then
+      continue
+    fi
+
+    echo "Creating missing Kafka topic: $topic"
+    if ! create_output="$(kubectl -n "$KAFKA_NAMESPACE" exec "$KAFKA_POD" -- "$KAFKA_CLI" \
+      --bootstrap-server localhost:9092 \
+      --create --if-not-exists --topic "$topic" --partitions 1 --replication-factor 1 2>&1)"; then
+      echo "Kafka topic creation failed for $topic:" >&2
+      echo "$create_output" >&2
+      kubectl -n "$KAFKA_NAMESPACE" logs "$KAFKA_POD" --tail=80 >&2 || true
+      return 1
+    fi
+    if ! kubectl -n "$KAFKA_NAMESPACE" exec "$KAFKA_POD" -- "$KAFKA_CLI" \
+      --bootstrap-server localhost:9092 --describe --topic "$topic" >/dev/null 2>&1; then
+      echo "Kafka topic exists but has no healthy leader: $topic" >&2
+      kubectl -n "$KAFKA_NAMESPACE" exec "$KAFKA_POD" -- "$KAFKA_CLI" \
+        --bootstrap-server localhost:9092 --describe --topic "$topic" >&2 || true
+      return 1
+    fi
+  done
+
+  echo "Kafka topics are ready."
+}
+
 for service in "${CHANGED[@]}"; do
   validate_image "$service"
 done
+
+# Fail fast ở hạ tầng message broker để không rollout từng service rồi timeout dây chuyền.
+ensure_kafka_topics
 
 # Validate kustomization trước khi đổi image. Base giữ raw manifest cũ ở
 # infra/k8s/{apps,config,ingress}; bước này không apply data infrastructure.

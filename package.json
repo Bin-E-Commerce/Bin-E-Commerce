@@ -2,6 +2,7 @@
   "name": "bin-ecommerce",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "npm@10.9.3",
   "workspaces": [
     "packages/*",
     "services/*"
