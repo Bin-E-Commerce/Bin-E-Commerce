@@ -46,7 +46,8 @@ data:
 
       selectors {
         role  = "pod"
-        field = "spec.nodeName=" + sys.env("HOST_NODE_NAME")
+        # Alloy v1.2.1 dung ham env(); sys.env chi co o cac ban moi hon.
+        field = "spec.nodeName=" + env("HOST_NODE_NAME")
       }
     }
 
