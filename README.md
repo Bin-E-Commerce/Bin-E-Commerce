@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./web/public/images/logo/logo_background_white.png" alt="Bin E-Commerce" width="260" />
+<img src="https://raw.githubusercontent.com/Bin-E-Commerce/Bin-E-Commerce-UI-Web/0299ed1be0f82dbd79549e2da0a3a92c8e0dfcf8/public/images/logo/logo_background_white.png" alt="Bin E-Commerce" width="260" />
 
 # Bin E-Commerce
 
