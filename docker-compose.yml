@@ -57,6 +57,11 @@ x-service-defaults: &service-defaults
       reservations:
         memory: 64m
 
+# Build dependency trong Docker Desktop cần đi qua host network để npm tải
+# tarball ổn định; runtime container vẫn dùng network bridge của Compose.
+x-build-defaults: &build-defaults
+  network: host
+
 services:
   # --------------------------------------------------------------------------
   # 01. Điểm vào HTTP
@@ -69,6 +74,7 @@ services:
     container_name: bin-ecommerce-app-api-gateway
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/api-gateway/Dockerfile
     image: bin-ecommerce/api-gateway:local
@@ -113,6 +119,7 @@ services:
     container_name: bin-ecommerce-app-auth-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/auth-service/Dockerfile
     image: bin-ecommerce/auth-service:local
@@ -165,6 +172,7 @@ services:
     container_name: bin-ecommerce-app-seller-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/seller-service/Dockerfile
     image: bin-ecommerce/seller-service:local
@@ -218,6 +226,7 @@ services:
     container_name: bin-ecommerce-app-product-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/product-service/Dockerfile
     image: bin-ecommerce/product-service:local
@@ -265,6 +274,7 @@ services:
     container_name: bin-ecommerce-app-catalog-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/catalog-service/Dockerfile
     image: bin-ecommerce/catalog-service:local
@@ -296,6 +306,7 @@ services:
     container_name: bin-ecommerce-app-media-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/media-service/Dockerfile
     image: bin-ecommerce/media-service:local
@@ -340,6 +351,7 @@ services:
     container_name: bin-ecommerce-app-recommendation-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/recommendation-service/Dockerfile
     image: bin-ecommerce/recommendation-service:local
@@ -420,6 +432,7 @@ services:
     container_name: bin-ecommerce-app-ai-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: ./services/ai-service
       dockerfile: Dockerfile
     image: bin-ecommerce/ai-service:local
@@ -496,6 +509,7 @@ services:
     container_name: bin-ecommerce-app-ai-embedding-worker
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: ./services/ai-service
       dockerfile: Dockerfile
     image: bin-ecommerce/ai-embedding-worker:local
@@ -537,6 +551,7 @@ services:
     container_name: bin-ecommerce-app-ai-image-optimization-worker
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: ./services/ai-service
       dockerfile: Dockerfile
     image: bin-ecommerce/ai-image-optimization-worker:local
@@ -616,6 +631,7 @@ services:
     container_name: bin-ecommerce-app-ai-outbox-relay
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: ./services/ai-service
       dockerfile: Dockerfile
     image: bin-ecommerce/ai-outbox-relay:local
@@ -663,6 +679,7 @@ services:
     container_name: bin-ecommerce-app-cart-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/cart-service/Dockerfile
     image: bin-ecommerce/cart-service:local
@@ -700,6 +717,7 @@ services:
     container_name: bin-ecommerce-app-order-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/order-service/Dockerfile
     image: bin-ecommerce/order-service:local
@@ -760,6 +778,7 @@ services:
     container_name: bin-ecommerce-app-notification-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/notification-service/Dockerfile
     image: bin-ecommerce/notification-service:local
@@ -807,6 +826,7 @@ services:
     container_name: bin-ecommerce-app-shipping-service
     <<: *service-defaults
     build:
+      <<: *build-defaults
       context: .
       dockerfile: services/shipping-service/Dockerfile
     image: bin-ecommerce/shipping-service:local
