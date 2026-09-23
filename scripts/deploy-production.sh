@@ -13,6 +13,7 @@ RELEASE_ROOT="${RELEASE_ROOT:-/opt/bin-ecommerce/releases}"
 RELEASE_ENV_FILE="${RELEASE_ENV_FILE:-/tmp/bin-ecommerce-release.env}"
 K3S_MANIFEST_PATH="${K3S_MANIFEST_PATH:-/opt/bin-ecommerce/k8s}"
 ROLLOUT_TIMEOUT="${ROLLOUT_TIMEOUT:-180s}"
+AI_ROLLOUT_TIMEOUT="${AI_ROLLOUT_TIMEOUT:-600s}"
 SMOKE_MAX_TIME="${SMOKE_MAX_TIME:-20}"
 SMOKE_RETRY_COUNT="${SMOKE_RETRY_COUNT:-4}"
 SMOKE_RETRY_DELAY="${SMOKE_RETRY_DELAY:-2}"
@@ -203,6 +204,7 @@ sudo mkdir -p "$release_dir"
 sudo rm -f "$previous_file" "$applied_file"
 
 declare -a APPLIED=()
+PREPULL_POD=""
 
 # AI image dùng chung một image nhưng có ba workload runtime độc lập.
 # Cập nhật đồng thời để job không bị ghi vào outbox mà thiếu relay/worker xử lý.
@@ -216,6 +218,84 @@ deployment_targets() {
     return
   fi
   printf 'bin-ecommerce-%s\n' "$service"
+}
+
+rollout_timeout_for() {
+  local service="$1"
+  if [[ "$service" == "ai-service" ]]; then
+    printf '%s' "$AI_ROLLOUT_TIMEOUT"
+    return
+  fi
+  printf '%s' "$ROLLOUT_TIMEOUT"
+}
+
+diagnose_rollout_failure() {
+  local deployment="$1"
+  local selector
+
+  echo "Rollout diagnostics for $deployment:" >&2
+  kubectl -n "$NAMESPACE" describe deployment "$deployment" >&2 || true
+  kubectl -n "$NAMESPACE" get deployment "$deployment" \
+    -o jsonpath='{range $key,$value := .spec.selector.matchLabels}{$key}={$value},{end}' \
+    2>/dev/null | sed 's/,$//' > "/tmp/bin-ecommerce-selector-$$" || true
+  selector="$(sudo cat "/tmp/bin-ecommerce-selector-$$" 2>/dev/null || true)"
+  sudo rm -f "/tmp/bin-ecommerce-selector-$$"
+  if [[ -n "$selector" ]]; then
+    kubectl -n "$NAMESPACE" get pods -l "$selector" -o wide >&2 || true
+  fi
+  kubectl -n "$NAMESPACE" get events --sort-by=.lastTimestamp | tail -80 >&2 || true
+}
+
+cleanup_prepull_pod() {
+  if [[ -n "$PREPULL_POD" ]]; then
+    kubectl -n "$NAMESPACE" delete pod "$PREPULL_POD" \
+      --ignore-not-found --grace-period=0 --force >/dev/null 2>&1 || true
+    PREPULL_POD=""
+  fi
+}
+
+prepull_ai_image() {
+  local image="$1"
+  local short_sha="${RELEASE_SHA:0:12}"
+
+  echo "Pre-pulling AI image once before creating API and worker pods..."
+  cleanup_prepull_pod
+  PREPULL_POD="bin-ecommerce-ai-prepull-$short_sha"
+  cat <<EOF | kubectl -n "$NAMESPACE" apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: $PREPULL_POD
+  labels:
+    app.kubernetes.io/name: bin-ecommerce-ai-prepull
+    app.kubernetes.io/part-of: bin-ecommerce
+spec:
+  restartPolicy: Never
+  imagePullSecrets:
+    - name: ghcr-pull-secret
+  containers:
+    - name: prepull
+      image: $image
+      imagePullPolicy: IfNotPresent
+      command: ["python", "-c", "import time; time.sleep(30)"]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 50m
+          memory: 64Mi
+EOF
+
+  if ! kubectl -n "$NAMESPACE" wait --for=condition=ready \
+    "pod/$PREPULL_POD" --timeout="$AI_ROLLOUT_TIMEOUT"; then
+    echo "AI image pre-pull failed for $image." >&2
+    kubectl -n "$NAMESPACE" describe pod "$PREPULL_POD" >&2 || true
+    kubectl -n "$NAMESPACE" logs "$PREPULL_POD" --all-containers --tail=100 >&2 || true
+    return 1
+  fi
+
+  cleanup_prepull_pod
 }
 
 # Container name của workload AI dùng chung để cập nhật và rollback cùng một image.
@@ -270,6 +350,7 @@ rollback() {
   trap - ERR
   set +e
   echo "Deployment failed; rolling back changed Deployments..." >&2
+  cleanup_prepull_pod
 
   if [[ -f "$previous_file" ]]; then
     while IFS=$'\t' read -r deployment container previous_image; do
@@ -304,13 +385,15 @@ trap rollback ERR
 for service in "${DEPLOY_ORDER[@]}"; do
   [[ " ${CHANGED[*]} " == *" $service "* ]] || continue
 
-  if [[ "$service" == "ai-service" ]]; then
-    ensure_ai_worker_deployments
-  fi
-
   image="$(image_variable "$service")"
   container="$(container_name "$service")"
 
+  if [[ "$service" == "ai-service" ]]; then
+    prepull_ai_image "$image"
+    ensure_ai_worker_deployments
+  fi
+
+  declare -a SERVICE_DEPLOYMENTS=()
   while IFS= read -r deployment; do
     [[ -n "$deployment" ]] || continue
     previous_image="$(kubectl -n "$NAMESPACE" get deployment "$deployment" \
@@ -327,14 +410,29 @@ for service in "${DEPLOY_ORDER[@]}"; do
         | sudo tee -a "$previous_file" >/dev/null
     fi
     APPLIED+=("$deployment")
+    SERVICE_DEPLOYMENTS+=("$deployment")
+  done < <(deployment_targets "$service")
 
+  # Set image cho toàn bộ workload cùng service trước khi chờ rollout.
+  # Với AI, image đã được pre-pull nên API và worker không tranh nhau tải image lớn.
+  for deployment in "${SERVICE_DEPLOYMENTS[@]}"; do
     echo "Deploying $service workload $deployment..."
     kubectl -n "$NAMESPACE" set image "deployment/$deployment" "$container=$image" >/dev/null
-    kubectl -n "$NAMESPACE" rollout status "deployment/$deployment" --timeout="$ROLLOUT_TIMEOUT"
-  done < <(deployment_targets "$service")
+  done
+
+  rollout_timeout="$(rollout_timeout_for "$service")"
+  for deployment in "${SERVICE_DEPLOYMENTS[@]}"; do
+    if ! kubectl -n "$NAMESPACE" rollout status \
+      "deployment/$deployment" --timeout="$rollout_timeout"; then
+      diagnose_rollout_failure "$deployment"
+      exit 1
+    fi
+  done
 
   printf '%s\n' "$service" | sudo tee -a "$applied_file" >/dev/null
 done
+
+cleanup_prepull_pod
 
 # Smoke test từ EC2 kiểm tra cả DNS/Ingress/public TLS mà người dùng thật sẽ
 # gặp. Không gửi credential và không in response body có thể chứa token.
