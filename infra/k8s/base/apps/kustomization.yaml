@@ -16,3 +16,4 @@ resources:
   - ../../apps/seller-service/deployment.yaml
   - ../../apps/shipping-service/deployment.yaml
   - ../../apps/ai-service/deployment.yaml
+  - ../../apps/ai-service/workers.yaml

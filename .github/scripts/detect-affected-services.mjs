@@ -132,6 +132,22 @@ for (const file of changedFiles) {
     hasInfraChanges = true;
   }
 
+  // Thay đổi workload AI phải build lại image và deploy cả HTTP API, outbox relay
+  // và image worker vì ba process dùng chung một artifact Python.
+  if (
+    file.startsWith("infra/k8s/apps/ai-service/") ||
+    file === "infra/k8s/base/apps/kustomization.yaml"
+  ) {
+    services.add("ai-service");
+  }
+
+  // Deploy script là hợp đồng rollout chung; mọi image cần được kiểm tra lại
+  // khi script thay đổi để production không dùng logic rollback cũ.
+  if (file === "scripts/deploy-production.sh") {
+    backendServices.forEach((service) => services.add(service));
+    hasInfraChanges = true;
+  }
+
   // Thay đổi workflow/script CI phải tự kiểm tra lại mọi service để tránh
   // một lỗi pipeline chỉ được phát hiện sau khi merge vào main.
   if (
