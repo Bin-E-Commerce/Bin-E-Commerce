@@ -35,6 +35,12 @@ set +a
 
 : "${RELEASE_SHA:?RELEASE_SHA is required}"
 : "${CHANGED_SERVICES:?CHANGED_SERVICES is required}"
+AI_WORKERS_CREATED="${AI_WORKERS_CREATED:-false}"
+
+if [[ "$AI_WORKERS_CREATED" != true && "$AI_WORKERS_CREATED" != false ]]; then
+  echo "AI_WORKERS_CREATED must be true or false." >&2
+  exit 1
+fi
 
 if [[ ! "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
   echo "RELEASE_SHA must be a full lowercase Git SHA." >&2
@@ -198,6 +204,67 @@ sudo rm -f "$previous_file" "$applied_file"
 
 declare -a APPLIED=()
 
+# AI image dùng chung một image nhưng có ba workload runtime độc lập.
+# Cập nhật đồng thời để job không bị ghi vào outbox mà thiếu relay/worker xử lý.
+deployment_targets() {
+  local service="$1"
+  if [[ "$service" == "ai-service" ]]; then
+    printf '%s\n' \
+      "bin-ecommerce-ai-service" \
+      "bin-ecommerce-ai-image-worker" \
+      "bin-ecommerce-ai-outbox-relay"
+    return
+  fi
+  printf 'bin-ecommerce-%s\n' "$service"
+}
+
+# Container name của workload AI dùng chung để cập nhật và rollback cùng một image.
+container_name() {
+  local service="$1"
+  if [[ "$service" == "ai-service" ]]; then
+    printf 'ai-service'
+    return
+  fi
+  printf '%s' "$service"
+}
+
+# Nhận diện workload được tạo trong chính release này để rollback bằng cách xóa,
+# không cố khôi phục một image cũ vốn chưa từng tồn tại trước deployment.
+is_created_ai_worker() {
+  [[ "$AI_WORKERS_CREATED" == true ]] && {
+    [[ "$1" == "bin-ecommerce-ai-image-worker" || "$1" == "bin-ecommerce-ai-outbox-relay" ]]
+  }
+}
+
+# Tạo cặp worker chỉ sau khi preflight Kafka/Kustomize và rollback trap đã sẵn sàng.
+# Deployment đã tồn tại không bị apply lại để giữ nguyên cấu hình cũ trong phạm vi release image.
+ensure_ai_worker_deployments() {
+  local manifest="$K3S_MANIFEST_PATH/apps/ai-service/workers.yaml"
+  local worker_exists=false
+  local relay_exists=false
+
+  [[ -f "$manifest" ]] || {
+    echo "AI worker manifest not found: $manifest" >&2
+    return 1
+  }
+
+  if kubectl -n "$NAMESPACE" get deployment bin-ecommerce-ai-image-worker >/dev/null 2>&1; then
+    worker_exists=true
+  fi
+  if kubectl -n "$NAMESPACE" get deployment bin-ecommerce-ai-outbox-relay >/dev/null 2>&1; then
+    relay_exists=true
+  fi
+
+  if [[ "$worker_exists" == false && "$relay_exists" == false ]]; then
+    # Đánh dấu trước apply để partial create vẫn được dọn khi kubectl trả lỗi.
+    AI_WORKERS_CREATED=true
+    kubectl apply -f "$manifest"
+  elif [[ "$worker_exists" != "$relay_exists" ]]; then
+    echo "AI worker deployments are partially installed; refusing unsafe rollout." >&2
+    return 1
+  fi
+}
+
 rollback() {
   local failure_code=$?
   trap - ERR
@@ -205,17 +272,27 @@ rollback() {
   echo "Deployment failed; rolling back changed Deployments..." >&2
 
   if [[ -f "$previous_file" ]]; then
-    while IFS='=' read -r service previous_image; do
-      [[ -n "$service" && -n "$previous_image" ]] || continue
+    while IFS=$'\t' read -r deployment container previous_image; do
+      [[ -n "$deployment" && -n "$container" && -n "$previous_image" ]] || continue
       kubectl -n "$NAMESPACE" set image \
-        "deployment/bin-ecommerce-$service" \
-        "$service=$previous_image" >/dev/null
+        "deployment/$deployment" \
+        "$container=$previous_image" >/dev/null
     done < <(sudo cat "$previous_file")
 
-    for service in "${APPLIED[@]}"; do
+    for deployment in "${APPLIED[@]}"; do
+      if is_created_ai_worker "$deployment"; then
+        continue
+      fi
       kubectl -n "$NAMESPACE" rollout status \
-        "deployment/bin-ecommerce-$service" --timeout="$ROLLOUT_TIMEOUT" >/dev/null
+        "deployment/$deployment" --timeout="$ROLLOUT_TIMEOUT" >/dev/null
     done
+  fi
+
+  if [[ "$AI_WORKERS_CREATED" == true ]]; then
+    kubectl -n "$NAMESPACE" delete deployment \
+      bin-ecommerce-ai-image-worker \
+      bin-ecommerce-ai-outbox-relay \
+      --ignore-not-found >/dev/null
   fi
 
   echo "Rollback attempted for release $RELEASE_SHA." >&2
@@ -227,23 +304,35 @@ trap rollback ERR
 for service in "${DEPLOY_ORDER[@]}"; do
   [[ " ${CHANGED[*]} " == *" $service "* ]] || continue
 
-  deployment="bin-ecommerce-$service"
-  previous_image="$(kubectl -n "$NAMESPACE" get deployment "$deployment" \
-    -o jsonpath='{.spec.template.spec.containers[0].image}')"
-  [[ -n "$previous_image" ]] || {
-    echo "Cannot determine current image for $deployment." >&2
-    exit 1
-  }
+  if [[ "$service" == "ai-service" ]]; then
+    ensure_ai_worker_deployments
+  fi
 
-  printf '%s=%s\n' "$service" "$previous_image" | sudo tee -a "$previous_file" >/dev/null
   image="$(image_variable "$service")"
-  # Ghi nhận trước khi set image để cả service đang fail readiness cũng được
-  # chờ rollback, thay vì chỉ rollback các service đã rollout thành công.
-  APPLIED+=("$service")
+  container="$(container_name "$service")"
 
-  echo "Deploying $service..."
-  kubectl -n "$NAMESPACE" set image "deployment/$deployment" "$service=$image" >/dev/null
-  kubectl -n "$NAMESPACE" rollout status "deployment/$deployment" --timeout="$ROLLOUT_TIMEOUT"
+  while IFS= read -r deployment; do
+    [[ -n "$deployment" ]] || continue
+    previous_image="$(kubectl -n "$NAMESPACE" get deployment "$deployment" \
+      -o jsonpath='{.spec.template.spec.containers[0].image}')"
+    [[ -n "$previous_image" ]] || {
+      echo "Cannot determine current image for $deployment." >&2
+      exit 1
+    }
+
+    # Ghi nhận trước khi set image để workload đang fail readiness cũng được rollback.
+    # Workload mới tạo không có image cũ; rollback sẽ xóa nó thay vì ghi nhận sai.
+    if ! is_created_ai_worker "$deployment"; then
+      printf '%s\t%s\t%s\n' "$deployment" "$container" "$previous_image" \
+        | sudo tee -a "$previous_file" >/dev/null
+    fi
+    APPLIED+=("$deployment")
+
+    echo "Deploying $service workload $deployment..."
+    kubectl -n "$NAMESPACE" set image "deployment/$deployment" "$container=$image" >/dev/null
+    kubectl -n "$NAMESPACE" rollout status "deployment/$deployment" --timeout="$ROLLOUT_TIMEOUT"
+  done < <(deployment_targets "$service")
+
   printf '%s\n' "$service" | sudo tee -a "$applied_file" >/dev/null
 done
 

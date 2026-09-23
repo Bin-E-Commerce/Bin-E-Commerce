@@ -1,0 +1,195 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bin-ecommerce-ai-image-worker
+  namespace: bin-ecommerce-app
+  labels:
+    app.kubernetes.io/name: bin-ecommerce-ai-image-worker
+    app.kubernetes.io/part-of: bin-ecommerce
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bin-ecommerce-ai-image-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bin-ecommerce-ai-image-worker
+        app.kubernetes.io/part-of: bin-ecommerce
+        app.kubernetes.io/component: worker
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: ai-service
+          image: ghcr.io/daongocanh25092004/bin-ecommerce-ai-service:c5aebdb5942a
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -m
+            - app.entrypoints.workers.image_optimization_worker
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: APP_NAME
+              value: ai-image-worker
+            - name: WORKER_HEALTH_FILE
+              value: /tmp/bin-ecommerce-ai-image-worker.health
+            - name: WORKER_HEALTH_MAX_AGE_SECONDS
+              value: "300"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka.bin-ecommerce-data.svc.cluster.local:9092
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-runtime-secrets
+                  key: AI_DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-runtime-secrets
+                  key: AI_REDIS_URL
+          envFrom:
+            - secretRef:
+                name: bin-ecommerce-runtime-secrets
+            - configMapRef:
+                name: bin-ecommerce-internal-services
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 750m
+              memory: 1Gi
+          startupProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - >-
+                  import os; raise SystemExit(0 if os.path.exists(os.environ["WORKER_HEALTH_FILE"]) else 1)
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - >-
+                  import os, time; path=os.environ["WORKER_HEALTH_FILE"]; max_age=float(os.environ["WORKER_HEALTH_MAX_AGE_SECONDS"]); raise SystemExit(0 if os.path.exists(path) and time.time() - os.path.getmtime(path) < max_age else 1)
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - >-
+                  import os, time; path=os.environ["WORKER_HEALTH_FILE"]; max_age=float(os.environ["WORKER_HEALTH_MAX_AGE_SECONDS"]); raise SystemExit(0 if os.path.exists(path) and time.time() - os.path.getmtime(path) < max_age else 1)
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bin-ecommerce-ai-outbox-relay
+  namespace: bin-ecommerce-app
+  labels:
+    app.kubernetes.io/name: bin-ecommerce-ai-outbox-relay
+    app.kubernetes.io/part-of: bin-ecommerce
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bin-ecommerce-ai-outbox-relay
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bin-ecommerce-ai-outbox-relay
+        app.kubernetes.io/part-of: bin-ecommerce
+        app.kubernetes.io/component: worker
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: ai-service
+          image: ghcr.io/daongocanh25092004/bin-ecommerce-ai-service:c5aebdb5942a
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -m
+            - app.entrypoints.workers.outbox_relay
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: APP_NAME
+              value: ai-outbox-relay
+            - name: WORKER_HEALTH_FILE
+              value: /tmp/bin-ecommerce-ai-outbox-relay.health
+            - name: WORKER_HEALTH_MAX_AGE_SECONDS
+              value: "300"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka.bin-ecommerce-data.svc.cluster.local:9092
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-runtime-secrets
+                  key: AI_DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: bin-ecommerce-runtime-secrets
+                  key: AI_REDIS_URL
+          envFrom:
+            - secretRef:
+                name: bin-ecommerce-runtime-secrets
+            - configMapRef:
+                name: bin-ecommerce-internal-services
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          startupProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - >-
+                  import os; raise SystemExit(0 if os.path.exists(os.environ["WORKER_HEALTH_FILE"]) else 1)
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          readinessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - >-
+                  import os, time; path=os.environ["WORKER_HEALTH_FILE"]; max_age=float(os.environ["WORKER_HEALTH_MAX_AGE_SECONDS"]); raise SystemExit(0 if os.path.exists(path) and time.time() - os.path.getmtime(path) < max_age else 1)
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - >-
+                  import os, time; path=os.environ["WORKER_HEALTH_FILE"]; max_age=float(os.environ["WORKER_HEALTH_MAX_AGE_SECONDS"]); raise SystemExit(0 if os.path.exists(path) and time.time() - os.path.getmtime(path) < max_age else 1)
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3

@@ -153,6 +153,14 @@ jobs:
           namespace_b64="$(printf '%s' "$PROD_NAMESPACE" | base64 --wrap=0)"
           manifest_b64="$(printf '%s' "$PROD_MANIFEST_PATH" | base64 --wrap=0)"
 
+          # Render worker manifest với đúng image release; tránh tạo workload mới
+          # bằng tag mẫu cũ rồi mới sửa image ở bước sau.
+          ai_workers_content="$(sed \
+            "s|ghcr.io/daongocanh25092004/bin-ecommerce-ai-service:[^[:space:]]*|ghcr.io/daongocanh25092004/bin-ecommerce-ai-service:$RELEASE_SHA|g" \
+            infra/k8s/apps/ai-service/workers.yaml)"
+          ai_workers_b64="$(printf '%s' "$ai_workers_content" | base64 --wrap=0)"
+          apps_kustomization_b64="$(base64 --wrap=0 infra/k8s/base/apps/kustomization.yaml)"
+
           commands_json="$(jq -cn \
             --arg script "$script_b64" \
             --arg release "$release_b64" \
@@ -160,17 +168,23 @@ jobs:
             --arg ghcr_username "$GHCR_USERNAME" \
             --arg namespace "$namespace_b64" \
             --arg manifest "$manifest_b64" \
+            --arg ai_workers "$ai_workers_b64" \
+            --arg apps_kustomization "$apps_kustomization_b64" \
             '{
               commands: [
                 "set -eu",
-                "trap \"sudo rm -f /tmp/bin-ecommerce-release.env /tmp/bin-ecommerce-deploy-production.sh /tmp/bin-ecommerce-ghcr-token\" EXIT",
+                "trap \"sudo rm -f /tmp/bin-ecommerce-release.env /tmp/bin-ecommerce-deploy-production.sh /tmp/bin-ecommerce-ghcr-token /tmp/bin-ecommerce-ai-workers.yaml /tmp/bin-ecommerce-apps-kustomization.yaml\" EXIT",
                 ("printf %s " + $script + " | base64 -d | sudo tee /tmp/bin-ecommerce-deploy-production.sh >/dev/null"),
                 ("printf %s " + $release + " | base64 -d | sudo tee /tmp/bin-ecommerce-release.env >/dev/null"),
                 ("printf %s " + $ghcr_token + " | base64 -d | sudo tee /tmp/bin-ecommerce-ghcr-token >/dev/null"),
+                ("printf %s " + $ai_workers + " | base64 -d | sudo tee /tmp/bin-ecommerce-ai-workers.yaml >/dev/null"),
+                ("printf %s " + $apps_kustomization + " | base64 -d | sudo tee /tmp/bin-ecommerce-apps-kustomization.yaml >/dev/null"),
                 "sudo chmod 0755 /tmp/bin-ecommerce-deploy-production.sh",
                 "sudo chmod 0600 /tmp/bin-ecommerce-release.env",
                 "sudo chmod 0600 /tmp/bin-ecommerce-ghcr-token",
                 "sudo install -m 0755 /tmp/bin-ecommerce-deploy-production.sh /opt/bin-ecommerce/deploy-production.sh",
+                ("sudo install -D -m 0644 /tmp/bin-ecommerce-ai-workers.yaml \"$(printf %s " + $manifest + " | base64 -d)/apps/ai-service/workers.yaml\""),
+                ("sudo install -D -m 0644 /tmp/bin-ecommerce-apps-kustomization.yaml \"$(printf %s " + $manifest + " | base64 -d)/base/apps/kustomization.yaml\""),
                 ("sudo kubectl -n \"$(printf %s " + $namespace + " | base64 -d)\" create secret docker-registry ghcr-pull-secret --docker-server=ghcr.io --docker-username=" + $ghcr_username + " --docker-password=\"$(sudo cat /tmp/bin-ecommerce-ghcr-token)\" --dry-run=client -o yaml | sudo kubectl apply -f -"),
                 ("sudo env RELEASE_ENV_FILE=/tmp/bin-ecommerce-release.env NAMESPACE=\"$(printf %s " + $namespace + " | base64 -d)\" K3S_MANIFEST_PATH=\"$(printf %s " + $manifest + " | base64 -d)\" bash /opt/bin-ecommerce/deploy-production.sh")
               ]
