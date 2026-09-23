@@ -201,7 +201,10 @@ jobs:
 
           echo "SSM command submitted: $command_id"
 
-          for attempt in $(seq 1 180); do
+          # AI image có dependency ML lớn; pre-pull có thể lâu hơn rollout Node.js.
+          # Poll đủ 30 phút để SSM không kết thúc workflow trước khi remote command trả kết quả.
+          ssm_max_attempts=360
+          for attempt in $(seq 1 "$ssm_max_attempts"); do
             status="$(aws ssm get-command-invocation \
               --region "$AWS_REGION" \
               --command-id "$command_id" \
@@ -230,13 +233,13 @@ jobs:
                 exit 1
                 ;;
               *)
-                echo "SSM status: $status (attempt $attempt/180)"
+                echo "SSM status: $status (attempt $attempt/$ssm_max_attempts)"
                 sleep 5
                 ;;
             esac
           done
 
-          echo 'SSM deploy timed out after 15 minutes.' >&2
+          echo 'SSM deploy timed out after 30 minutes.' >&2
           exit 1
 
       - name: Remove temporary release metadata
