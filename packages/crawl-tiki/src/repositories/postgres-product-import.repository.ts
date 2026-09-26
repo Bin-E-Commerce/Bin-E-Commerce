@@ -35,11 +35,15 @@ export class PostgresProductImportRepository implements ProductImportRepository 
     ): Promise<ProductImportResult> {
         await this.db.query('BEGIN');
         try {
-            const categoryIds = await this.upsertCategoryChain(graph.categoryChain);
+            const categoryIds = await this.upsertCategoryChain(
+                graph.categoryChain,
+            );
             const brandId = graph.brand
                 ? await this.upsertBrand(graph.brand)
                 : null;
-            const shopId = graph.shop ? await this.upsertShop(graph.shop) : null;
+            const shopId = graph.shop
+                ? await this.upsertShop(graph.shop)
+                : null;
             const categoryId = categoryIds.at(-1) ?? null;
             const productId = await this.upsertProduct(
                 graph,
@@ -59,7 +63,11 @@ export class PostgresProductImportRepository implements ProductImportRepository 
                 optionValueIds,
             );
             await this.upsertInventories(graph.inventories, variantIds);
-            await this.upsertAttributes(productId, categoryId, graph.attributes);
+            await this.upsertAttributes(
+                productId,
+                categoryId,
+                graph.attributes,
+            );
             await this.upsertReviews(productId, graph.reviews, variantIds);
             await this.db.query('COMMIT');
 
@@ -79,7 +87,7 @@ export class PostgresProductImportRepository implements ProductImportRepository 
 
         for (const category of categories) {
             const parentId = category.parentExternalId
-                ? externalToId.get(category.parentExternalId) ?? null
+                ? (externalToId.get(category.parentExternalId) ?? null)
                 : null;
             const id = await this.upsertCategory(category, parentId);
             externalToId.set(category.externalId, id);
@@ -266,7 +274,7 @@ export class PostgresProductImportRepository implements ProductImportRepository 
     ): Promise<void> {
         for (const image of images) {
             const variantId = image.variantExternalId
-                ? variantIds.get(image.variantExternalId) ?? null
+                ? (variantIds.get(image.variantExternalId) ?? null)
                 : null;
             await this.db.query(
                 `
@@ -382,7 +390,9 @@ export class PostgresProductImportRepository implements ProductImportRepository 
             variantIds.set(variant.externalId ?? variant.sku, variantId);
             variantIds.set(variant.sku, variantId);
 
-            for (const [optionName, value] of Object.entries(variant.optionValues)) {
+            for (const [optionName, value] of Object.entries(
+                variant.optionValues,
+            )) {
                 const optionValueId = optionValueIds.get(
                     this.optionValueKey(optionName, value),
                 );
@@ -507,7 +517,7 @@ export class PostgresProductImportRepository implements ProductImportRepository 
     ): Promise<void> {
         for (const review of reviews) {
             const variantId = review.variantExternalId
-                ? variantIds.get(review.variantExternalId) ?? null
+                ? (variantIds.get(review.variantExternalId) ?? null)
                 : null;
             await this.db.query(
                 `
@@ -544,7 +554,10 @@ export class PostgresProductImportRepository implements ProductImportRepository 
     }
 
     // Lấy id đầu tiên từ RETURNING, ném lỗi rõ ràng nếu query không trả id.
-    private firstId(result: QueryResult<{ id: string }>, entityName: string): string {
+    private firstId(
+        result: QueryResult<{ id: string }>,
+        entityName: string,
+    ): string {
         const id = result.rows[0]?.id;
         if (!id) throw new Error(`Missing id after upserting ${entityName}`);
         return id;

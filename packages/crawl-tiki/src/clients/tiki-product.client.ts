@@ -46,17 +46,19 @@ export class TikiProductClient {
         const response = await this.http.getJson<
             TikiCategoryResponse[] | { data?: TikiCategoryResponse[] }
         >(url);
-        return Array.isArray(response) ? response : response.data ?? [];
+        return Array.isArray(response) ? response : (response.data ?? []);
     }
 
     // Lấy danh mục con theo parent/category id khi nguồn public trả dữ liệu dạng cây.
-    async fetchChildCategories(categoryId: number): Promise<TikiCategoryResponse[]> {
+    async fetchChildCategories(
+        categoryId: number,
+    ): Promise<TikiCategoryResponse[]> {
         const url = new URL(`${TIKI_API_BASE_URL}/categories`);
         url.searchParams.set('parent_id', String(categoryId));
         const response = await this.http.getJson<
             TikiCategoryResponse[] | { data?: TikiCategoryResponse[] }
         >(url);
-        return Array.isArray(response) ? response : response.data ?? [];
+        return Array.isArray(response) ? response : (response.data ?? []);
     }
 
     // Lấy url_key của category để listing endpoint không bị Tiki từ chối request category.
@@ -119,7 +121,10 @@ export class TikiProductClient {
     }
 
     // Lấy review public nếu endpoint cho phép; caller có thể bỏ qua khi API không trả dữ liệu.
-    async fetchProductReviews(id: number, limit: number): Promise<TikiReviewResponse> {
+    async fetchProductReviews(
+        id: number,
+        limit: number,
+    ): Promise<TikiReviewResponse> {
         const url = new URL(`${TIKI_API_BASE_URL}/reviews`);
         url.searchParams.set('product_id', String(id));
         url.searchParams.set('limit', String(limit));

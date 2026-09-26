@@ -82,7 +82,8 @@ export class FileBrandCheckpointStore {
         try {
             const content = await readFile(lockPath, 'utf8');
             const parsed = JSON.parse(content) as { pid?: unknown };
-            return typeof parsed.pid === 'number' && Number.isInteger(parsed.pid)
+            return typeof parsed.pid === 'number' &&
+                Number.isInteger(parsed.pid)
                 ? parsed.pid
                 : null;
         } catch {

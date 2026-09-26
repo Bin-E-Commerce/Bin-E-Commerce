@@ -51,7 +51,9 @@ export class TikiOpenApiBrandClient {
 
             const pageBrands = pageData.values
                 .map((value) => this.mapBrand(value))
-                .filter((brand): brand is TikiOpenApiBrandValue => brand !== null);
+                .filter(
+                    (brand): brand is TikiOpenApiBrandValue => brand !== null,
+                );
 
             if (pageBrands.length === 0) {
                 throw new Error(
@@ -156,16 +158,22 @@ export class TikiOpenApiBrandClient {
 
         return {
             currentPage: this.optionalPositiveInteger(
-                metadata['current_page'] ?? metadata['currentPage'] ?? metadata['page'],
+                metadata['current_page'] ??
+                    metadata['currentPage'] ??
+                    metadata['page'],
             ),
             lastPage: this.optionalPositiveInteger(
-                metadata['last_page'] ?? metadata['lastPage'] ?? metadata['total_pages'],
+                metadata['last_page'] ??
+                    metadata['lastPage'] ??
+                    metadata['total_pages'],
             ),
             total: this.optionalNonNegativeInteger(
                 metadata['total'] ?? metadata['total_count'],
             ),
             perPage: this.optionalPositiveInteger(
-                metadata['per_page'] ?? metadata['perPage'] ?? metadata['limit'],
+                metadata['per_page'] ??
+                    metadata['perPage'] ??
+                    metadata['limit'],
             ),
         };
     }
@@ -219,7 +227,9 @@ export class TikiOpenApiBrandClient {
     }
 
     // Loại trùng theo external ID và giữ thứ tự position từ Tiki để output ổn định giữa các lần chạy.
-    private deduplicate(brands: TikiOpenApiBrandValue[]): TikiOpenApiBrandValue[] {
+    private deduplicate(
+        brands: TikiOpenApiBrandValue[],
+    ): TikiOpenApiBrandValue[] {
         const unique = new Map<string, TikiOpenApiBrandValue>();
         for (const brand of brands) {
             if (!unique.has(brand.externalBrandId)) {
@@ -259,7 +269,9 @@ export class TikiOpenApiBrandClient {
     }
 
     // Chỉ chọn object thực sự chứa khóa phân trang để không bỏ qua paging hợp lệ nằm sau một meta object khác.
-    private isPaginationRecord(value: unknown): value is Record<string, unknown> {
+    private isPaginationRecord(
+        value: unknown,
+    ): value is Record<string, unknown> {
         if (!this.isRecord(value)) return false;
 
         return [
@@ -279,6 +291,8 @@ export class TikiOpenApiBrandClient {
 
     // Thu hẹp unknown thành object có thể đọc khóa mà không dùng any.
     private isRecord(value: unknown): value is Record<string, unknown> {
-        return typeof value === 'object' && value !== null && !Array.isArray(value);
+        return (
+            typeof value === 'object' && value !== null && !Array.isArray(value)
+        );
     }
 }

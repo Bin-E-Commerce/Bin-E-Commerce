@@ -88,7 +88,9 @@ export class TikiShopClient {
     }
 
     // Lấy object sellerProfile từ HTML bằng cách đếm brace thay vì regex greedy, tránh cắt sai khi mô tả có ký tự đặc biệt.
-    private extractSellerProfile(html: string): TikiSellerProfilePayload | null {
+    private extractSellerProfile(
+        html: string,
+    ): TikiSellerProfilePayload | null {
         const marker = '"sellerStoreInfo":';
         let searchFrom = 0;
 
@@ -164,7 +166,9 @@ export class TikiShopClient {
         );
         if (!ratingStat || typeof ratingStat !== 'object') return null;
 
-        const title = this.readString((ratingStat as { title?: unknown }).title);
+        const title = this.readString(
+            (ratingStat as { title?: unknown }).title,
+        );
         const rating = title?.match(/\d+(?:\.\d+)?/)?.[0];
         return rating ? this.readNumber(rating) : null;
     }
@@ -183,7 +187,10 @@ export class TikiShopClient {
     // Giữ slug ổn định từ URL profile, fallback về slug đã chuẩn hóa ở product detail nếu URL thiếu.
     private extractSlug(url: string, fallback: string): string {
         try {
-            const slug = new URL(url).pathname.split('/').filter(Boolean).at(-1);
+            const slug = new URL(url).pathname
+                .split('/')
+                .filter(Boolean)
+                .at(-1);
             return slug || fallback;
         } catch {
             return fallback;

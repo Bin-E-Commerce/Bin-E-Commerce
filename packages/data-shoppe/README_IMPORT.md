@@ -10,15 +10,15 @@ Bộ dữ liệu này được chuyển từ JSON Shopee sang đúng các bảng
 
 Tổng số bản ghi:
 
-| Nhóm | Số lượng |
-|---|---:|
-| Categories | 1,593 |
-| Thuộc tính cấp đầu | 15,355 |
-| Option cấp đầu | 73,593 |
-| Thuộc tính điều kiện | 52 |
-| Option điều kiện | 161 |
-| Tổng thuộc tính | 15,407 |
-| Tổng option | 73,754 |
+| Nhóm                 | Số lượng |
+| -------------------- | -------: |
+| Categories           |    1,593 |
+| Thuộc tính cấp đầu   |   15,355 |
+| Option cấp đầu       |   73,593 |
+| Thuộc tính điều kiện |       52 |
+| Option điều kiện     |      161 |
+| Tổng thuộc tính      |   15,407 |
+| Tổng option          |   73,754 |
 
 ## 2. Thứ tự import bắt buộc
 
@@ -56,60 +56,54 @@ import { readFile } from 'node:fs/promises';
 import { DataSource, EntityTarget, ObjectLiteral } from 'typeorm';
 
 type ImportFile<T> = {
-  target_table: string;
-  records: T[];
+    target_table: string;
+    records: T[];
 };
 
 async function loadImportFile<T>(filePath: string): Promise<T[]> {
-  const raw = await readFile(filePath, 'utf8');
-  const parsed = JSON.parse(raw) as ImportFile<T>;
-  return parsed.records;
+    const raw = await readFile(filePath, 'utf8');
+    const parsed = JSON.parse(raw) as ImportFile<T>;
+    return parsed.records;
 }
 
 async function upsertInChunks<T extends ObjectLiteral>(
-  dataSource: DataSource,
-  entity: EntityTarget<T>,
-  records: T[],
-  conflictPaths: string[],
-  chunkSize = 500,
+    dataSource: DataSource,
+    entity: EntityTarget<T>,
+    records: T[],
+    conflictPaths: string[],
+    chunkSize = 500,
 ): Promise<void> {
-  const repository = dataSource.getRepository(entity);
+    const repository = dataSource.getRepository(entity);
 
-  for (let index = 0; index < records.length; index += chunkSize) {
-    const chunk = records.slice(index, index + chunkSize);
+    for (let index = 0; index < records.length; index += chunkSize) {
+        const chunk = records.slice(index, index + chunkSize);
 
-    await repository.upsert(chunk, {
-      conflictPaths,
-      skipUpdateIfNoValuesChanged: true,
-    });
-  }
+        await repository.upsert(chunk, {
+            conflictPaths,
+            skipUpdateIfNoValuesChanged: true,
+        });
+    }
 }
 ```
 
 Cách gọi:
 
 ```ts
-const categories = await loadImportFile(
-  './data/01_categories.json',
-);
+const categories = await loadImportFile('./data/01_categories.json');
 
-await upsertInChunks(
-  dataSource,
-  Category,
-  categories,
-  ['sourcePlatform', 'externalCategoryId'],
-);
+await upsertInChunks(dataSource, Category, categories, [
+    'sourcePlatform',
+    'externalCategoryId',
+]);
 
 const rootAttributes = await loadImportFile(
-  './data/02_category_attributes_root.json',
+    './data/02_category_attributes_root.json',
 );
 
-await upsertInChunks(
-  dataSource,
-  CategoryAttribute,
-  rootAttributes,
-  ['categoryId', 'externalAttributeId'],
-);
+await upsertInChunks(dataSource, CategoryAttribute, rootAttributes, [
+    'categoryId',
+    'externalAttributeId',
+]);
 
 // Tiếp tục theo đúng thứ tự trong manifest.json.
 ```
@@ -122,19 +116,19 @@ Nếu entity TypeORM dùng `camelCase`, hãy map trước khi gọi `upsert()`:
 
 ```ts
 const entity = {
-  id: row.id,
-  categoryId: row.category_id,
-  parentAttributeId: row.parent_attribute_id,
-  triggerOptionId: row.trigger_option_id,
-  externalAttributeId: row.external_attribute_id,
-  displayName: row.display_name,
-  inputType: row.input_type,
-  isRequired: row.is_required,
-  isFilterable: row.is_filterable,
-  maxSelections: row.max_selections,
-  sortOrder: row.sort_order,
-  isActive: row.is_active,
-  metadata: row.metadata,
+    id: row.id,
+    categoryId: row.category_id,
+    parentAttributeId: row.parent_attribute_id,
+    triggerOptionId: row.trigger_option_id,
+    externalAttributeId: row.external_attribute_id,
+    displayName: row.display_name,
+    inputType: row.input_type,
+    isRequired: row.is_required,
+    isFilterable: row.is_filterable,
+    maxSelections: row.max_selections,
+    sortOrder: row.sort_order,
+    isActive: row.is_active,
+    metadata: row.metadata,
 };
 ```
 

@@ -27,5 +27,8 @@ export interface ProductSourceAdapter {
     listChildCategories(parentExternalId: string): Promise<SourceCategory[]>;
     listProducts(request: ProductPageRequest): Promise<ProductPageResult>;
     getProductDetail(externalId: string): Promise<SourceProductDetail>;
-    getProductReviews(externalId: string, limit: number): Promise<SourceProductDetail['reviews']>;
+    getProductReviews(
+        externalId: string,
+        limit: number,
+    ): Promise<SourceProductDetail['reviews']>;
 }

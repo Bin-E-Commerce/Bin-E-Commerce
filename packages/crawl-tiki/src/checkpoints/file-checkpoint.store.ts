@@ -19,9 +19,13 @@ export class FileCheckpointStore implements CheckpointStore {
     async save(checkpoint: CrawlCheckpoint): Promise<void> {
         const absolutePath = resolve(this.filePath);
         await mkdir(dirname(absolutePath), { recursive: true });
-        await writeFile(absolutePath, `${JSON.stringify(checkpoint, null, 2)}\n`, {
-            encoding: 'utf8',
-        });
+        await writeFile(
+            absolutePath,
+            `${JSON.stringify(checkpoint, null, 2)}\n`,
+            {
+                encoding: 'utf8',
+            },
+        );
     }
 
     // Xóa checkpoint khi job hoàn tất toàn bộ để lần sau bắt đầu từ đầu.

@@ -33,9 +33,8 @@ export class BrandCrawlerService {
         const brandRecords = new Map(
             checkpoint.brands.map((brand) => [brand.externalBrandId, brand]),
         );
-        const requestFailureCountBeforeDiscovery = this.countRequestFailures(
-            checkpoint,
-        );
+        const requestFailureCountBeforeDiscovery =
+            this.countRequestFailures(checkpoint);
 
         await this.discoverBrands(checkpoint, brandRecords, options);
         const discoveryFailed =
@@ -64,12 +63,21 @@ export class BrandCrawlerService {
         const generatedAt = new Date().toISOString();
         const finalized = [...brandRecords.values()]
             .map((record) => this.dependencies.mapper.finalize(record))
-            .sort((left, right) => left.brand.name.localeCompare(right.brand.name, 'vi'));
+            .sort((left, right) =>
+                left.brand.name.localeCompare(right.brand.name, 'vi'),
+            );
         const qualityIssues = finalized
             .map((item) => item.issue)
             .filter((issue): issue is BrandCrawlQualityIssue => issue !== null);
-        const summary = this.buildSummary(checkpoint, finalized.map((item) => item.brand));
-        const completed = this.isCrawlCompleted(checkpoint, brandRecords, options);
+        const summary = this.buildSummary(
+            checkpoint,
+            finalized.map((item) => item.brand),
+        );
+        const completed = this.isCrawlCompleted(
+            checkpoint,
+            brandRecords,
+            options,
+        );
 
         if (completed) {
             await this.dependencies.checkpoint.clear();
@@ -149,9 +157,8 @@ export class BrandCrawlerService {
             let shouldPauseDiscovery = false;
 
             try {
-                const discovery = await this.dependencies.client.discoverCategory(
-                    category,
-                );
+                const discovery =
+                    await this.dependencies.client.discoverCategory(category);
                 const observedAt = new Date().toISOString();
 
                 for (const brand of discovery.brands) {
@@ -211,7 +218,10 @@ export class BrandCrawlerService {
         brandRecords: Map<string, MutableBrandRecord>,
         options: BrandCrawlOptions,
     ): Promise<void> {
-        if (!options.includeCountryEvidence || options.sampleProductsPerBrand === 0) {
+        if (
+            !options.includeCountryEvidence ||
+            options.sampleProductsPerBrand === 0
+        ) {
             checkpoint.nextBrandIndex = brandRecords.size;
             return;
         }
@@ -277,11 +287,12 @@ export class BrandCrawlerService {
             const remaining = sampleLimit - samples.length;
             if (remaining <= 0) break;
 
-            const categorySamples = await this.dependencies.client.fetchBrandSamples(
-                brand.externalBrandId,
-                Number(category.externalCategoryId),
-                remaining,
-            );
+            const categorySamples =
+                await this.dependencies.client.fetchBrandSamples(
+                    brand.externalBrandId,
+                    Number(category.externalCategoryId),
+                    remaining,
+                );
             samples.push(...categorySamples);
         }
 
@@ -339,8 +350,9 @@ export class BrandCrawlerService {
 
     // Đếm riêng lỗi request để quyết định có nên tiếp tục pha enrichment trong chính lần chạy hiện tại hay không.
     private countRequestFailures(checkpoint: BrandCrawlCheckpoint): number {
-        return checkpoint.issues.filter((issue) => issue.type === 'request_failed')
-            .length;
+        return checkpoint.issues.filter(
+            (issue) => issue.type === 'request_failed',
+        ).length;
     }
 
     // Full crawl phải hết queue; pilot được phép chuyển pha khi đạt giới hạn category hoặc brand do operator cấu hình.
@@ -404,7 +416,10 @@ export class BrandCrawlerService {
         options: BrandCrawlOptions,
     ): boolean {
         if (checkpoint.pendingCategories.length > 0) return false;
-        if (!options.includeCountryEvidence || options.sampleProductsPerBrand === 0) {
+        if (
+            !options.includeCountryEvidence ||
+            options.sampleProductsPerBrand === 0
+        ) {
             return true;
         }
 

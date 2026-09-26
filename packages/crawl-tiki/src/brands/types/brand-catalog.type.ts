@@ -1,8 +1,5 @@
 export type BrandCountryResolutionStatus =
-    | 'resolved'
-    | 'conflict'
-    | 'unknown_alias'
-    | 'missing';
+    'resolved' | 'conflict' | 'unknown_alias' | 'missing';
 
 export interface BrandCategoryObservation {
     externalCategoryId: string;

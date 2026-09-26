@@ -36,7 +36,8 @@ export class RetryableHttpClient {
                     headers: {
                         accept: 'application/json, text/plain, */*',
                         'accept-language':
-                            this.options.acceptLanguage ?? 'vi-VN,vi;q=0.9,en;q=0.8',
+                            this.options.acceptLanguage ??
+                            'vi-VN,vi;q=0.9,en;q=0.8',
                         ...(this.options.referer
                             ? { referer: this.options.referer }
                             : {}),
@@ -49,7 +50,9 @@ export class RetryableHttpClient {
                     throw new RetryableHttpError(
                         `HTTP ${response.status}: ${url.toString()}`,
                         response.status,
-                        this.parseRetryAfter(response.headers.get('retry-after')),
+                        this.parseRetryAfter(
+                            response.headers.get('retry-after'),
+                        ),
                         'http_error',
                     );
                 }
@@ -97,7 +100,8 @@ export class RetryableHttpClient {
                     headers: {
                         accept: 'text/html,application/xhtml+xml',
                         'accept-language':
-                            this.options.acceptLanguage ?? 'vi-VN,vi;q=0.9,en;q=0.8',
+                            this.options.acceptLanguage ??
+                            'vi-VN,vi;q=0.9,en;q=0.8',
                         ...(this.options.referer
                             ? { referer: this.options.referer }
                             : {}),
@@ -110,7 +114,9 @@ export class RetryableHttpClient {
                     throw new RetryableHttpError(
                         `HTTP ${response.status}: ${url.toString()}`,
                         response.status,
-                        this.parseRetryAfter(response.headers.get('retry-after')),
+                        this.parseRetryAfter(
+                            response.headers.get('retry-after'),
+                        ),
                         'http_error',
                     );
                 }
@@ -145,7 +151,7 @@ export class RetryableHttpClient {
             return this.options.nonJsonDelayMs ?? 30_000;
         }
         return error.status === 429 || error.status === 403
-            ? this.options.nonJsonDelayMs ?? 30_000
+            ? (this.options.nonJsonDelayMs ?? 30_000)
             : undefined;
     }
 
@@ -157,6 +163,8 @@ export class RetryableHttpClient {
         if (Number.isFinite(seconds)) return Math.max(0, seconds * 1_000);
 
         const timestamp = Date.parse(value);
-        return Number.isNaN(timestamp) ? null : Math.max(0, timestamp - Date.now());
+        return Number.isNaN(timestamp)
+            ? null
+            : Math.max(0, timestamp - Date.now());
     }
 }
