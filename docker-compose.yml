@@ -193,6 +193,7 @@ services:
       POSTGRES_DB: bin_ecommerce_seller
       AUTH_SERVICE_URL: http://auth-service:3001
       PRODUCT_SERVICE_URL: http://product-service:3008
+      ORDER_SERVICE_URL: http://order-service:3011
       CATALOG_SERVICE_URL: http://catalog-service:3003
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
       KAFKA_BROKERS: kafka:9092
@@ -201,6 +202,8 @@ services:
       auth-service:
         condition: service_healthy
       product-service:
+        condition: service_healthy
+      order-service:
         condition: service_healthy
       catalog-service:
         condition: service_healthy
