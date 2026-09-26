@@ -109,6 +109,8 @@ validate_image() {
 ensure_kafka_topics() {
   local topics=(
     "notification.otp-requested"
+    "user.status-changed"
+    "user.role-changed"
     "order.created"
     "order.cancelled"
     "order.delivery.awaiting_confirmation"
@@ -195,6 +197,21 @@ if [[ -f "$K3S_MANIFEST_PATH/overlays/production/kustomization.yaml" ]]; then
   kubectl kustomize --load-restrictor LoadRestrictionsNone \
     "$K3S_MANIFEST_PATH/overlays/production" >/dev/null
 fi
+
+# Cập nhật ConfigMap chứa URL public và DNS nội bộ trước khi rollout image mới.
+# Secret runtime vẫn do server quản lý riêng và không được ghi vào repository.
+sync_application_config() {
+  local config_manifest="$K3S_MANIFEST_PATH/config/internal-services.yaml"
+
+  [[ -f "$config_manifest" ]] || {
+    echo "Production application ConfigMap not found: $config_manifest" >&2
+    return 1
+  }
+
+  kubectl apply -f "$config_manifest" >/dev/null
+}
+
+sync_application_config
 
 release_dir="$RELEASE_ROOT/$RELEASE_SHA"
 previous_file="$release_dir/previous-images.env"

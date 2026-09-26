@@ -132,6 +132,12 @@ for (const file of changedFiles) {
     hasInfraChanges = true;
   }
 
+  // ConfigMap chứa URL public và DNS dùng chung; thay đổi cấu hình phải rollout
+  // toàn bộ backend để pod mới nhận giá trị thay vì giữ environment cũ trong memory.
+  if (file === "infra/k8s/config/internal-services.yaml") {
+    backendServices.forEach((service) => services.add(service));
+  }
+
   // Thay đổi workload AI phải build lại image và deploy cả HTTP API, outbox relay
   // và image worker vì ba process dùng chung một artifact Python.
   if (

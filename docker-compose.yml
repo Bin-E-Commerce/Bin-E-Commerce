@@ -145,6 +145,7 @@ services:
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
       KEYCLOAK_WEB_CLIENT_ID: web-client
       KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_WEB_CLIENT_SECRET:-}
+      SELLER_SERVICE_URL: http://seller-service:3007
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       SOCIAL_AUTH_CALLBACK_URL: ${SOCIAL_AUTH_CALLBACK_URL:-http://localhost:5173/callback}
       KAFKA_BROKERS: kafka:9092
@@ -801,7 +802,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@binecommerce.local}
-      WEB_BASE_URL: ${WEB_BASE_URL:-http://localhost:5173}
+      WEB_BASE_URL: ${WEB_BASE_URL:?Set WEB_BASE_URL in .env or .env.production}
       EMAIL_LOGO_PATH: assets/email/logo_background_white.png
     healthcheck:
       test:
