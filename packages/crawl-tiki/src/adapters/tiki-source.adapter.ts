@@ -29,7 +29,8 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
     readonly platform = 'tiki' as const;
     private readonly productSourceUrls = new Map<string, string>();
     private readonly productListItems = new Map<string, TikiProductListItem>();
-    private sellerContext: { id: string; name: string; slug?: string } | null = null;
+    private sellerContext: { id: string; name: string; slug?: string } | null =
+        null;
     private readonly shopProfilePromises = new Map<
         string,
         Promise<TikiShopProfile>
@@ -49,7 +50,9 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
     }
 
     // Lấy danh mục con của một category Tiki nếu endpoint public đang hỗ trợ.
-    async listChildCategories(parentExternalId: string): Promise<SourceCategory[]> {
+    async listChildCategories(
+        parentExternalId: string,
+    ): Promise<SourceCategory[]> {
         const categories = await this.client.fetchChildCategories(
             Number(parentExternalId),
         );
@@ -59,7 +62,9 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
     }
 
     // Lấy một trang sản phẩm theo keyword hoặc category id rồi map item tối giản cho crawler.
-    async listProducts(request: ProductPageRequest): Promise<ProductPageResult> {
+    async listProducts(
+        request: ProductPageRequest,
+    ): Promise<ProductPageResult> {
         if (request.sellerExternalId && request.sellerName) {
             this.sellerContext = {
                 id: request.sellerExternalId,
@@ -81,7 +86,10 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
         const items = (response.data ?? []).map((item) => {
             const mappedItem = this.mapListItem(item);
             this.productListItems.set(mappedItem.externalId, item);
-            this.productSourceUrls.set(mappedItem.externalId, mappedItem.sourceUrl);
+            this.productSourceUrls.set(
+                mappedItem.externalId,
+                mappedItem.sourceUrl,
+            );
             return mappedItem;
         });
 
@@ -157,7 +165,9 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
         );
 
         return (response.data ?? []).map((review) => ({
-            externalId: String(review.id ?? `${externalId}-${review.created_at}`),
+            externalId: String(
+                review.id ?? `${externalId}-${review.created_at}`,
+            ),
             rating: toNullableNumber(review.rating) ?? 0,
             content: review.content ?? review.title ?? null,
             images:
@@ -176,7 +186,9 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
         parentExternalId: string | null,
         sortOrder: number,
     ): SourceCategory {
-        const externalId = String(category.id ?? category.url_path ?? sortOrder);
+        const externalId = String(
+            category.id ?? category.url_path ?? sortOrder,
+        );
         const name = category.name ?? `Tiki category ${externalId}`;
 
         return {
@@ -220,12 +232,14 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
             ...item,
             short_description: item.short_description,
             images: item.thumbnail_url
-                ? [{
-                      base_url: item.thumbnail_url,
-                      large_url: item.thumbnail_url,
-                      medium_url: item.thumbnail_url,
-                      small_url: item.thumbnail_url,
-                  }]
+                ? [
+                      {
+                          base_url: item.thumbnail_url,
+                          large_url: item.thumbnail_url,
+                          medium_url: item.thumbnail_url,
+                          small_url: item.thumbnail_url,
+                      },
+                  ]
                 : [],
             categories: { name: categoryName },
             breadcrumbs: categoryNames.map((name, index) => ({
@@ -288,7 +302,10 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
                       name: detail.brand.name,
                       slug:
                           detail.brand.slug ??
-                          sourceSlug(detail.brand.name, String(detail.brand.id ?? '')),
+                          sourceSlug(
+                              detail.brand.name,
+                              String(detail.brand.id ?? ''),
+                          ),
                       logoUrl: detail.brand.logo ?? null,
                       description: null,
                   }
@@ -360,15 +377,17 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
         }
 
         return configurableProducts.map((variant) => ({
-            externalId: variant.id ? String(variant.id) : variant.sku ?? null,
+            externalId: variant.id ? String(variant.id) : (variant.sku ?? null),
             sku: variant.sku ?? `tiki-${detail.id}-${variant.id ?? 'variant'}`,
             name: variant.name ?? detail.name ?? `Tiki variant ${variant.id}`,
-            price: toNullableNumber(variant.price) ?? toNullableNumber(detail.price) ?? 0,
+            price:
+                toNullableNumber(variant.price) ??
+                toNullableNumber(detail.price) ??
+                0,
             originalPrice:
                 toNullableNumber(variant.original_price) ??
                 toNullableNumber(detail.original_price),
-            stockQuantity:
-                variant.inventory_status === 'available' ? 999 : 0,
+            stockQuantity: variant.inventory_status === 'available' ? 999 : 0,
             weight: null,
             imageUrl: variant.thumbnail_url ?? detail.thumbnail_url ?? null,
             optionValues: this.collectVariantOptionValues(variant, options),
@@ -377,29 +396,38 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
 
     // Gắn option value cho variant từ configurable_product_options hoặc fallback option1/2/3 của Tiki.
     private collectVariantOptionValues(
-        variant: NonNullable<TikiProductDetailResponse['configurable_products']>[number],
+        variant: NonNullable<
+            TikiProductDetailResponse['configurable_products']
+        >[number],
         options: Array<{ name: string; values: string[] }>,
     ): Record<string, string> {
         const explicitValues =
-            variant.configurable_product_options?.reduce<Record<string, string>>(
-                (acc, option) => {
-                    if (option.name && option.value) acc[option.name] = option.value;
-                    return acc;
-                },
-                {},
-            ) ?? {};
+            variant.configurable_product_options?.reduce<
+                Record<string, string>
+            >((acc, option) => {
+                if (option.name && option.value)
+                    acc[option.name] = option.value;
+                return acc;
+            }, {}) ?? {};
 
         if (Object.keys(explicitValues).length > 0) return explicitValues;
 
         return options.reduce<Record<string, string>>((acc, option, index) => {
-            const rawValue = [variant.option1, variant.option2, variant.option3][index];
+            const rawValue = [
+                variant.option1,
+                variant.option2,
+                variant.option3,
+            ][index];
             if (rawValue) acc[option.name] = rawValue;
             return acc;
         }, {});
     }
 
     // Gom ảnh detail của Tiki thành danh sách ảnh product, giữ thứ tự gốc để chọn thumbnail.
-    private collectImages(detail: TikiProductDetailResponse, productName: string) {
+    private collectImages(
+        detail: TikiProductDetailResponse,
+        productName: string,
+    ) {
         const urls =
             detail.images?.flatMap((image) => [
                 image.large_url,
@@ -410,8 +438,8 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
 
         const uniqueUrls = Array.from(
             new Set(
-                [detail.thumbnail_url, ...urls].filter(
-                    (url): url is string => Boolean(url),
+                [detail.thumbnail_url, ...urls].filter((url): url is string =>
+                    Boolean(url),
                 ),
             ),
         );
@@ -423,7 +451,9 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
     }
 
     // Gom breadcrumb/category thành category chain từ cha tới con để importer upsert theo cấp.
-    private collectCategories(detail: TikiProductDetailResponse): SourceCategory[] {
+    private collectCategories(
+        detail: TikiProductDetailResponse,
+    ): SourceCategory[] {
         const breadcrumbs = (detail.breadcrumbs ?? []).filter(
             (breadcrumb) => breadcrumb.category_id || breadcrumb.name,
         );
@@ -431,7 +461,10 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
             return breadcrumbs.map((breadcrumb, index) => {
                 const externalId = String(
                     breadcrumb.category_id ??
-                        sourceSlug(breadcrumb.name ?? 'category', String(index)),
+                        sourceSlug(
+                            breadcrumb.name ?? 'category',
+                            String(index),
+                        ),
                 );
                 const name = breadcrumb.name ?? `Tiki category ${externalId}`;
                 return {

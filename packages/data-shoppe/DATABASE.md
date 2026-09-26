@@ -1,4 +1,5 @@
-# THIẾT KẾ DATABASE MODULE SẢN PHẨM  
+# THIẾT KẾ DATABASE MODULE SẢN PHẨM
+
 ## Phiên bản đơn giản hóa – Category có sẵn cho Seller tạo sản phẩm
 
 ## 1. Mục tiêu thiết kế
@@ -115,18 +116,18 @@ brands
 
 Lưu shop của Seller trong hệ thống.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `owner_id` | uuid | ID người dùng sở hữu shop |
-| `name` | varchar(255) | Not null |
-| `slug` | varchar(300) | Not null |
-| `avatar_url` | text nullable | |
-| `description` | text nullable | |
-| `status` | enum `shop_status` | Default `ACTIVE` |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column        | Type                 | Rule                      |
+| ------------- | -------------------- | ------------------------- |
+| `id`          | uuid                 | PK                        |
+| `owner_id`    | uuid                 | ID người dùng sở hữu shop |
+| `name`        | varchar(255)         | Not null                  |
+| `slug`        | varchar(300)         | Not null                  |
+| `avatar_url`  | text nullable        |                           |
+| `description` | text nullable        |                           |
+| `status`      | enum `shop_status`   | Default `ACTIVE`          |
+| `created_at`  | timestamptz          |                           |
+| `updated_at`  | timestamptz          |                           |
+| `deleted_at`  | timestamptz nullable | Soft delete               |
 
 Constraint/index:
 
@@ -146,23 +147,23 @@ Không cần `source_platform` hoặc `external_shop_id` vì hệ thống hiện
 
 Lưu cây ngành hàng nhiều cấp.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `parent_id` | uuid nullable | Self FK `categories.id` |
-| `name` | varchar(255) | Not null |
-| `slug` | varchar(300) | Not null |
-| `level` | integer | Root = 0 |
-| `path` | text nullable | Ví dụ `Thời trang > Nam > Áo` |
-| `image_url` | text nullable | Ảnh đại diện category |
-| `sort_order` | integer | Default 0 |
-| `is_leaf` | boolean | Chỉ category lá được chọn khi tạo sản phẩm |
-| `is_active` | boolean | Default true |
-| `source_platform` | varchar(50) nullable | Ví dụ `shopee` |
-| `external_category_id` | varchar(100) nullable | ID category trong dữ liệu nguồn |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column                 | Type                  | Rule                                       |
+| ---------------------- | --------------------- | ------------------------------------------ |
+| `id`                   | uuid                  | PK                                         |
+| `parent_id`            | uuid nullable         | Self FK `categories.id`                    |
+| `name`                 | varchar(255)          | Not null                                   |
+| `slug`                 | varchar(300)          | Not null                                   |
+| `level`                | integer               | Root = 0                                   |
+| `path`                 | text nullable         | Ví dụ `Thời trang > Nam > Áo`              |
+| `image_url`            | text nullable         | Ảnh đại diện category                      |
+| `sort_order`           | integer               | Default 0                                  |
+| `is_leaf`              | boolean               | Chỉ category lá được chọn khi tạo sản phẩm |
+| `is_active`            | boolean               | Default true                               |
+| `source_platform`      | varchar(50) nullable  | Ví dụ `shopee`                             |
+| `external_category_id` | varchar(100) nullable | ID category trong dữ liệu nguồn            |
+| `created_at`           | timestamptz           |                                            |
+| `updated_at`           | timestamptz           |                                            |
+| `deleted_at`           | timestamptz nullable  | Soft delete                                |
 
 Constraint/index:
 
@@ -226,32 +227,32 @@ Ví dụ:
 - Dung tích.
 - Loại bảo hành.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `category_id` | uuid | FK `categories.id` |
-| `parent_attribute_id` | uuid nullable | Self FK, dùng cho thuộc tính con |
-| `trigger_option_id` | uuid nullable | Option làm xuất hiện thuộc tính con |
-| `external_attribute_id` | varchar(100) nullable | ID thuộc tính từ dữ liệu nguồn |
-| `name` | varchar(255) | Tên dùng trong hệ thống |
-| `display_name` | varchar(255) | Tên hiển thị cho Seller |
-| `slug` | varchar(300) | Not null |
-| `input_type` | enum `attribute_input_type` | Not null |
-| `unit` | varchar(50) nullable | Ví dụ `ml`, `kg`, `cm` |
-| `placeholder` | varchar(255) nullable | |
-| `help_text` | text nullable | |
-| `is_required` | boolean | Default false |
-| `is_filterable` | boolean | Default false |
-| `max_selections` | integer nullable | Dùng cho `MULTI_SELECT` |
-| `min_value` | numeric nullable | |
-| `max_value` | numeric nullable | |
-| `validation_pattern` | text nullable | Regex nếu cần |
-| `sort_order` | integer | Default 0 |
-| `is_active` | boolean | Default true |
-| `metadata` | jsonb | Default `{}` |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column                  | Type                        | Rule                                |
+| ----------------------- | --------------------------- | ----------------------------------- |
+| `id`                    | uuid                        | PK                                  |
+| `category_id`           | uuid                        | FK `categories.id`                  |
+| `parent_attribute_id`   | uuid nullable               | Self FK, dùng cho thuộc tính con    |
+| `trigger_option_id`     | uuid nullable               | Option làm xuất hiện thuộc tính con |
+| `external_attribute_id` | varchar(100) nullable       | ID thuộc tính từ dữ liệu nguồn      |
+| `name`                  | varchar(255)                | Tên dùng trong hệ thống             |
+| `display_name`          | varchar(255)                | Tên hiển thị cho Seller             |
+| `slug`                  | varchar(300)                | Not null                            |
+| `input_type`            | enum `attribute_input_type` | Not null                            |
+| `unit`                  | varchar(50) nullable        | Ví dụ `ml`, `kg`, `cm`              |
+| `placeholder`           | varchar(255) nullable       |                                     |
+| `help_text`             | text nullable               |                                     |
+| `is_required`           | boolean                     | Default false                       |
+| `is_filterable`         | boolean                     | Default false                       |
+| `max_selections`        | integer nullable            | Dùng cho `MULTI_SELECT`             |
+| `min_value`             | numeric nullable            |                                     |
+| `max_value`             | numeric nullable            |                                     |
+| `validation_pattern`    | text nullable               | Regex nếu cần                       |
+| `sort_order`            | integer                     | Default 0                           |
+| `is_active`             | boolean                     | Default true                        |
+| `metadata`              | jsonb                       | Default `{}`                        |
+| `created_at`            | timestamptz                 |                                     |
+| `updated_at`            | timestamptz                 |                                     |
+| `deleted_at`            | timestamptz nullable        | Soft delete                         |
 
 Constraint/index:
 
@@ -300,8 +301,8 @@ Trong trường hợp trên:
 - `Sản phẩm đặt theo yêu cầu?` là thuộc tính cha.
 - Option `Có` nằm trong `category_attribute_options`.
 - `Nội dung người mua cần cung cấp` có:
-  - `parent_attribute_id` trỏ đến thuộc tính cha.
-  - `trigger_option_id` trỏ đến option `Có`.
+    - `parent_attribute_id` trỏ đến thuộc tính cha.
+    - `trigger_option_id` trỏ đến option `Có`.
 
 Nếu giai đoạn đầu chưa làm giao diện thuộc tính điều kiện, backend có thể import các trường này nhưng chưa sử dụng.
 
@@ -317,19 +318,19 @@ Ví dụ thuộc tính `Giới tính` có:
 - Nữ.
 - Unisex.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `attribute_id` | uuid | FK `category_attributes.id` |
-| `external_value_id` | varchar(100) nullable | ID option từ dữ liệu nguồn |
-| `value` | varchar(255) | Giá trị chuẩn |
-| `display_value` | varchar(255) | Giá trị hiển thị |
-| `sort_order` | integer | Default 0 |
-| `is_active` | boolean | Default true |
-| `metadata` | jsonb | Default `{}` |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column              | Type                  | Rule                        |
+| ------------------- | --------------------- | --------------------------- |
+| `id`                | uuid                  | PK                          |
+| `attribute_id`      | uuid                  | FK `category_attributes.id` |
+| `external_value_id` | varchar(100) nullable | ID option từ dữ liệu nguồn  |
+| `value`             | varchar(255)          | Giá trị chuẩn               |
+| `display_value`     | varchar(255)          | Giá trị hiển thị            |
+| `sort_order`        | integer               | Default 0                   |
+| `is_active`         | boolean               | Default true                |
+| `metadata`          | jsonb                 | Default `{}`                |
+| `created_at`        | timestamptz           |                             |
+| `updated_at`        | timestamptz           |                             |
+| `deleted_at`        | timestamptz nullable  | Soft delete                 |
 
 Constraint/index:
 
@@ -360,17 +361,17 @@ WHERE deleted_at IS NULL;
 
 Lưu danh sách thương hiệu do Admin cung cấp.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `name` | varchar(255) | Not null |
-| `slug` | varchar(300) | Not null |
-| `logo_url` | text nullable | |
-| `description` | text nullable | |
-| `is_active` | boolean | Default true |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column        | Type                 | Rule         |
+| ------------- | -------------------- | ------------ |
+| `id`          | uuid                 | PK           |
+| `name`        | varchar(255)         | Not null     |
+| `slug`        | varchar(300)         | Not null     |
+| `logo_url`    | text nullable        |              |
+| `description` | text nullable        |              |
+| `is_active`   | boolean              | Default true |
+| `created_at`  | timestamptz          |              |
+| `updated_at`  | timestamptz          |              |
+| `deleted_at`  | timestamptz nullable | Soft delete  |
 
 Constraint/index:
 
@@ -392,26 +393,26 @@ WHERE deleted_at IS NULL;
 
 Lưu thông tin chung của sản phẩm.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `shop_id` | uuid | FK `shops.id` |
-| `category_id` | uuid | FK `categories.id` |
-| `brand_id` | uuid nullable | FK `brands.id` |
-| `name` | varchar(500) | Not null |
-| `slug` | varchar(600) | Not null |
-| `description` | text nullable | |
-| `short_description` | text nullable | |
-| `status` | enum `product_status` | Default `DRAFT` |
-| `min_price` | numeric(14,2) | Default 0 |
-| `max_price` | numeric(14,2) | Default 0 |
-| `total_sold` | integer | Default 0 |
-| `rating_avg` | numeric(3,2) nullable | |
-| `review_count` | integer | Default 0 |
-| `view_count` | integer | Default 0 |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column              | Type                  | Rule               |
+| ------------------- | --------------------- | ------------------ |
+| `id`                | uuid                  | PK                 |
+| `shop_id`           | uuid                  | FK `shops.id`      |
+| `category_id`       | uuid                  | FK `categories.id` |
+| `brand_id`          | uuid nullable         | FK `brands.id`     |
+| `name`              | varchar(500)          | Not null           |
+| `slug`              | varchar(600)          | Not null           |
+| `description`       | text nullable         |                    |
+| `short_description` | text nullable         |                    |
+| `status`            | enum `product_status` | Default `DRAFT`    |
+| `min_price`         | numeric(14,2)         | Default 0          |
+| `max_price`         | numeric(14,2)         | Default 0          |
+| `total_sold`        | integer               | Default 0          |
+| `rating_avg`        | numeric(3,2) nullable |                    |
+| `review_count`      | integer               | Default 0          |
+| `view_count`        | integer               | Default 0          |
+| `created_at`        | timestamptz           |                    |
+| `updated_at`        | timestamptz           |                    |
+| `deleted_at`        | timestamptz nullable  | Soft delete        |
 
 Constraint/index:
 
@@ -446,13 +447,13 @@ CHECK (rating_avg IS NULL OR rating_avg BETWEEN 0 AND 5);
 - Seller chỉ được chọn category `is_leaf = true` và `is_active = true`.
 - Sản phẩm `DRAFT` có thể chưa đủ thuộc tính bắt buộc.
 - Sản phẩm chỉ được chuyển sang `ACTIVE` khi:
-  - Có category hợp lệ.
-  - Category là category lá.
-  - Có tên và mô tả hợp lệ.
-  - Có ít nhất một ảnh.
-  - Đã nhập đầy đủ thuộc tính bắt buộc.
-  - Có ít nhất một variant hợp lệ.
-  - Giá và tồn kho hợp lệ.
+    - Có category hợp lệ.
+    - Category là category lá.
+    - Có tên và mô tả hợp lệ.
+    - Có ít nhất một ảnh.
+    - Đã nhập đầy đủ thuộc tính bắt buộc.
+    - Có ít nhất một variant hợp lệ.
+    - Giá và tồn kho hợp lệ.
 - Khi đổi category, backend phải kiểm tra và xóa hoặc vô hiệu hóa các `product_attribute_values` không còn thuộc category mới.
 - Không cần lưu `source_platform`, `external_product_id` hoặc `source_url` nếu hệ thống chỉ quản lý sản phẩm do Seller tự tạo.
 
@@ -460,18 +461,18 @@ CHECK (rating_avg IS NULL OR rating_avg BETWEEN 0 AND 5);
 
 ## 9.2. `product_images`
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `product_id` | uuid | FK `products.id` |
-| `variant_id` | uuid nullable | FK `product_variants.id` |
-| `image_url` | text | Not null |
-| `alt_text` | varchar(255) nullable | |
-| `sort_order` | integer | Default 0 |
-| `is_thumbnail` | boolean | Default false |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column         | Type                  | Rule                     |
+| -------------- | --------------------- | ------------------------ |
+| `id`           | uuid                  | PK                       |
+| `product_id`   | uuid                  | FK `products.id`         |
+| `variant_id`   | uuid nullable         | FK `product_variants.id` |
+| `image_url`    | text                  | Not null                 |
+| `alt_text`     | varchar(255) nullable |                          |
+| `sort_order`   | integer               | Default 0                |
+| `is_thumbnail` | boolean               | Default false            |
+| `created_at`   | timestamptz           |                          |
+| `updated_at`   | timestamptz           |                          |
+| `deleted_at`   | timestamptz nullable  | Soft delete              |
 
 Constraint/index:
 
@@ -501,15 +502,15 @@ Không được nhầm với `category_attributes`, là thông tin mô tả do A
 
 ## 10.1. `product_options`
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `product_id` | uuid | FK `products.id` |
-| `name` | varchar(150) | Not null |
-| `position` | integer | Default 0 |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column       | Type                 | Rule             |
+| ------------ | -------------------- | ---------------- |
+| `id`         | uuid                 | PK               |
+| `product_id` | uuid                 | FK `products.id` |
+| `name`       | varchar(150)         | Not null         |
+| `position`   | integer              | Default 0        |
+| `created_at` | timestamptz          |                  |
+| `updated_at` | timestamptz          |                  |
+| `deleted_at` | timestamptz nullable | Soft delete      |
 
 ```sql
 UNIQUE (product_id, name)
@@ -520,15 +521,15 @@ WHERE deleted_at IS NULL;
 
 ## 10.2. `product_option_values`
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `option_id` | uuid | FK `product_options.id` |
-| `value` | varchar(150) | Not null |
-| `position` | integer | Default 0 |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column       | Type                 | Rule                    |
+| ------------ | -------------------- | ----------------------- |
+| `id`         | uuid                 | PK                      |
+| `option_id`  | uuid                 | FK `product_options.id` |
+| `value`      | varchar(150)         | Not null                |
+| `position`   | integer              | Default 0               |
+| `created_at` | timestamptz          |                         |
+| `updated_at` | timestamptz          |                         |
+| `deleted_at` | timestamptz nullable | Soft delete             |
 
 ```sql
 UNIQUE (option_id, value)
@@ -539,20 +540,20 @@ WHERE deleted_at IS NULL;
 
 ## 10.3. `product_variants`
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `product_id` | uuid | FK `products.id` |
-| `sku` | varchar(150) nullable | |
-| `name` | varchar(500) | Not null |
-| `price` | numeric(14,2) | Not null |
-| `original_price` | numeric(14,2) nullable | |
-| `weight` | numeric(12,3) nullable | |
-| `status` | enum `variant_status` | Default `ACTIVE` |
-| `image_url` | text nullable | |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column           | Type                   | Rule             |
+| ---------------- | ---------------------- | ---------------- |
+| `id`             | uuid                   | PK               |
+| `product_id`     | uuid                   | FK `products.id` |
+| `sku`            | varchar(150) nullable  |                  |
+| `name`           | varchar(500)           | Not null         |
+| `price`          | numeric(14,2)          | Not null         |
+| `original_price` | numeric(14,2) nullable |                  |
+| `weight`         | numeric(12,3) nullable |                  |
+| `status`         | enum `variant_status`  | Default `ACTIVE` |
+| `image_url`      | text nullable          |                  |
+| `created_at`     | timestamptz            |                  |
+| `updated_at`     | timestamptz            |                  |
+| `deleted_at`     | timestamptz nullable   | Soft delete      |
 
 Constraint/index:
 
@@ -576,9 +577,9 @@ Khi cần cho phép hai shop sử dụng cùng một SKU, có thể bổ sung `s
 
 ## 10.4. `product_variant_option_values`
 
-| Column | Type | Rule |
-|---|---|---|
-| `variant_id` | uuid | FK `product_variants.id` |
+| Column            | Type | Rule                          |
+| ----------------- | ---- | ----------------------------- |
+| `variant_id`      | uuid | FK `product_variants.id`      |
 | `option_value_id` | uuid | FK `product_option_values.id` |
 
 ```sql
@@ -593,16 +594,16 @@ Không nên vừa lưu `stock_quantity` trong variant vừa lưu `quantity_avail
 
 Phiên bản này chỉ lưu tồn kho tại `inventories`.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `variant_id` | uuid | FK `product_variants.id`, unique |
-| `quantity_available` | integer | Default 0 |
-| `quantity_reserved` | integer | Default 0 |
-| `quantity_sold` | integer | Default 0 |
-| `low_stock_threshold` | integer | Default 0 |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
+| Column                | Type        | Rule                             |
+| --------------------- | ----------- | -------------------------------- |
+| `id`                  | uuid        | PK                               |
+| `variant_id`          | uuid        | FK `product_variants.id`, unique |
+| `quantity_available`  | integer     | Default 0                        |
+| `quantity_reserved`   | integer     | Default 0                        |
+| `quantity_sold`       | integer     | Default 0                        |
+| `low_stock_threshold` | integer     | Default 0                        |
+| `created_at`          | timestamptz |                                  |
+| `updated_at`          | timestamptz |                                  |
 
 Constraint:
 
@@ -623,19 +624,19 @@ CHECK (low_stock_threshold >= 0);
 
 Lưu giá trị do Seller nhập cho một thuộc tính của category.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `product_id` | uuid | FK `products.id` |
-| `attribute_id` | uuid | FK `category_attributes.id` |
-| `value_text` | text nullable | |
-| `value_integer` | bigint nullable | |
-| `value_decimal` | numeric nullable | |
-| `value_boolean` | boolean nullable | |
-| `value_date` | date nullable | |
-| `value_datetime` | timestamptz nullable | |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
+| Column           | Type                 | Rule                        |
+| ---------------- | -------------------- | --------------------------- |
+| `id`             | uuid                 | PK                          |
+| `product_id`     | uuid                 | FK `products.id`            |
+| `attribute_id`   | uuid                 | FK `category_attributes.id` |
+| `value_text`     | text nullable        |                             |
+| `value_integer`  | bigint nullable      |                             |
+| `value_decimal`  | numeric nullable     |                             |
+| `value_boolean`  | boolean nullable     |                             |
+| `value_date`     | date nullable        |                             |
+| `value_datetime` | timestamptz nullable |                             |
+| `created_at`     | timestamptz          |                             |
+| `updated_at`     | timestamptz          |                             |
 
 Constraint/index:
 
@@ -663,11 +664,11 @@ CHECK (
 
 Lưu option mà Seller chọn.
 
-| Column | Type | Rule |
-|---|---|---|
-| `product_attribute_value_id` | uuid | FK `product_attribute_values.id` |
-| `attribute_option_id` | uuid | FK `category_attribute_options.id` |
-| `position` | integer | Default 0 |
+| Column                       | Type    | Rule                               |
+| ---------------------------- | ------- | ---------------------------------- |
+| `product_attribute_value_id` | uuid    | FK `product_attribute_values.id`   |
+| `attribute_option_id`        | uuid    | FK `category_attribute_options.id` |
+| `position`                   | integer | Default 0                          |
 
 ```sql
 PRIMARY KEY (
@@ -693,19 +694,19 @@ Các quy tắc này nên kiểm tra tại service trong cùng một transaction.
 
 ## 12.1. `reviews`
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | uuid | PK |
-| `user_id` | uuid nullable | |
-| `product_id` | uuid | FK `products.id` |
-| `variant_id` | uuid nullable | FK `product_variants.id` |
-| `rating` | integer | 1–5 |
-| `content` | text nullable | |
-| `images` | jsonb | Default `[]` |
-| `status` | enum `review_status` | Default `PENDING` |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz nullable | Soft delete |
+| Column       | Type                 | Rule                     |
+| ------------ | -------------------- | ------------------------ |
+| `id`         | uuid                 | PK                       |
+| `user_id`    | uuid nullable        |                          |
+| `product_id` | uuid                 | FK `products.id`         |
+| `variant_id` | uuid nullable        | FK `product_variants.id` |
+| `rating`     | integer              | 1–5                      |
+| `content`    | text nullable        |                          |
+| `images`     | jsonb                | Default `[]`             |
+| `status`     | enum `review_status` | Default `PENDING`        |
+| `created_at` | timestamptz          |                          |
+| `updated_at` | timestamptz          |                          |
+| `deleted_at` | timestamptz nullable | Soft delete              |
 
 Constraint/index:
 
@@ -758,21 +759,21 @@ Dữ liệu trả về gồm:
 
 ```json
 [
-  {
-    "id": "uuid",
-    "name": "gender",
-    "displayName": "Giới tính",
-    "inputType": "SINGLE_SELECT",
-    "required": false,
-    "maxSelections": 1,
-    "options": [
-      {
+    {
         "id": "uuid",
-        "value": "male",
-        "displayValue": "Nam"
-      }
-    ]
-  }
+        "name": "gender",
+        "displayName": "Giới tính",
+        "inputType": "SINGLE_SELECT",
+        "required": false,
+        "maxSelections": 1,
+        "options": [
+            {
+                "id": "uuid",
+                "value": "male",
+                "displayValue": "Nam"
+            }
+        ]
+    }
 ]
 ```
 
@@ -786,23 +787,23 @@ Payload nên tách:
 
 ```json
 {
-  "categoryId": "uuid",
-  "brandId": "uuid",
-  "name": "Tên sản phẩm",
-  "description": "Mô tả",
-  "attributes": [
-    {
-      "attributeId": "uuid",
-      "value": "Nội dung chữ"
-    },
-    {
-      "attributeId": "uuid",
-      "optionIds": ["uuid"]
-    }
-  ],
-  "options": [],
-  "variants": [],
-  "images": []
+    "categoryId": "uuid",
+    "brandId": "uuid",
+    "name": "Tên sản phẩm",
+    "description": "Mô tả",
+    "attributes": [
+        {
+            "attributeId": "uuid",
+            "value": "Nội dung chữ"
+        },
+        {
+            "attributeId": "uuid",
+            "optionIds": ["uuid"]
+        }
+    ],
+    "options": [],
+    "variants": [],
+    "images": []
 }
 ```
 
@@ -843,21 +844,21 @@ Không cần bảng quản lý file import.
 
 Importer hoặc seed script chỉ cần xử lý trực tiếp:
 
-| JSON nguồn | Database |
-|---|---|
-| `category_id` | `categories.external_category_id` |
-| `category_name` | `categories.name` |
-| `category_raw.path` | tạo cây `categories` |
-| `category_path` | `categories.path` |
-| `category_raw.images[0]` | `categories.image_url` |
-| `attribute_tree[].attribute_id` | `category_attributes.external_attribute_id` |
-| `attribute_tree[].display_name` | `category_attributes.display_name` |
-| `attribute_tree[].name` | `category_attributes.name` |
-| `attribute_tree[].mandatory` | `category_attributes.is_required` |
-| `attribute_tree[].attribute_info.max_value_count` | `category_attributes.max_selections` |
-| `attribute_tree[].children[].value_id` | `category_attribute_options.external_value_id` |
-| `attribute_tree[].children[].name` | `category_attribute_options.value` |
-| `attribute_tree[].children[].display_name` | `category_attribute_options.display_value` |
+| JSON nguồn                                        | Database                                       |
+| ------------------------------------------------- | ---------------------------------------------- |
+| `category_id`                                     | `categories.external_category_id`              |
+| `category_name`                                   | `categories.name`                              |
+| `category_raw.path`                               | tạo cây `categories`                           |
+| `category_path`                                   | `categories.path`                              |
+| `category_raw.images[0]`                          | `categories.image_url`                         |
+| `attribute_tree[].attribute_id`                   | `category_attributes.external_attribute_id`    |
+| `attribute_tree[].display_name`                   | `category_attributes.display_name`             |
+| `attribute_tree[].name`                           | `category_attributes.name`                     |
+| `attribute_tree[].mandatory`                      | `category_attributes.is_required`              |
+| `attribute_tree[].attribute_info.max_value_count` | `category_attributes.max_selections`           |
+| `attribute_tree[].children[].value_id`            | `category_attribute_options.external_value_id` |
+| `attribute_tree[].children[].name`                | `category_attribute_options.value`             |
+| `attribute_tree[].children[].display_name`        | `category_attribute_options.display_value`     |
 
 ### Upsert key
 

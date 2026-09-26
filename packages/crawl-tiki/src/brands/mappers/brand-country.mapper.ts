@@ -27,7 +27,8 @@ export class BrandCountryMapper {
 
         return {
             externalProductId: String(sample.detail.id),
-            productName: sample.detail.name?.trim() || `Tiki #${sample.detail.id}`,
+            productName:
+                sample.detail.name?.trim() || `Tiki #${sample.detail.id}`,
             sourceUrl: this.toProductUrl(
                 sample.detail.url_path ?? sample.listItem.url_path,
                 sample.detail.id,
@@ -64,36 +65,48 @@ export class BrandCountryMapper {
         }
 
         const ranked = [...votes.values()].sort(
-            (left, right) => right.count - left.count || left.code.localeCompare(right.code),
+            (left, right) =>
+                right.count - left.count || left.code.localeCompare(right.code),
         );
         const winner = ranked[0];
-        const totalVotes = ranked.reduce((total, item) => total + item.count, 0);
+        const totalVotes = ranked.reduce(
+            (total, item) => total + item.count,
+            0,
+        );
 
         return {
             code: winner?.code ?? null,
             name: winner?.name ?? null,
             status: ranked.length > 1 ? 'conflict' : 'resolved',
-            confidence: winner ? Number((winner.count / totalVotes).toFixed(4)) : 0,
+            confidence: winner
+                ? Number((winner.count / totalVotes).toFixed(4))
+                : 0,
             rawValues,
         };
     }
 
     // Tìm tất cả quốc gia được nhắc trong một giá trị để nhận diện trường hợp nguồn ghi “Mỹ/Trung Quốc”.
-    private findCountries(rawValue: string): Array<{ code: string; name: string }> {
+    private findCountries(
+        rawValue: string,
+    ): Array<{ code: string; name: string }> {
         const normalized = this.normalize(rawValue);
         const matches = Object.entries(COUNTRY_ALIASES)
             .sort(([left], [right]) => right.length - left.length)
             .filter(([alias]) => this.containsAlias(normalized, alias))
             .map(([, country]) => country);
 
-        return [...new Map(matches.map((country) => [country.code, country])).values()];
+        return [
+            ...new Map(
+                matches.map((country) => [country.code, country]),
+            ).values(),
+        ];
     }
 
     // So khớp alias theo ranh giới từ để alias ngắn như “Ý”, “Bỉ”, “Mỹ” không khớp nhầm vào từ dài hơn.
     private containsAlias(value: string, alias: string): boolean {
-        return new RegExp(`(^|[^a-z0-9])${this.escapeRegex(alias)}([^a-z0-9]|$)`).test(
-            value,
-        );
+        return new RegExp(
+            `(^|[^a-z0-9])${this.escapeRegex(alias)}([^a-z0-9]|$)`,
+        ).test(value);
     }
 
     // Chỉ coi field nói rõ “thương hiệu” là nguồn xác định quốc gia brand.
@@ -112,7 +125,8 @@ export class BrandCountryMapper {
         return (
             normalized.includes('made in') ||
             normalized.includes('noi san xuat') ||
-            (normalized.includes('xuat xu') && !normalized.includes('thuong hieu'))
+            (normalized.includes('xuat xu') &&
+                !normalized.includes('thuong hieu'))
         );
     }
 
@@ -129,7 +143,10 @@ export class BrandCountryMapper {
     }
 
     // Tạo URL sản phẩm đầy đủ từ url_path public; fallback theo ID nếu nguồn không trả path.
-    private toProductUrl(urlPath: string | undefined, productId: number): string {
+    private toProductUrl(
+        urlPath: string | undefined,
+        productId: number,
+    ): string {
         if (!urlPath) return `https://tiki.vn/p${productId}.html`;
         return urlPath.startsWith('http')
             ? urlPath
@@ -138,7 +155,10 @@ export class BrandCountryMapper {
 
     // Trả kết quả rỗng có trạng thái rõ ràng để report phân biệt thiếu dữ liệu và alias chưa hỗ trợ.
     private emptyResolution(
-        status: Extract<BrandCountryResolutionStatus, 'missing' | 'unknown_alias'>,
+        status: Extract<
+            BrandCountryResolutionStatus,
+            'missing' | 'unknown_alias'
+        >,
         rawValues: string[],
     ): CrawledBrandCountry {
         return { code: null, name: null, status, confidence: 0, rawValues };

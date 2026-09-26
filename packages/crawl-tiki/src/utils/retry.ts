@@ -28,7 +28,9 @@ export async function retry<T>(
                 strategyDelay ?? exponentialDelay,
                 options.maxDelayMs ?? 60_000,
             );
-            const jitter = Math.floor(Math.random() * Math.max(100, cappedDelay * 0.2));
+            const jitter = Math.floor(
+                Math.random() * Math.max(100, cappedDelay * 0.2),
+            );
             await sleep(cappedDelay + jitter);
         }
     }

@@ -145,6 +145,7 @@ services:
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
       KEYCLOAK_WEB_CLIENT_ID: web-client
       KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_WEB_CLIENT_SECRET:-}
+      SELLER_SERVICE_URL: http://seller-service:3007
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       SOCIAL_AUTH_CALLBACK_URL: ${SOCIAL_AUTH_CALLBACK_URL:-http://localhost:5173/callback}
       KAFKA_BROKERS: kafka:9092
@@ -192,6 +193,7 @@ services:
       POSTGRES_DB: bin_ecommerce_seller
       AUTH_SERVICE_URL: http://auth-service:3001
       PRODUCT_SERVICE_URL: http://product-service:3008
+      ORDER_SERVICE_URL: http://order-service:3011
       CATALOG_SERVICE_URL: http://catalog-service:3003
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN in .env}
       KAFKA_BROKERS: kafka:9092
@@ -200,6 +202,8 @@ services:
       auth-service:
         condition: service_healthy
       product-service:
+        condition: service_healthy
+      order-service:
         condition: service_healthy
       catalog-service:
         condition: service_healthy
@@ -801,7 +805,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@binecommerce.local}
-      WEB_BASE_URL: ${WEB_BASE_URL:-http://localhost:5173}
+      WEB_BASE_URL: ${WEB_BASE_URL:?Set WEB_BASE_URL in .env or .env.production}
       EMAIL_LOGO_PATH: assets/email/logo_background_white.png
     healthcheck:
       test:

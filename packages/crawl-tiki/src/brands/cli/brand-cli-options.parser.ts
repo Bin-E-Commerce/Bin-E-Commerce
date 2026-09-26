@@ -33,12 +33,17 @@ export function parseBrandCliOptions(argv: string[]): BrandCrawlOptions {
         categoryIds: getNumberList(args, 'category-ids'),
         maxCategories: getPositiveNumber(args, 'max-categories'),
         maxBrands: getPositiveNumber(args, 'max-brands'),
-        sampleProductsPerBrand: getNonNegativeNumber(args, 'sample-products') ?? 1,
+        sampleProductsPerBrand:
+            getNonNegativeNumber(args, 'sample-products') ?? 1,
         includeCountryEvidence: args.get('skip-country') !== true,
         discoveryDelayMs:
-            getNonNegativeNumber(args, 'discovery-delay') ?? sharedDelayMs ?? 350,
+            getNonNegativeNumber(args, 'discovery-delay') ??
+            sharedDelayMs ??
+            350,
         enrichmentDelayMs:
-            getNonNegativeNumber(args, 'enrichment-delay') ?? sharedDelayMs ?? 1_500,
+            getNonNegativeNumber(args, 'enrichment-delay') ??
+            sharedDelayMs ??
+            1_500,
         outputFile: getString(args, 'output') ?? DEFAULT_OUTPUT_FILE,
         reportFile: getString(args, 'report') ?? DEFAULT_REPORT_FILE,
         checkpointFile:
@@ -106,7 +111,9 @@ function getNumberList(
 
     const ids = value.split(',').map((item) => Number(item.trim()));
     if (ids.some((id) => !Number.isInteger(id) || id <= 0)) {
-        throw new Error(`--${key} chỉ nhận danh sách ID nguyên dương phân cách bằng dấu phẩy.`);
+        throw new Error(
+            `--${key} chỉ nhận danh sách ID nguyên dương phân cách bằng dấu phẩy.`,
+        );
     }
     return [...new Set(ids)];
 }

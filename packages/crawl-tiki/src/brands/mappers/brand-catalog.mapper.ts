@@ -23,7 +23,8 @@ export class BrandCatalogMapper {
         category: TikiMenuCategory,
         observedAt: string,
     ): MutableBrandRecord {
-        const record = current ?? this.createRecord(source.externalBrandId, observedAt);
+        const record =
+            current ?? this.createRecord(source.externalBrandId, observedAt);
         record.names = this.unique([...record.names, source.name]);
         record.sourceUrls = this.unique([
             ...record.sourceUrls,
@@ -67,7 +68,8 @@ export class BrandCatalogMapper {
     ): MutableBrandRecord {
         for (const sample of samples) {
             const brand = sample.detail.brand ?? sample.listItem.brand;
-            if (brand?.name) record.names = this.unique([...record.names, brand.name]);
+            if (brand?.name)
+                record.names = this.unique([...record.names, brand.name]);
             if (brand?.logo) {
                 record.logoUrls = this.unique([...record.logoUrls, brand.logo]);
             }
@@ -150,7 +152,10 @@ export class BrandCatalogMapper {
         if (!existing) return [...categories, incoming];
 
         existing.categoryName = incoming.categoryName;
-        existing.productCount = Math.max(existing.productCount, incoming.productCount);
+        existing.productCount = Math.max(
+            existing.productCount,
+            incoming.productCount,
+        );
         return categories;
     }
 
@@ -209,6 +214,8 @@ export class BrandCatalogMapper {
 
     // Loại trùng chuỗi sau khi trim nhưng vẫn giữ thứ tự quan sát đầu tiên.
     private unique(values: string[]): string[] {
-        return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+        return [
+            ...new Set(values.map((value) => value.trim()).filter(Boolean)),
+        ];
     }
 }

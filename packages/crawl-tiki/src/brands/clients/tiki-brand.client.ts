@@ -173,7 +173,9 @@ export class TikiBrandClient {
     }
 
     // Chuẩn hóa query_value thành số nguyên dương trước khi đưa vào queue category.
-    private toPositiveInteger(value: string | number | undefined): number | null {
+    private toPositiveInteger(
+        value: string | number | undefined,
+    ): number | null {
         const parsed = Number(value);
         return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
     }

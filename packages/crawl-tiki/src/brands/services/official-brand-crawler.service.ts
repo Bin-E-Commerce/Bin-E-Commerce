@@ -16,7 +16,9 @@ export interface OfficialBrandCrawlerDependencies {
 }
 
 export class OfficialBrandCrawlerService {
-    constructor(private readonly dependencies: OfficialBrandCrawlerDependencies) {}
+    constructor(
+        private readonly dependencies: OfficialBrandCrawlerDependencies,
+    ) {}
 
     // Lấy toàn bộ trang catalog brand chính thức, chuẩn hóa và tạo quality report mà không đọc hoặc ghi category.
     async crawl(options: BrandCrawlOptions): Promise<BrandCrawlResult> {

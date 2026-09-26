@@ -1,1 +1,1 @@
-export * from "./integration-event-envelope";
+export * from './integration-event-envelope';

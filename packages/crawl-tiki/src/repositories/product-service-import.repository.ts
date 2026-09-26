@@ -154,10 +154,7 @@ export class ProductServiceImportRepository implements ProductImportRepository {
     ): Promise<string | null> {
         const sourceRoot = graph.categoryChain.at(0)?.name.toLowerCase() ?? '';
         const productText = graph.product.name.toLowerCase();
-        const targetName = this.resolveSourceRootAlias(
-            sourceRoot,
-            productText,
-        );
+        const targetName = this.resolveSourceRootAlias(sourceRoot, productText);
         if (!targetName) return null;
 
         const result = await this.catalogDb.query<{ id: string }>(
@@ -221,7 +218,10 @@ export class ProductServiceImportRepository implements ProductImportRepository {
         ) {
             return 'Điện Thoại & Phụ Kiện';
         }
-        if (sourceRoot.includes('cross border') && productText.includes('sữa')) {
+        if (
+            sourceRoot.includes('cross border') &&
+            productText.includes('sữa')
+        ) {
             return 'Mẹ & Bé';
         }
         if (sourceRoot.includes('làm đẹp - sức khỏe')) {
@@ -240,8 +240,7 @@ export class ProductServiceImportRepository implements ProductImportRepository {
                 : 'Sức Khỏe';
         }
         if (sourceRoot.includes('ô tô - xe máy - xe đạp')) {
-            return productText.includes('ô tô') ||
-                productText.includes('honda')
+            return productText.includes('ô tô') || productText.includes('honda')
                 ? 'Ô tô'
                 : 'Mô tô, xe máy';
         }
@@ -536,7 +535,9 @@ export class ProductServiceImportRepository implements ProductImportRepository {
             for (const [optionName, value] of Object.entries(
                 variant.optionValues,
             )) {
-                const optionValueId = optionValueIds.get(`${optionName}:${value}`);
+                const optionValueId = optionValueIds.get(
+                    `${optionName}:${value}`,
+                );
                 if (!optionValueId) continue;
 
                 await this.productDb.query(
@@ -563,7 +564,7 @@ export class ProductServiceImportRepository implements ProductImportRepository {
     ): Promise<void> {
         for (const image of graph.images) {
             const variantId = image.variantExternalId
-                ? variantIds.get(image.variantExternalId) ?? null
+                ? (variantIds.get(image.variantExternalId) ?? null)
                 : null;
 
             await this.productDb.query(
@@ -704,7 +705,7 @@ export class ProductServiceImportRepository implements ProductImportRepository {
     ): Promise<void> {
         for (const review of graph.reviews) {
             const variantId = review.variantExternalId
-                ? variantIds.get(review.variantExternalId) ?? null
+                ? (variantIds.get(review.variantExternalId) ?? null)
                 : null;
 
             await this.productDb.query(

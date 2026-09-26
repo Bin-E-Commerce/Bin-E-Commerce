@@ -1,5 +1,8 @@
 import type { DatabaseExecutor } from '../../repositories/postgres-product-import.repository';
-import type { BrandCrawlCatalog, CrawledBrand } from '../types/brand-catalog.type';
+import type {
+    BrandCrawlCatalog,
+    CrawledBrand,
+} from '../types/brand-catalog.type';
 import type { BrandImportResult } from '../types/brand-import-result.type';
 
 interface ExistingBrandRow {
@@ -19,7 +22,9 @@ export class ProductServiceBrandRepository {
     constructor(private readonly database: DatabaseExecutor) {}
 
     // Import toàn bộ catalog trong một transaction nhưng cô lập từng brand bằng savepoint để record lỗi không chặn phần còn lại.
-    async upsertCatalog(catalog: BrandCrawlCatalog): Promise<BrandImportResult> {
+    async upsertCatalog(
+        catalog: BrandCrawlCatalog,
+    ): Promise<BrandImportResult> {
         await this.assertSchemaReady();
         const result: BrandImportResult = {
             total: catalog.brands.length,
@@ -46,12 +51,17 @@ export class ProductServiceBrandRepository {
                     result[existed ? 'updated' : 'inserted'] += 1;
                     await this.database.query(`RELEASE SAVEPOINT ${savepoint}`);
                 } catch (error) {
-                    await this.database.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+                    await this.database.query(
+                        `ROLLBACK TO SAVEPOINT ${savepoint}`,
+                    );
                     result.failed += 1;
                     result.failures.push({
                         externalBrandId: brand.externalBrandId,
                         brandName: brand.name,
-                        reason: error instanceof Error ? error.message : String(error),
+                        reason:
+                            error instanceof Error
+                                ? error.message
+                                : String(error),
                     });
                 }
             }
@@ -89,7 +99,9 @@ export class ProductServiceBrandRepository {
     }
 
     // Tìm theo external ID trước, fallback slug để hợp nhất brand đã được product crawler tạo từ trước.
-    private async findExistingBrand(brand: CrawledBrand): Promise<string | null> {
+    private async findExistingBrand(
+        brand: CrawledBrand,
+    ): Promise<string | null> {
         const queryResult = await this.database.query<ExistingBrandRow>(
             `
             SELECT id

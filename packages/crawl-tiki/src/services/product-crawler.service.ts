@@ -34,7 +34,9 @@ export class ProductCrawlerService {
     // Crawl theo category hoặc keyword, validate dữ liệu và import nếu có repository.
     // Crawl theo category, keyword hoặc seller; reviews-only loại product không có review thật trước khi tăng crawled count.
     // Quy tắc này giữ dataset recommendation có dữ liệu đánh giá thực tế thay vì chỉ dựa vào reviewCount trên listing.
-    async crawl(options: ProductCrawlOptions): Promise<ProductCrawlerRunResult> {
+    async crawl(
+        options: ProductCrawlOptions,
+    ): Promise<ProductCrawlerRunResult> {
         const stats: CrawlStats = {
             crawled: 0,
             imported: 0,
@@ -43,7 +45,9 @@ export class ProductCrawlerService {
         };
         const products: ImportProductGraph[] = [];
         const categoryIds = await this.resolveCategoryIds(options);
-        const checkpoint = options.resume ? await this.deps.checkpoint.load() : null;
+        const checkpoint = options.resume
+            ? await this.deps.checkpoint.load()
+            : null;
 
         for (const categoryExternalId of categoryIds) {
             const startPage =
@@ -85,23 +89,31 @@ export class ProductCrawlerService {
                             detail.shop?.externalId !== options.sellerId
                         ) {
                             stats.skipped += 1;
-                            this.logger.warn('skip product from another seller', {
-                                externalId: item.externalId,
-                                expectedSellerId: options.sellerId,
-                                actualSellerId: detail.shop?.externalId ?? null,
-                            });
+                            this.logger.warn(
+                                'skip product from another seller',
+                                {
+                                    externalId: item.externalId,
+                                    expectedSellerId: options.sellerId,
+                                    actualSellerId:
+                                        detail.shop?.externalId ?? null,
+                                },
+                            );
                             continue;
                         }
 
                         if (options.includeReviews) {
-                            detail.reviews = await this.deps.source.getProductReviews(
-                                item.externalId,
-                                options.reviewLimit,
-                            );
+                            detail.reviews =
+                                await this.deps.source.getProductReviews(
+                                    item.externalId,
+                                    options.reviewLimit,
+                                );
                         }
                         // Chỉ giữ product có review đã lấy được từ endpoint review; reviewCount trên listing
                         // có thể không đồng nhất với dữ liệu chi tiết nên không dùng nó làm điều kiện duy nhất.
-                        if (options.requireReviews && detail.reviews.length === 0) {
+                        if (
+                            options.requireReviews &&
+                            detail.reviews.length === 0
+                        ) {
                             stats.skipped += 1;
                             this.logger.warn('skip product without reviews', {
                                 externalId: item.externalId,
@@ -186,7 +198,8 @@ export class ProductCrawlerService {
         if (options.categoryIds && options.categoryIds.length > 0) {
             return options.categoryIds;
         }
-        if (options.categoryId !== undefined) return [String(options.categoryId)];
+        if (options.categoryId !== undefined)
+            return [String(options.categoryId)];
         return [null];
     }
 }

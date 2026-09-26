@@ -1,76 +1,78 @@
 // Permission là hợp đồng quyền dùng chung giữa backend, gateway và admin UI.
 // Mỗi giá trị ở đây phải tương ứng với một nghiệp vụ thật đang được bảo vệ bằng guard hoặc render trong menu.
 export enum Permission {
-  // Admin
-  // 1. Admin Center
-  ADMIN_ACCESS = "admin.access", // Cho phép truy cập Admin Center, nhưng không có quyền gì khác.
-  // 2. Admin Dashboard
-  ADMIN_DASHBOARD_VIEW = "admin.dashboard.view",
-  // 3. Admin Access Control
-  ADMIN_ACCESS_CONTROL_READ = "admin.access_control.read",
-  ADMIN_ACCESS_CONTROL_UPDATE = "admin.access_control.update",
-  // Quyền xem dữ liệu hành vi và KPI của Recommendation Center.
-  ADMIN_RECOMMENDATION_ANALYTICS_READ = "admin.recommendation.analytics.read",
-  // Quyền xem policy ranking đang chạy và lịch sử policy.
-  ADMIN_RECOMMENDATION_POLICY_READ = "admin.recommendation.policy.read",
-  // Quyền thay đổi trọng số/flag ranking; endpoint vẫn ghi audit version immutable.
-  ADMIN_RECOMMENDATION_POLICY_WRITE = "admin.recommendation.policy.write",
-  // Quyền rollback policy về một version đã audit.
-  ADMIN_RECOMMENDATION_POLICY_ROLLBACK = "admin.recommendation.policy.rollback",
+    // Admin
+    // 1. Admin Center
+    ADMIN_ACCESS = 'admin.access', // Cho phép truy cập Admin Center, nhưng không có quyền gì khác.
+    // 2. Admin Dashboard
+    ADMIN_DASHBOARD_VIEW = 'admin.dashboard.view',
+    // 3. Admin Access Control
+    ADMIN_ACCESS_CONTROL_READ = 'admin.access_control.read',
+    ADMIN_ACCESS_CONTROL_UPDATE = 'admin.access_control.update',
+    // Chỉ ADMIN được xem và vận hành module quản lý tài khoản; SUPPORT_AGENT không nhận grant này.
+    ADMIN_USER_MANAGEMENT = 'admin.user_management',
+    // Quyền xem dữ liệu hành vi và KPI của Recommendation Center.
+    ADMIN_RECOMMENDATION_ANALYTICS_READ = 'admin.recommendation.analytics.read',
+    // Quyền xem policy ranking đang chạy và lịch sử policy.
+    ADMIN_RECOMMENDATION_POLICY_READ = 'admin.recommendation.policy.read',
+    // Quyền thay đổi trọng số/flag ranking; endpoint vẫn ghi audit version immutable.
+    ADMIN_RECOMMENDATION_POLICY_WRITE = 'admin.recommendation.policy.write',
+    // Quyền rollback policy về một version đã audit.
+    ADMIN_RECOMMENDATION_POLICY_ROLLBACK = 'admin.recommendation.policy.rollback',
 
-  // Cart dùng chung cho Customer và Seller
-  CART_READ = "cart.read",
-  CART_ITEM_ADD = "cart.item.add",
-  CART_ITEM_UPDATE = "cart.item.update",
-  CART_ITEM_REMOVE = "cart.item.remove",
+    // Cart dùng chung cho Customer và Seller
+    CART_READ = 'cart.read',
+    CART_ITEM_ADD = 'cart.item.add',
+    CART_ITEM_UPDATE = 'cart.item.update',
+    CART_ITEM_REMOVE = 'cart.item.remove',
 
-  // Order dùng chung cho Customer và Seller khi đặt COD từ cart của chính mình.
-  ORDER_CREATE = "order.create",
-  ORDER_READ = "order.read",
-  ORDER_CANCEL = "order.cancel",
-  ORDER_CONFIRM_DELIVERY = "order.delivery.confirm",
-  RETURN_CREATE = "return.create",
-  RETURN_READ = "return.read",
-  RETURN_CANCEL = "return.cancel",
-  RETURN_REVIEW = "return.review",
-  RETURN_INSPECT = "return.inspect",
-  PRODUCT_REVIEW_CREATE = "product.review.create",
-  SHOP_FOLLOW = "shop.follow",
-  SELLER_ORDER_READ = "seller.order.read",
-  SELLER_ORDER_MANAGE = "seller.order.manage",
-  SELLER_SHIPPING_SETTINGS_READ = "seller.shipping.settings.read",
-  SELLER_SHIPPING_SETTINGS_MANAGE = "seller.shipping.settings.manage",
-  SELLER_SHIPPING_READ = "seller.shipping.read",
-  SELLER_SHIPPING_MANAGE = "seller.shipping.manage",
-  SHIPPING_TRACKING_READ = "shipping.tracking.read",
+    // Order dùng chung cho Customer và Seller khi đặt COD từ cart của chính mình.
+    ORDER_CREATE = 'order.create',
+    ORDER_READ = 'order.read',
+    ORDER_CANCEL = 'order.cancel',
+    ORDER_CONFIRM_DELIVERY = 'order.delivery.confirm',
+    RETURN_CREATE = 'return.create',
+    RETURN_READ = 'return.read',
+    RETURN_CANCEL = 'return.cancel',
+    RETURN_REVIEW = 'return.review',
+    RETURN_INSPECT = 'return.inspect',
+    PRODUCT_REVIEW_CREATE = 'product.review.create',
+    SHOP_FOLLOW = 'shop.follow',
+    SELLER_ORDER_READ = 'seller.order.read',
+    SELLER_ORDER_MANAGE = 'seller.order.manage',
+    SELLER_SHIPPING_SETTINGS_READ = 'seller.shipping.settings.read',
+    SELLER_SHIPPING_SETTINGS_MANAGE = 'seller.shipping.settings.manage',
+    SELLER_SHIPPING_READ = 'seller.shipping.read',
+    SELLER_SHIPPING_MANAGE = 'seller.shipping.manage',
+    SHIPPING_TRACKING_READ = 'shipping.tracking.read',
 
-  // Seller
-  // 1. Seller Center
-  SELLER_ACCESS = "seller.access", // Cho phép truy cập Seller Center, nhưng không có quyền gì khác.
-  // 2. Seller Dashboard
-  SELLER_DASHBOARD_VIEW = "seller.dashboard.view",
-  // 3. Seller Product
-  SELLER_PRODUCT_READ = "seller.product.read",
-  SELLER_PRODUCT_CREATE = "seller.product.create",
-  SELLER_PRODUCT_UPDATE = "seller.product.update",
-  SELLER_PRODUCT_STATUS_UPDATE = "seller.product.status.update",
-  SELLER_PRODUCT_DELETE = "seller.product.delete",
-  SELLER_PRODUCT_RESTORE = "seller.product.restore",
-  // 4. Seller AI: chỉ cấp cho thao tác sinh nội dung trong phạm vi shop của seller.
-  SELLER_AI_PRODUCT_CONTENT_GENERATE = "seller.ai.product_content.generate",
-  SELLER_AI_IMAGE_OPTIMIZATION_VIEW = "seller.ai.image_optimization.view",
-  SELLER_AI_IMAGE_OPTIMIZATION_GENERATE = "seller.ai.image_optimization.generate",
-  SELLER_AI_IMAGE_OPTIMIZATION_APPLY = "seller.ai.image_optimization.apply",
-  SELLER_AI_IMAGE_OPTIMIZATION_ROLLBACK = "seller.ai.image_optimization.rollback",
-  // 5. Seller Shop Profile
-  SELLER_SHOP_PROFILE_READ = "seller.shop_profile.read",
-  SELLER_SHOP_PROFILE_UPDATE = "seller.shop_profile.update",
-  SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE = "seller.shop_profile_change_request.create",
-  ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ = "admin.shop_profile_change_request.read",
-  ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE = "admin.shop_profile_change_request.approve",
-  ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT = "admin.shop_profile_change_request.reject",
-  // 6. Seller Application
-  SELLER_APPLICATION_READ = "seller.application.read",
-  SELLER_APPLICATION_APPROVE = "seller.application.approve",
-  SELLER_APPLICATION_REJECT = "seller.application.reject",
+    // Seller
+    // 1. Seller Center
+    SELLER_ACCESS = 'seller.access', // Cho phép truy cập Seller Center, nhưng không có quyền gì khác.
+    // 2. Seller Dashboard
+    SELLER_DASHBOARD_VIEW = 'seller.dashboard.view',
+    // 3. Seller Product
+    SELLER_PRODUCT_READ = 'seller.product.read',
+    SELLER_PRODUCT_CREATE = 'seller.product.create',
+    SELLER_PRODUCT_UPDATE = 'seller.product.update',
+    SELLER_PRODUCT_STATUS_UPDATE = 'seller.product.status.update',
+    SELLER_PRODUCT_DELETE = 'seller.product.delete',
+    SELLER_PRODUCT_RESTORE = 'seller.product.restore',
+    // 4. Seller AI: chỉ cấp cho thao tác sinh nội dung trong phạm vi shop của seller.
+    SELLER_AI_PRODUCT_CONTENT_GENERATE = 'seller.ai.product_content.generate',
+    SELLER_AI_IMAGE_OPTIMIZATION_VIEW = 'seller.ai.image_optimization.view',
+    SELLER_AI_IMAGE_OPTIMIZATION_GENERATE = 'seller.ai.image_optimization.generate',
+    SELLER_AI_IMAGE_OPTIMIZATION_APPLY = 'seller.ai.image_optimization.apply',
+    SELLER_AI_IMAGE_OPTIMIZATION_ROLLBACK = 'seller.ai.image_optimization.rollback',
+    // 5. Seller Shop Profile
+    SELLER_SHOP_PROFILE_READ = 'seller.shop_profile.read',
+    SELLER_SHOP_PROFILE_UPDATE = 'seller.shop_profile.update',
+    SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE = 'seller.shop_profile_change_request.create',
+    ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ = 'admin.shop_profile_change_request.read',
+    ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE = 'admin.shop_profile_change_request.approve',
+    ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT = 'admin.shop_profile_change_request.reject',
+    // 6. Seller Application
+    SELLER_APPLICATION_READ = 'seller.application.read',
+    SELLER_APPLICATION_APPROVE = 'seller.application.approve',
+    SELLER_APPLICATION_REJECT = 'seller.application.reject',
 }

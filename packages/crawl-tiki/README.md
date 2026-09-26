@@ -119,21 +119,19 @@ Mở file output để kiểm tra `categoryChain`, `product`, `variants`, `image
 
 ```json
 {
-  "id": 123,
-  "name": "Điện thoại Demo",
-  "price": 3990000,
-  "brand": { "id": 10, "name": "Demo Brand" },
-  "current_seller": { "id": 99, "name": "Demo Shop" },
-  "images": [{ "large_url": "https://..." }],
-  "configurable_options": [
-    { "name": "Màu sắc", "values": [{ "label": "Đen" }] }
-  ],
-  "configurable_products": [
-    { "id": 1, "sku": "SKU-BLACK", "price": 3990000, "option1": "Đen" }
-  ],
-  "specifications": [
-    { "attributes": [{ "name": "RAM", "value": "8 GB" }] }
-  ]
+    "id": 123,
+    "name": "Điện thoại Demo",
+    "price": 3990000,
+    "brand": { "id": 10, "name": "Demo Brand" },
+    "current_seller": { "id": 99, "name": "Demo Shop" },
+    "images": [{ "large_url": "https://..." }],
+    "configurable_options": [
+        { "name": "Màu sắc", "values": [{ "label": "Đen" }] }
+    ],
+    "configurable_products": [
+        { "id": 1, "sku": "SKU-BLACK", "price": 3990000, "option1": "Đen" }
+    ],
+    "specifications": [{ "attributes": [{ "name": "RAM", "value": "8 GB" }] }]
 }
 ```
 
@@ -141,17 +139,17 @@ Mở file output để kiểm tra `categoryChain`, `product`, `variants`, `image
 
 ```json
 {
-  "product": {
-    "externalId": "123",
-    "sourcePlatform": "tiki",
-    "name": "Điện thoại Demo",
-    "slug": "dien-thoai-demo-123"
-  },
-  "brand": { "externalId": "10", "name": "Demo Brand" },
-  "shop": { "externalId": "99", "name": "Demo Shop" },
-  "options": [{ "name": "Màu sắc", "values": [{ "value": "Đen" }] }],
-  "variants": [{ "sku": "SKU-BLACK", "price": 3990000 }],
-  "attributes": [{ "name": "RAM", "valueText": "8 GB" }]
+    "product": {
+        "externalId": "123",
+        "sourcePlatform": "tiki",
+        "name": "Điện thoại Demo",
+        "slug": "dien-thoai-demo-123"
+    },
+    "brand": { "externalId": "10", "name": "Demo Brand" },
+    "shop": { "externalId": "99", "name": "Demo Shop" },
+    "options": [{ "name": "Màu sắc", "values": [{ "value": "Đen" }] }],
+    "variants": [{ "sku": "SKU-BLACK", "price": 3990000 }],
+    "attributes": [{ "name": "RAM", "valueText": "8 GB" }]
 }
 ```
 

@@ -2,11 +2,11 @@
 // Nghiệp vụ hoàn hàng dùng permission theo return; không tách role nhân sự hoàn tiền riêng.
 
 export enum UserRole {
-  CUSTOMER = "CUSTOMER", // Khách mua hàng trên nền tảng.
-  SELLER = "SELLER", // Người bán đã được duyệt và có quyền truy cập Seller Center.
-  // Nhân sự nội bộ xử lý hồ sơ seller theo các permission read/approve/reject được cấp riêng.
-  SUPPORT_AGENT = "SUPPORT_AGENT",
-  ADMIN = "ADMIN", // Quản trị viên hệ thống có quyền vận hành toàn nền tảng.
+    CUSTOMER = 'CUSTOMER', // Khách mua hàng trên nền tảng.
+    SELLER = 'SELLER', // Người bán đã được duyệt và có quyền truy cập Seller Center.
+    // Nhân sự nội bộ xử lý hồ sơ seller theo các permission read/approve/reject được cấp riêng.
+    SUPPORT_AGENT = 'SUPPORT_AGENT',
+    ADMIN = 'ADMIN', // Quản trị viên hệ thống có quyền vận hành toàn nền tảng.
 }
 
 // Nhóm role người dùng cuối; hiện dùng để phân biệt khách mua với các role vận hành.

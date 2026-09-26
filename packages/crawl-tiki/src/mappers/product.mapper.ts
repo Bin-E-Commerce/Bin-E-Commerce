@@ -19,7 +19,8 @@ export class ProductMapper {
         const variants = this.mapVariants(source);
         const minPrice = Math.min(...variants.map((variant) => variant.price));
         const maxPrice = Math.max(...variants.map((variant) => variant.price));
-        const productSlug = source.slug ?? sourceSlug(source.name, source.externalId);
+        const productSlug =
+            source.slug ?? sourceSlug(source.name, source.externalId);
 
         return {
             categoryChain: source.categories.map((category, index) => ({
@@ -28,7 +29,9 @@ export class ProductMapper {
                 sourceUrl: category.sourceUrl ?? null,
                 parentExternalId: category.parentExternalId ?? null,
                 name: category.name,
-                slug: category.slug ?? sourceSlug(category.name, category.externalId),
+                slug:
+                    category.slug ??
+                    sourceSlug(category.name, category.externalId),
                 level: category.level,
                 sortOrder: category.sortOrder ?? index,
                 isActive: true,
@@ -40,7 +43,10 @@ export class ProductMapper {
                       name: source.brand.name,
                       slug:
                           source.brand.slug ??
-                          sourceSlug(source.brand.name, source.brand.externalId),
+                          sourceSlug(
+                              source.brand.name,
+                              source.brand.externalId,
+                          ),
                       logoUrl: source.brand.logoUrl ?? null,
                       description: source.brand.description ?? null,
                       isActive: true,
@@ -72,7 +78,8 @@ export class ProductMapper {
                 description: source.description ?? null,
                 shortDescription: source.shortDescription ?? null,
                 status: 'active',
-                totalSold: source.totalSold ?? this.sumSoldFromVariants(variants),
+                totalSold:
+                    source.totalSold ?? this.sumSoldFromVariants(variants),
                 ratingAverage: source.ratingAverage ?? null,
                 reviewCount: source.reviewCount ?? source.reviews.length,
                 viewCount: source.viewCount ?? 0,
@@ -159,7 +166,9 @@ export class ProductMapper {
     }
 
     // Tạo inventory tương ứng mỗi variant để tách tồn kho khỏi thông tin bán hàng.
-    private mapInventories(variants: ImportProductVariant[]): ImportInventory[] {
+    private mapInventories(
+        variants: ImportProductVariant[],
+    ): ImportInventory[] {
         return variants.map((variant) => ({
             variantSku: variant.sku,
             quantityAvailable: variant.stockQuantity,
