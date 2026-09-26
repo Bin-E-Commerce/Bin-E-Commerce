@@ -1,1074 +1,1104 @@
 // File này là nguồn định nghĩa permission, role grant và navigation dùng chung cho Auth Service, Gateway và FE.
 // Không đặt logic kiểm tra JWT hay business workflow ở đây; chỉ khai báo contract để các lớp runtime cùng đọc.
 
-import { UserRole } from "../../../enums/user-role.enum";
-import { Permission } from "../contracts/permission.enum";
-import { PermissionScope } from "../contracts/permission-scope.enum";
+import { UserRole } from '../../../enums/user-role.enum';
+import { Permission } from '../contracts/permission.enum';
+import { PermissionScope } from '../contracts/permission-scope.enum';
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = "2026.09.19.1";
+export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.09.24.1';
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
-  code: Permission; // Mã permission dùng trong DB, guard, menu, FE accessProfile.
-  name: string;
-  description: string;
-  resource: string;
-  action: string; // resource.action là cách đặt tên permission theo chuẩn RESTful, giúp FE và BE hiểu ngữ nghĩa permission.
+    code: Permission; // Mã permission dùng trong DB, guard, menu, FE accessProfile.
+    name: string;
+    description: string;
+    resource: string;
+    action: string; // resource.action là cách đặt tên permission theo chuẩn RESTful, giúp FE và BE hiểu ngữ nghĩa permission.
 }
 
 // Danh sách role, permission và scope mặc định khi seed môi trường mới.
 export interface RoleDefinition {
-  code: UserRole;
-  name: string;
-  description: string;
-  isSystem: boolean; // Role hệ thống không được xóa, chỉ có thể bật/tắt hoặc gán quyền.
+    code: UserRole;
+    name: string;
+    description: string;
+    isSystem: boolean; // Role hệ thống không được xóa, chỉ có thể bật/tắt hoặc gán quyền.
 }
 
 // Ma trận quyền mặc định khi seed môi trường mới.
 export interface RolePermissionDefinition {
-  roleCode: UserRole; // Role code dùng trong DB, guard, menu, FE accessProfile.
-  permissionCode: Permission;
-  scope: PermissionScope;
+    roleCode: UserRole; // Role code dùng trong DB, guard, menu, FE accessProfile.
+    permissionCode: Permission;
+    scope: PermissionScope;
 }
 
 // Danh mục menu backend trả về cho FE trong accessProfile.
 export interface NavigationItemDefinition {
-  area: "admin" | "seller";
-  groupCode: string; // Mã nhóm menu dùng trong DB, guard, menu, FE accessProfile. FE sẽ render groupCode trong <el-menu-item-group> hoặc <q-item-label> tùy framework.
-  groupLabel: string; // Tên hiển thị nhóm menu trong sidebar, FE sẽ render groupLabel trong <el-menu-item-group> hoặc <q-item-label> tùy framework.
-  groupOrder: number; // Thứ tự nhóm menu trong sidebar, FE sẽ sort theo groupOrder trước, sortOrder sau.
-  code: string; // Mã menu dùng trong DB, guard, menu, FE accessProfile.
-  label: string; // Tên hiển thị trong menu.
-  description: string;
-  href: string; // Link menu, FE sẽ render <a href={href}> hoặc <router-link :to="{ path: href }"> tùy framework.
-  icon: string; // Icon hiển thị trong menu.
-  sortOrder: number; //  Thứ tự menu trong nhóm, FE sẽ sort theo groupOrder trước, sortOrder sau.
-  requiredPermissionCode: Permission; // Mã permission dùng trong DB, guard, menu, FE accessProfile. FE sẽ render menu nếu user có permission này.
-  requiredScope?: PermissionScope; // Scope mặc định của permission khi render menu, FE sẽ render menu nếu user có permission này với scope này. Nếu không có thì FE sẽ render menu nếu user có permission này với bất kỳ scope nào.
-  parentCode?: string; // Mã menu cha dùng trong DB, guard, menu, FE accessProfile. FE sẽ render menu con nếu user có permission này với scope này và menu cha có permission này với scope này. Nếu không có thì FE sẽ render menu con nếu user có permission này với bất kỳ scope nào.
+    area: 'admin' | 'seller';
+    groupCode: string; // Mã nhóm menu dùng trong DB, guard, menu, FE accessProfile. FE sẽ render groupCode trong <el-menu-item-group> hoặc <q-item-label> tùy framework.
+    groupLabel: string; // Tên hiển thị nhóm menu trong sidebar, FE sẽ render groupLabel trong <el-menu-item-group> hoặc <q-item-label> tùy framework.
+    groupOrder: number; // Thứ tự nhóm menu trong sidebar, FE sẽ sort theo groupOrder trước, sortOrder sau.
+    code: string; // Mã menu dùng trong DB, guard, menu, FE accessProfile.
+    label: string; // Tên hiển thị trong menu.
+    description: string;
+    href: string; // Link menu, FE sẽ render <a href={href}> hoặc <router-link :to="{ path: href }"> tùy framework.
+    icon: string; // Icon hiển thị trong menu.
+    sortOrder: number; //  Thứ tự menu trong nhóm, FE sẽ sort theo groupOrder trước, sortOrder sau.
+    requiredPermissionCode: Permission; // Mã permission dùng trong DB, guard, menu, FE accessProfile. FE sẽ render menu nếu user có permission này.
+    requiredScope?: PermissionScope; // Scope mặc định của permission khi render menu, FE sẽ render menu nếu user có permission này với scope này. Nếu không có thì FE sẽ render menu nếu user có permission này với bất kỳ scope nào.
+    parentCode?: string; // Mã menu cha dùng trong DB, guard, menu, FE accessProfile. FE sẽ render menu con nếu user có permission này với scope này và menu cha có permission này với scope này. Nếu không có thì FE sẽ render menu con nếu user có permission này với bất kỳ scope nào.
 }
 
 // Danh mục permission chính thức của hệ thống.
 // Admin UI chỉ được bật/tắt các permission đã có trong danh sách này, không tự tạo permission tự do trong DB.
 export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
-  {
-    code: Permission.ADMIN_ACCESS,
-    name: "Truy cập Admin Center",
-    description: "Cho phép vào khu vực vận hành nội bộ của nền tảng.",
-    resource: "admin",
-    action: "access",
-  },
-  {
-    code: Permission.ADMIN_DASHBOARD_VIEW,
-    name: "Xem bảng điều khiển admin",
-    description: "Cho phép xem dashboard tổng quan của Admin Center.",
-    resource: "admin.dashboard",
-    action: "view",
-  },
-  {
-    code: Permission.ADMIN_ACCESS_CONTROL_READ,
-    name: "Xem trang phân quyền",
-    description:
-      "Cho phép xem role, permission, scope và menu trong Admin Center.",
-    resource: "admin.access_control",
-    action: "read",
-  },
-  {
-    code: Permission.ADMIN_ACCESS_CONTROL_UPDATE,
-    name: "Chỉnh sửa phân quyền",
-    description:
-      "Cho phép bật hoặc tắt permission cho từng role trong Admin Center.",
-    resource: "admin.access_control",
-    action: "update",
-  },
-  {
-    code: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
-    name: "Xem phân tích Recommendation",
-    description:
-      "Theo dõi lượt hiển thị, click, thêm giỏ và hành vi theo tài khoản.",
-    resource: "admin.recommendation.analytics",
-    action: "read",
-  },
-  {
-    code: Permission.ADMIN_RECOMMENDATION_POLICY_READ,
-    name: "Xem policy Recommendation",
-    description: "Xem trọng số, feature flag và lịch sử cấu hình ranking.",
-    resource: "admin.recommendation.policy",
-    action: "read",
-  },
-  {
-    code: Permission.ADMIN_RECOMMENDATION_POLICY_WRITE,
-    name: "Chỉnh policy Recommendation",
-    description: "Thay đổi trọng số và flag ranking đang chạy.",
-    resource: "admin.recommendation.policy",
-    action: "write",
-  },
-  {
-    code: Permission.ADMIN_RECOMMENDATION_POLICY_ROLLBACK,
-    name: "Rollback policy Recommendation",
-    description: "Khôi phục một phiên bản policy đã lưu trong lịch sử.",
-    resource: "admin.recommendation.policy",
-    action: "rollback",
-  },
-  {
-    code: Permission.CART_READ,
-    name: "Xem giỏ hàng",
-    description:
-      "Cho phép Customer hoặc Seller xem giỏ hàng active của chính mình.",
-    resource: "cart",
-    action: "read",
-  },
-  {
-    code: Permission.CART_ITEM_ADD,
-    name: "Thêm sản phẩm vào giỏ hàng",
-    description:
-      "Cho phép Customer hoặc Seller thêm sản phẩm nội bộ vào giỏ hàng của chính mình.",
-    resource: "cart.item",
-    action: "add",
-  },
-  {
-    code: Permission.CART_ITEM_UPDATE,
-    name: "Cập nhật số lượng trong giỏ hàng",
-    description:
-      "Cho phép Customer hoặc Seller tăng, giảm số lượng sản phẩm trong giỏ hàng của chính mình.",
-    resource: "cart.item",
-    action: "update",
-  },
-  {
-    code: Permission.CART_ITEM_REMOVE,
-    name: "Xóa sản phẩm khỏi giỏ hàng",
-    description:
-      "Cho phép Customer hoặc Seller xóa sản phẩm khỏi giỏ hàng của chính mình.",
-    resource: "cart.item",
-    action: "remove",
-  },
-  {
-    code: Permission.ORDER_CREATE,
-    name: "Tạo đơn COD",
-    description:
-      "Cho phép Customer hoặc Seller tạo đơn COD từ giỏ hàng của chính mình.",
-    resource: "order",
-    action: "create",
-  },
-  {
-    code: Permission.ORDER_READ,
-    name: "Xem đơn hàng của tôi",
-    description:
-      "Cho phép Customer xem lịch sử và chi tiết các đơn hàng thuộc tài khoản của mình.",
-    resource: "order",
-    action: "read",
-  },
-  {
-    code: Permission.ORDER_CANCEL,
-    name: "Hủy đơn hàng của tôi",
-    description:
-      "Cho phép Customer hủy đơn COD đã xác nhận thuộc tài khoản của mình.",
-    resource: "order",
-    action: "cancel",
-  },
-  {
-    code: Permission.ORDER_CONFIRM_DELIVERY,
-    name: "Xác nhận đã nhận hàng",
-    description:
-      "Cho phép Customer xác nhận hoặc báo vấn đề với đơn hàng đã giao.",
-    resource: "order.delivery",
-    action: "confirm",
-  },
-  {
-    code: Permission.RETURN_CREATE,
-    name: "Tạo yêu cầu hoàn hàng",
-    description:
-      "Cho phép khách hàng tạo yêu cầu hoàn hàng cho đơn đủ điều kiện.",
-    resource: "return",
-    action: "create",
-  },
-  {
-    code: Permission.RETURN_READ,
-    name: "Xem yêu cầu hoàn hàng",
-    description: "Cho phép xem yêu cầu hoàn hàng trong phạm vi được cấp.",
-    resource: "return",
-    action: "read",
-  },
-  {
-    code: Permission.RETURN_CANCEL,
-    name: "Hủy yêu cầu hoàn hàng",
-    description: "Cho phép khách hàng hủy yêu cầu hoàn hàng đang chờ xử lý.",
-    resource: "return",
-    action: "cancel",
-  },
-  {
-    code: Permission.RETURN_REVIEW,
-    name: "Duyệt yêu cầu hoàn hàng",
-    description:
-      "Cho phép seller duyệt hoặc từ chối yêu cầu hoàn hàng của shop.",
-    resource: "return",
-    action: "review",
-  },
-  {
-    code: Permission.RETURN_INSPECT,
-    name: "Kiểm tra hàng hoàn",
-    description: "Cho phép seller ghi nhận kết quả kiểm tra hàng hoàn.",
-    resource: "return",
-    action: "inspect",
-  },
-  {
-    code: Permission.PRODUCT_REVIEW_CREATE,
-    name: "Đánh giá sản phẩm đã mua",
-    description:
-      "Cho phép Customer gửi đánh giá cho sản phẩm trong đơn hàng đã giao.",
-    resource: "product.review",
-    action: "create",
-  },
-  {
-    code: Permission.SELLER_ORDER_READ,
-    name: "Xem đơn hàng của shop",
-    description:
-      "Cho phép Seller xem các đơn hàng có sản phẩm thuộc shop của mình.",
-    resource: "seller.order",
-    action: "read",
-  },
-  {
-    code: Permission.SELLER_SHIPPING_READ,
-    name: "Xem vận đơn của shop",
-    description:
-      "Cho phép Seller xem hành trình vận chuyển của đơn thuộc shop mình.",
-    resource: "seller.shipping",
-    action: "read",
-  },
-  {
-    code: Permission.SELLER_SHIPPING_MANAGE,
-    name: "Quản lý vận đơn của shop",
-    description:
-      "Cho phép Seller tạo, làm mới, hủy đủ điều kiện và in nhãn vận đơn thuộc shop mình.",
-    resource: "seller.shipping",
-    action: "manage",
-  },
-  {
-    code: Permission.SELLER_SHIPPING_SETTINGS_READ,
-    name: "Xem thiết lập giao nhận",
-    description:
-      "Cho phép Seller xem địa chỉ lấy hàng và cấu hình vận hành của shop mình.",
-    resource: "seller.shipping.settings",
-    action: "read",
-  },
-  {
-    code: Permission.SELLER_SHIPPING_SETTINGS_MANAGE,
-    name: "Quản lý thiết lập giao nhận",
-    description:
-      "Cho phép Seller cập nhật địa chỉ lấy hàng và cấu hình vận hành của shop mình.",
-    resource: "seller.shipping.settings",
-    action: "manage",
-  },
-  {
-    code: Permission.SHIPPING_TRACKING_READ,
-    name: "Theo dõi vận chuyển đơn hàng",
-    description:
-      "Cho phép Customer xem hành trình vận chuyển đơn hàng của chính mình.",
-    resource: "shipping.tracking",
-    action: "read",
-  },
-  {
-    code: Permission.SELLER_APPLICATION_READ,
-    name: "Xem hồ sơ đăng ký seller",
-    description: "Cho phép xem danh sách và chi tiết hồ sơ đăng ký người bán.",
-    resource: "seller.application",
-    action: "read",
-  },
-  {
-    code: Permission.SELLER_APPLICATION_APPROVE,
-    name: "Duyệt hồ sơ đăng ký seller",
-    description: "Cho phép chấp thuận hồ sơ đăng ký người bán.",
-    resource: "seller.application",
-    action: "approve",
-  },
-  {
-    code: Permission.SELLER_APPLICATION_REJECT,
-    name: "Từ chối hồ sơ đăng ký seller",
-    description: "Cho phép từ chối hồ sơ đăng ký người bán.",
-    resource: "seller.application",
-    action: "reject",
-  },
-  {
-    code: Permission.SELLER_ACCESS,
-    name: "Truy cập Seller Center",
-    description: "Cho phép vào khu vực vận hành shop của người bán.",
-    resource: "seller",
-    action: "access",
-  },
-  {
-    code: Permission.SELLER_DASHBOARD_VIEW,
-    name: "Xem bảng điều khiển seller",
-    description: "Cho phép xem dashboard tổng quan trong Seller Center.",
-    resource: "seller.dashboard",
-    action: "view",
-  },
-  {
-    code: Permission.SELLER_PRODUCT_READ,
-    name: "Xem sản phẩm của shop",
-    description:
-      "Cho phép người bán xem danh sách sản phẩm thuộc shop do mình sở hữu.",
-    resource: "seller.product",
-    action: "read",
-  },
-  {
-    code: Permission.SELLER_PRODUCT_CREATE,
-    name: "Thêm sản phẩm cho shop",
-    description:
-      "Cho phép người bán tạo bản nháp hoặc đăng sản phẩm mới thuộc shop do mình sở hữu.",
-    resource: "seller.product",
-    action: "create",
-  },
-  {
-    code: Permission.SELLER_PRODUCT_UPDATE,
-    name: "Chỉnh sửa sản phẩm của shop",
-    description:
-      "Cho phép người bán cập nhật thông tin, phân loại, giá bán và tồn kho sản phẩm thuộc shop do mình sở hữu.",
-    resource: "seller.product",
-    action: "update",
-  },
-  {
-    code: Permission.SELLER_PRODUCT_STATUS_UPDATE,
-    name: "Thay đổi trạng thái sản phẩm của shop",
-    description:
-      "Cho phép người bán bật hoặc tắt sản phẩm thuộc shop mà không thay đổi nội dung sản phẩm.",
-    resource: "seller.product.status",
-    action: "update",
-  },
-  {
-    code: Permission.SELLER_PRODUCT_DELETE,
-    name: "Xóa sản phẩm của shop",
-    description:
-      "Cho phép người bán chuyển sản phẩm thuộc shop sang trạng thái đã xóa theo chính sách vòng đời sản phẩm.",
-    resource: "seller.product",
-    action: "delete",
-  },
-  {
-    code: Permission.SELLER_PRODUCT_RESTORE,
-    name: "Khôi phục sản phẩm của shop",
-    description:
-      "Cho phép người bán khôi phục sản phẩm đã xóa mềm thuộc shop do mình sở hữu.",
-    resource: "seller.product",
-    action: "restore",
-  },
-  {
-    code: Permission.SELLER_AI_PRODUCT_CONTENT_GENERATE,
-    name: "Tạo gợi ý nội dung sản phẩm bằng AI",
-    description:
-      "Cho phép người bán sử dụng AI để đề xuất tên sản phẩm trong phạm vi shop của mình.",
-    resource: "seller.ai.product_content",
-    action: "generate",
-  },
-  {
-    code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
-    name: "Xem cong cu toi uu anh bang AI",
-    description:
-      "Cho phep seller xem bang dieu khien va ket qua toi uu anh cua shop.",
-    resource: "seller.ai.image_optimization",
-    action: "view",
-  },
-  {
-    code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_GENERATE,
-    name: "Tao yeu cau toi uu anh bang AI",
-    description:
-      "Cho phep seller tao job toi uu anh trong pham vi shop cua minh.",
-    resource: "seller.ai.image_optimization",
-    action: "generate",
-  },
-  {
-    code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_APPLY,
-    name: "Ap dung anh toi uu bang AI",
-    description:
-      "Cho phep seller duyet va ap dung anh AI vao san pham cua shop.",
-    resource: "seller.ai.image_optimization",
-    action: "apply",
-  },
-  {
-    code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_ROLLBACK,
-    name: "Khoi phuc anh goc sau toi uu AI",
-    description:
-      "Cho phep seller khoi phuc anh goc cua san pham da ap dung AI.",
-    resource: "seller.ai.image_optimization",
-    action: "rollback",
-  },
-  {
-    code: Permission.SELLER_SHOP_PROFILE_READ,
-    name: "Xem hồ sơ shop",
-    description:
-      "Cho phép người bán xem thông tin công khai, thuế và định danh đã xác minh của shop mình.",
-    resource: "seller.shop_profile",
-    action: "read",
-  },
-  {
-    code: Permission.SELLER_SHOP_PROFILE_UPDATE,
-    name: "Chỉnh sửa hồ sơ shop",
-    description:
-      "Cho phép người bán cập nhật tên, logo, mô tả và thông tin liên hệ công khai của shop mình.",
-    resource: "seller.shop_profile",
-    action: "update",
-  },
-  {
-    code: Permission.SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE,
-    name: "Gửi yêu cầu đổi hồ sơ shop",
-    description:
-      "Cho phép người bán gửi thay đổi thuế, thanh toán hoặc định danh để admin xác minh.",
-    resource: "seller.shop_profile_change_request",
-    action: "create",
-  },
-  {
-    code: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
-    name: "Xem yêu cầu đổi hồ sơ shop",
-    description:
-      "Cho phép nhân sự vận hành xem dữ liệu trước và sau trong yêu cầu thay đổi hồ sơ shop.",
-    resource: "admin.shop_profile_change_request",
-    action: "read",
-  },
-  {
-    code: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE,
-    name: "Duyệt yêu cầu đổi hồ sơ shop",
-    description:
-      "Cho phép áp dụng thay đổi thuế, thanh toán hoặc định danh vào hồ sơ đang có hiệu lực.",
-    resource: "admin.shop_profile_change_request",
-    action: "approve",
-  },
-  {
-    code: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT,
-    name: "Từ chối yêu cầu đổi hồ sơ shop",
-    description:
-      "Cho phép từ chối yêu cầu thay đổi hồ sơ shop và ghi rõ lý do cho người bán.",
-    resource: "admin.shop_profile_change_request",
-    action: "reject",
-  },
-  {
-    code: Permission.SHOP_FOLLOW,
-    name: "Theo dõi shop",
-    description:
-      "Cho phép Customer hoặc Seller theo dõi và bỏ theo dõi shop công khai.",
-    resource: "shop",
-    action: "follow",
-  },
+    {
+        code: Permission.ADMIN_ACCESS,
+        name: 'Truy cập Admin Center',
+        description: 'Cho phép vào khu vực vận hành nội bộ của nền tảng.',
+        resource: 'admin',
+        action: 'access',
+    },
+    {
+        code: Permission.ADMIN_DASHBOARD_VIEW,
+        name: 'Xem bảng điều khiển admin',
+        description: 'Cho phép xem dashboard tổng quan của Admin Center.',
+        resource: 'admin.dashboard',
+        action: 'view',
+    },
+    {
+        code: Permission.ADMIN_ACCESS_CONTROL_READ,
+        name: 'Xem trang phân quyền',
+        description:
+            'Cho phép xem role, permission, scope và menu trong Admin Center.',
+        resource: 'admin.access_control',
+        action: 'read',
+    },
+    {
+        code: Permission.ADMIN_ACCESS_CONTROL_UPDATE,
+        name: 'Chỉnh sửa phân quyền',
+        description:
+            'Cho phép bật hoặc tắt permission cho từng role trong Admin Center.',
+        resource: 'admin.access_control',
+        action: 'update',
+    },
+    {
+        code: Permission.ADMIN_USER_MANAGEMENT,
+        name: 'Quản lý người dùng',
+        description:
+            'Cho phép xem tài khoản, đổi role/trạng thái và thu hồi session người dùng.',
+        resource: 'admin.users',
+        action: 'manage',
+    },
+    {
+        code: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
+        name: 'Xem phân tích Recommendation',
+        description:
+            'Theo dõi lượt hiển thị, click, thêm giỏ và hành vi theo tài khoản.',
+        resource: 'admin.recommendation.analytics',
+        action: 'read',
+    },
+    {
+        code: Permission.ADMIN_RECOMMENDATION_POLICY_READ,
+        name: 'Xem policy Recommendation',
+        description: 'Xem trọng số, feature flag và lịch sử cấu hình ranking.',
+        resource: 'admin.recommendation.policy',
+        action: 'read',
+    },
+    {
+        code: Permission.ADMIN_RECOMMENDATION_POLICY_WRITE,
+        name: 'Chỉnh policy Recommendation',
+        description: 'Thay đổi trọng số và flag ranking đang chạy.',
+        resource: 'admin.recommendation.policy',
+        action: 'write',
+    },
+    {
+        code: Permission.ADMIN_RECOMMENDATION_POLICY_ROLLBACK,
+        name: 'Rollback policy Recommendation',
+        description: 'Khôi phục một phiên bản policy đã lưu trong lịch sử.',
+        resource: 'admin.recommendation.policy',
+        action: 'rollback',
+    },
+    {
+        code: Permission.CART_READ,
+        name: 'Xem giỏ hàng',
+        description:
+            'Cho phép Customer hoặc Seller xem giỏ hàng active của chính mình.',
+        resource: 'cart',
+        action: 'read',
+    },
+    {
+        code: Permission.CART_ITEM_ADD,
+        name: 'Thêm sản phẩm vào giỏ hàng',
+        description:
+            'Cho phép Customer hoặc Seller thêm sản phẩm nội bộ vào giỏ hàng của chính mình.',
+        resource: 'cart.item',
+        action: 'add',
+    },
+    {
+        code: Permission.CART_ITEM_UPDATE,
+        name: 'Cập nhật số lượng trong giỏ hàng',
+        description:
+            'Cho phép Customer hoặc Seller tăng, giảm số lượng sản phẩm trong giỏ hàng của chính mình.',
+        resource: 'cart.item',
+        action: 'update',
+    },
+    {
+        code: Permission.CART_ITEM_REMOVE,
+        name: 'Xóa sản phẩm khỏi giỏ hàng',
+        description:
+            'Cho phép Customer hoặc Seller xóa sản phẩm khỏi giỏ hàng của chính mình.',
+        resource: 'cart.item',
+        action: 'remove',
+    },
+    {
+        code: Permission.ORDER_CREATE,
+        name: 'Tạo đơn COD',
+        description:
+            'Cho phép Customer hoặc Seller tạo đơn COD từ giỏ hàng của chính mình.',
+        resource: 'order',
+        action: 'create',
+    },
+    {
+        code: Permission.ORDER_READ,
+        name: 'Xem đơn hàng của tôi',
+        description:
+            'Cho phép Customer xem lịch sử và chi tiết các đơn hàng thuộc tài khoản của mình.',
+        resource: 'order',
+        action: 'read',
+    },
+    {
+        code: Permission.ORDER_CANCEL,
+        name: 'Hủy đơn hàng của tôi',
+        description:
+            'Cho phép Customer hủy đơn COD đã xác nhận thuộc tài khoản của mình.',
+        resource: 'order',
+        action: 'cancel',
+    },
+    {
+        code: Permission.ORDER_CONFIRM_DELIVERY,
+        name: 'Xác nhận đã nhận hàng',
+        description:
+            'Cho phép Customer xác nhận hoặc báo vấn đề với đơn hàng đã giao.',
+        resource: 'order.delivery',
+        action: 'confirm',
+    },
+    {
+        code: Permission.RETURN_CREATE,
+        name: 'Tạo yêu cầu hoàn hàng',
+        description:
+            'Cho phép khách hàng tạo yêu cầu hoàn hàng cho đơn đủ điều kiện.',
+        resource: 'return',
+        action: 'create',
+    },
+    {
+        code: Permission.RETURN_READ,
+        name: 'Xem yêu cầu hoàn hàng',
+        description: 'Cho phép xem yêu cầu hoàn hàng trong phạm vi được cấp.',
+        resource: 'return',
+        action: 'read',
+    },
+    {
+        code: Permission.RETURN_CANCEL,
+        name: 'Hủy yêu cầu hoàn hàng',
+        description:
+            'Cho phép khách hàng hủy yêu cầu hoàn hàng đang chờ xử lý.',
+        resource: 'return',
+        action: 'cancel',
+    },
+    {
+        code: Permission.RETURN_REVIEW,
+        name: 'Duyệt yêu cầu hoàn hàng',
+        description:
+            'Cho phép seller duyệt hoặc từ chối yêu cầu hoàn hàng của shop.',
+        resource: 'return',
+        action: 'review',
+    },
+    {
+        code: Permission.RETURN_INSPECT,
+        name: 'Kiểm tra hàng hoàn',
+        description: 'Cho phép seller ghi nhận kết quả kiểm tra hàng hoàn.',
+        resource: 'return',
+        action: 'inspect',
+    },
+    {
+        code: Permission.PRODUCT_REVIEW_CREATE,
+        name: 'Đánh giá sản phẩm đã mua',
+        description:
+            'Cho phép Customer gửi đánh giá cho sản phẩm trong đơn hàng đã giao.',
+        resource: 'product.review',
+        action: 'create',
+    },
+    {
+        code: Permission.SELLER_ORDER_READ,
+        name: 'Xem đơn hàng của shop',
+        description:
+            'Cho phép Seller xem các đơn hàng có sản phẩm thuộc shop của mình.',
+        resource: 'seller.order',
+        action: 'read',
+    },
+    {
+        code: Permission.SELLER_SHIPPING_READ,
+        name: 'Xem vận đơn của shop',
+        description:
+            'Cho phép Seller xem hành trình vận chuyển của đơn thuộc shop mình.',
+        resource: 'seller.shipping',
+        action: 'read',
+    },
+    {
+        code: Permission.SELLER_SHIPPING_MANAGE,
+        name: 'Quản lý vận đơn của shop',
+        description:
+            'Cho phép Seller tạo, làm mới, hủy đủ điều kiện và in nhãn vận đơn thuộc shop mình.',
+        resource: 'seller.shipping',
+        action: 'manage',
+    },
+    {
+        code: Permission.SELLER_SHIPPING_SETTINGS_READ,
+        name: 'Xem thiết lập giao nhận',
+        description:
+            'Cho phép Seller xem địa chỉ lấy hàng và cấu hình vận hành của shop mình.',
+        resource: 'seller.shipping.settings',
+        action: 'read',
+    },
+    {
+        code: Permission.SELLER_SHIPPING_SETTINGS_MANAGE,
+        name: 'Quản lý thiết lập giao nhận',
+        description:
+            'Cho phép Seller cập nhật địa chỉ lấy hàng và cấu hình vận hành của shop mình.',
+        resource: 'seller.shipping.settings',
+        action: 'manage',
+    },
+    {
+        code: Permission.SHIPPING_TRACKING_READ,
+        name: 'Theo dõi vận chuyển đơn hàng',
+        description:
+            'Cho phép Customer xem hành trình vận chuyển đơn hàng của chính mình.',
+        resource: 'shipping.tracking',
+        action: 'read',
+    },
+    {
+        code: Permission.SELLER_APPLICATION_READ,
+        name: 'Xem hồ sơ đăng ký seller',
+        description:
+            'Cho phép xem danh sách và chi tiết hồ sơ đăng ký người bán.',
+        resource: 'seller.application',
+        action: 'read',
+    },
+    {
+        code: Permission.SELLER_APPLICATION_APPROVE,
+        name: 'Duyệt hồ sơ đăng ký seller',
+        description: 'Cho phép chấp thuận hồ sơ đăng ký người bán.',
+        resource: 'seller.application',
+        action: 'approve',
+    },
+    {
+        code: Permission.SELLER_APPLICATION_REJECT,
+        name: 'Từ chối hồ sơ đăng ký seller',
+        description: 'Cho phép từ chối hồ sơ đăng ký người bán.',
+        resource: 'seller.application',
+        action: 'reject',
+    },
+    {
+        code: Permission.SELLER_ACCESS,
+        name: 'Truy cập Seller Center',
+        description: 'Cho phép vào khu vực vận hành shop của người bán.',
+        resource: 'seller',
+        action: 'access',
+    },
+    {
+        code: Permission.SELLER_DASHBOARD_VIEW,
+        name: 'Xem bảng điều khiển seller',
+        description: 'Cho phép xem dashboard tổng quan trong Seller Center.',
+        resource: 'seller.dashboard',
+        action: 'view',
+    },
+    {
+        code: Permission.SELLER_PRODUCT_READ,
+        name: 'Xem sản phẩm của shop',
+        description:
+            'Cho phép người bán xem danh sách sản phẩm thuộc shop do mình sở hữu.',
+        resource: 'seller.product',
+        action: 'read',
+    },
+    {
+        code: Permission.SELLER_PRODUCT_CREATE,
+        name: 'Thêm sản phẩm cho shop',
+        description:
+            'Cho phép người bán tạo bản nháp hoặc đăng sản phẩm mới thuộc shop do mình sở hữu.',
+        resource: 'seller.product',
+        action: 'create',
+    },
+    {
+        code: Permission.SELLER_PRODUCT_UPDATE,
+        name: 'Chỉnh sửa sản phẩm của shop',
+        description:
+            'Cho phép người bán cập nhật thông tin, phân loại, giá bán và tồn kho sản phẩm thuộc shop do mình sở hữu.',
+        resource: 'seller.product',
+        action: 'update',
+    },
+    {
+        code: Permission.SELLER_PRODUCT_STATUS_UPDATE,
+        name: 'Thay đổi trạng thái sản phẩm của shop',
+        description:
+            'Cho phép người bán bật hoặc tắt sản phẩm thuộc shop mà không thay đổi nội dung sản phẩm.',
+        resource: 'seller.product.status',
+        action: 'update',
+    },
+    {
+        code: Permission.SELLER_PRODUCT_DELETE,
+        name: 'Xóa sản phẩm của shop',
+        description:
+            'Cho phép người bán chuyển sản phẩm thuộc shop sang trạng thái đã xóa theo chính sách vòng đời sản phẩm.',
+        resource: 'seller.product',
+        action: 'delete',
+    },
+    {
+        code: Permission.SELLER_PRODUCT_RESTORE,
+        name: 'Khôi phục sản phẩm của shop',
+        description:
+            'Cho phép người bán khôi phục sản phẩm đã xóa mềm thuộc shop do mình sở hữu.',
+        resource: 'seller.product',
+        action: 'restore',
+    },
+    {
+        code: Permission.SELLER_AI_PRODUCT_CONTENT_GENERATE,
+        name: 'Tạo gợi ý nội dung sản phẩm bằng AI',
+        description:
+            'Cho phép người bán sử dụng AI để đề xuất tên sản phẩm trong phạm vi shop của mình.',
+        resource: 'seller.ai.product_content',
+        action: 'generate',
+    },
+    {
+        code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
+        name: 'Xem cong cu toi uu anh bang AI',
+        description:
+            'Cho phep seller xem bang dieu khien va ket qua toi uu anh cua shop.',
+        resource: 'seller.ai.image_optimization',
+        action: 'view',
+    },
+    {
+        code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_GENERATE,
+        name: 'Tao yeu cau toi uu anh bang AI',
+        description:
+            'Cho phep seller tao job toi uu anh trong pham vi shop cua minh.',
+        resource: 'seller.ai.image_optimization',
+        action: 'generate',
+    },
+    {
+        code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_APPLY,
+        name: 'Ap dung anh toi uu bang AI',
+        description:
+            'Cho phep seller duyet va ap dung anh AI vao san pham cua shop.',
+        resource: 'seller.ai.image_optimization',
+        action: 'apply',
+    },
+    {
+        code: Permission.SELLER_AI_IMAGE_OPTIMIZATION_ROLLBACK,
+        name: 'Khoi phuc anh goc sau toi uu AI',
+        description:
+            'Cho phep seller khoi phuc anh goc cua san pham da ap dung AI.',
+        resource: 'seller.ai.image_optimization',
+        action: 'rollback',
+    },
+    {
+        code: Permission.SELLER_SHOP_PROFILE_READ,
+        name: 'Xem hồ sơ shop',
+        description:
+            'Cho phép người bán xem thông tin công khai, thuế và định danh đã xác minh của shop mình.',
+        resource: 'seller.shop_profile',
+        action: 'read',
+    },
+    {
+        code: Permission.SELLER_SHOP_PROFILE_UPDATE,
+        name: 'Chỉnh sửa hồ sơ shop',
+        description:
+            'Cho phép người bán cập nhật tên, logo, mô tả và thông tin liên hệ công khai của shop mình.',
+        resource: 'seller.shop_profile',
+        action: 'update',
+    },
+    {
+        code: Permission.SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE,
+        name: 'Gửi yêu cầu đổi hồ sơ shop',
+        description:
+            'Cho phép người bán gửi thay đổi thuế, thanh toán hoặc định danh để admin xác minh.',
+        resource: 'seller.shop_profile_change_request',
+        action: 'create',
+    },
+    {
+        code: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
+        name: 'Xem yêu cầu đổi hồ sơ shop',
+        description:
+            'Cho phép nhân sự vận hành xem dữ liệu trước và sau trong yêu cầu thay đổi hồ sơ shop.',
+        resource: 'admin.shop_profile_change_request',
+        action: 'read',
+    },
+    {
+        code: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE,
+        name: 'Duyệt yêu cầu đổi hồ sơ shop',
+        description:
+            'Cho phép áp dụng thay đổi thuế, thanh toán hoặc định danh vào hồ sơ đang có hiệu lực.',
+        resource: 'admin.shop_profile_change_request',
+        action: 'approve',
+    },
+    {
+        code: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT,
+        name: 'Từ chối yêu cầu đổi hồ sơ shop',
+        description:
+            'Cho phép từ chối yêu cầu thay đổi hồ sơ shop và ghi rõ lý do cho người bán.',
+        resource: 'admin.shop_profile_change_request',
+        action: 'reject',
+    },
+    {
+        code: Permission.SHOP_FOLLOW,
+        name: 'Theo dõi shop',
+        description:
+            'Cho phép Customer hoặc Seller theo dõi và bỏ theo dõi shop công khai.',
+        resource: 'shop',
+        action: 'follow',
+    },
 ];
 
 // Danh mục role nghiệp vụ chính thức.
 // DB có thể lưu trạng thái active hoặc assignment, nhưng code giữ danh sách role được hệ thống hiểu.
 export const ROLE_DEFINITIONS: RoleDefinition[] = [
-  {
-    code: UserRole.CUSTOMER,
-    name: "Khách hàng",
-    description: "Người dùng mua hàng trên nền tảng.",
-    isSystem: true,
-  },
-  {
-    code: UserRole.SELLER,
-    name: "Người bán",
-    description: "Người bán đã được duyệt và có quyền vận hành shop.",
-    isSystem: true,
-  },
-  {
-    code: UserRole.SUPPORT_AGENT,
-    name: "Nhân sự hỗ trợ",
-    description: "Nhân sự nội bộ xử lý hồ sơ và hỗ trợ người dùng.",
-    isSystem: true,
-  },
-  {
-    code: UserRole.ADMIN,
-    name: "Quản trị viên",
-    description: "Quản trị viên hệ thống có quyền vận hành toàn nền tảng.",
-    isSystem: true,
-  },
+    {
+        code: UserRole.CUSTOMER,
+        name: 'Khách hàng',
+        description: 'Người dùng mua hàng trên nền tảng.',
+        isSystem: true,
+    },
+    {
+        code: UserRole.SELLER,
+        name: 'Người bán',
+        description: 'Người bán đã được duyệt và có quyền vận hành shop.',
+        isSystem: true,
+    },
+    {
+        code: UserRole.SUPPORT_AGENT,
+        name: 'Nhân sự hỗ trợ',
+        description: 'Nhân sự nội bộ xử lý hồ sơ và hỗ trợ người dùng.',
+        isSystem: true,
+    },
+    {
+        code: UserRole.ADMIN,
+        name: 'Quản trị viên',
+        description: 'Quản trị viên hệ thống có quyền vận hành toàn nền tảng.',
+        isSystem: true,
+    },
 ];
 
 // Ma trận quyền mặc định khi seed môi trường mới.
 // Seed service chỉ tạo bản ghi còn thiếu, không ghi đè trạng thái quyền mà admin đã bật/tắt trong DB.
 export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.SHOP_FOLLOW,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SHOP_FOLLOW,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.CART_READ,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.RETURN_CREATE,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.RETURN_READ,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.RETURN_CANCEL,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.RETURN_READ,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.RETURN_REVIEW,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.RETURN_INSPECT,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.RETURN_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.RETURN_REVIEW,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.RETURN_INSPECT,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_ACCESS,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.CART_READ,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.CART_ITEM_ADD,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.CART_ITEM_ADD,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.CART_ITEM_UPDATE,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.CART_ITEM_UPDATE,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.CART_ITEM_REMOVE,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.CART_ITEM_REMOVE,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.ORDER_CREATE,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.ORDER_CREATE,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.ORDER_READ,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.ORDER_READ,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.ORDER_CANCEL,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.ORDER_CONFIRM_DELIVERY,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.PRODUCT_REVIEW_CREATE,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.ORDER_CANCEL,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_ORDER_READ,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_ORDER_MANAGE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_SHIPPING_SETTINGS_MANAGE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_SHIPPING_READ,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_SHIPPING_MANAGE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.CUSTOMER,
-    permissionCode: Permission.SHIPPING_TRACKING_READ,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SHIPPING_TRACKING_READ,
-    scope: PermissionScope.OWN,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_ACCESS,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_DASHBOARD_VIEW,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_PRODUCT_READ,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_PRODUCT_CREATE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_PRODUCT_UPDATE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_PRODUCT_STATUS_UPDATE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_PRODUCT_DELETE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_PRODUCT_RESTORE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_AI_PRODUCT_CONTENT_GENERATE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_GENERATE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_APPLY,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_ROLLBACK,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_SHOP_PROFILE_READ,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_SHOP_PROFILE_UPDATE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SELLER,
-    permissionCode: Permission.SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE,
-    scope: PermissionScope.OWN_SHOP,
-  },
-  {
-    roleCode: UserRole.SUPPORT_AGENT,
-    permissionCode: Permission.SELLER_APPLICATION_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    // Nhân sự hỗ trợ được xem hồ sơ và xử lý đầy đủ vòng review seller.
-    // Gateway và seller-service vẫn kiểm tra từng permission riêng nên không thể dùng quyền đọc để duyệt hoặc từ chối.
-    roleCode: UserRole.SUPPORT_AGENT,
-    permissionCode: Permission.SELLER_APPLICATION_APPROVE,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    // Tách quyền từ chối riêng để thao tác này được hiển thị, audit và thu hồi độc lập với quyền duyệt hồ sơ.
-    roleCode: UserRole.SUPPORT_AGENT,
-    permissionCode: Permission.SELLER_APPLICATION_REJECT,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    // Mở đúng khung Admin Center cho nhân sự hỗ trợ; quyền này không cấp quyền quản trị hệ thống.
-    roleCode: UserRole.SUPPORT_AGENT,
-    permissionCode: Permission.ADMIN_ACCESS,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    // Cho phép nhân sự hỗ trợ xem danh sách yêu cầu thay đổi hồ sơ shop để thực hiện quy trình review.
-    roleCode: UserRole.SUPPORT_AGENT,
-    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    // Cho phép duyệt thay đổi hồ sơ shop; seller-service vẫn kiểm tra lại permission ở lớp nghiệp vụ.
-    roleCode: UserRole.SUPPORT_AGENT,
-    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    // Cho phép từ chối thay đổi hồ sơ shop độc lập với quyền xem và quyền duyệt.
-    roleCode: UserRole.SUPPORT_AGENT,
-    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_ACCESS,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_DASHBOARD_VIEW,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_ACCESS_CONTROL_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_ACCESS_CONTROL_UPDATE,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_WRITE,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_ROLLBACK,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.SELLER_APPLICATION_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.SELLER_APPLICATION_APPROVE,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.SELLER_APPLICATION_REJECT,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.SELLER_ACCESS,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.SELLER_DASHBOARD_VIEW,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.SELLER_PRODUCT_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.SELLER_SHOP_PROFILE_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.SELLER_SHOP_PROFILE_UPDATE,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE,
-    scope: PermissionScope.GLOBAL,
-  },
-  {
-    roleCode: UserRole.ADMIN,
-    permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT,
-    scope: PermissionScope.GLOBAL,
-  },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.SHOP_FOLLOW,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SHOP_FOLLOW,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.CART_READ,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.RETURN_CREATE,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.RETURN_READ,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.RETURN_CANCEL,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.RETURN_READ,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.RETURN_REVIEW,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.RETURN_INSPECT,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.RETURN_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.RETURN_REVIEW,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.RETURN_INSPECT,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_ACCESS,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.CART_READ,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.CART_ITEM_ADD,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.CART_ITEM_ADD,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.CART_ITEM_UPDATE,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.CART_ITEM_UPDATE,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.CART_ITEM_REMOVE,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.CART_ITEM_REMOVE,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.ORDER_CREATE,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.ORDER_CREATE,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.ORDER_READ,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.ORDER_READ,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.ORDER_CANCEL,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.ORDER_CONFIRM_DELIVERY,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.PRODUCT_REVIEW_CREATE,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.ORDER_CANCEL,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_ORDER_READ,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_ORDER_MANAGE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_SHIPPING_SETTINGS_MANAGE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_SHIPPING_READ,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_SHIPPING_MANAGE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.CUSTOMER,
+        permissionCode: Permission.SHIPPING_TRACKING_READ,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SHIPPING_TRACKING_READ,
+        scope: PermissionScope.OWN,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_ACCESS,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_DASHBOARD_VIEW,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_PRODUCT_READ,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_PRODUCT_CREATE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_PRODUCT_UPDATE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_PRODUCT_STATUS_UPDATE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_PRODUCT_DELETE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_PRODUCT_RESTORE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_AI_PRODUCT_CONTENT_GENERATE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_GENERATE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_APPLY,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_ROLLBACK,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_SHOP_PROFILE_READ,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_SHOP_PROFILE_UPDATE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_SHOP_PROFILE_CHANGE_REQUEST_CREATE,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SUPPORT_AGENT,
+        permissionCode: Permission.SELLER_APPLICATION_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        // Nhân sự hỗ trợ được xem hồ sơ và xử lý đầy đủ vòng review seller.
+        // Gateway và seller-service vẫn kiểm tra từng permission riêng nên không thể dùng quyền đọc để duyệt hoặc từ chối.
+        roleCode: UserRole.SUPPORT_AGENT,
+        permissionCode: Permission.SELLER_APPLICATION_APPROVE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        // Tách quyền từ chối riêng để thao tác này được hiển thị, audit và thu hồi độc lập với quyền duyệt hồ sơ.
+        roleCode: UserRole.SUPPORT_AGENT,
+        permissionCode: Permission.SELLER_APPLICATION_REJECT,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        // Mở đúng khung Admin Center cho nhân sự hỗ trợ; quyền này không cấp quyền quản trị hệ thống.
+        roleCode: UserRole.SUPPORT_AGENT,
+        permissionCode: Permission.ADMIN_ACCESS,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        // Cho phép nhân sự hỗ trợ xem danh sách yêu cầu thay đổi hồ sơ shop để thực hiện quy trình review.
+        roleCode: UserRole.SUPPORT_AGENT,
+        permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        // Cho phép duyệt thay đổi hồ sơ shop; seller-service vẫn kiểm tra lại permission ở lớp nghiệp vụ.
+        roleCode: UserRole.SUPPORT_AGENT,
+        permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        // Cho phép từ chối thay đổi hồ sơ shop độc lập với quyền xem và quyền duyệt.
+        roleCode: UserRole.SUPPORT_AGENT,
+        permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_ACCESS,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_DASHBOARD_VIEW,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_ACCESS_CONTROL_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_ACCESS_CONTROL_UPDATE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        // Grant riêng cho ADMIN để SUPPORT_AGENT vẫn có thể vào các màn hình hỗ trợ nhưng không thấy/quản lý user.
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_USER_MANAGEMENT,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_WRITE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_ROLLBACK,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.SELLER_APPLICATION_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.SELLER_APPLICATION_APPROVE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.SELLER_APPLICATION_REJECT,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.SELLER_ACCESS,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.SELLER_DASHBOARD_VIEW,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.SELLER_PRODUCT_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.SELLER_SHOP_PROFILE_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.SELLER_SHOP_PROFILE_UPDATE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_APPROVE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_REJECT,
+        scope: PermissionScope.GLOBAL,
+    },
 ];
 
 // Manifest menu backend trả về cho FE trong accessProfile.
 // Mỗi item phải khai báo group rõ ràng để sidebar không tự gom sai ngữ nghĩa ở frontend.
 export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
-  {
-    area: "admin",
-    groupCode: "overview",
-    groupLabel: "Tổng quan",
-    groupOrder: 10,
-    code: "admin.dashboard",
-    label: "Bảng điều khiển",
-    description: "Tình trạng hệ thống và việc cần xử lý",
-    href: "/admin/dashboard",
-    icon: "LayoutDashboard",
-    sortOrder: 10,
-    requiredPermissionCode: Permission.ADMIN_DASHBOARD_VIEW,
-  },
-  {
-    area: "admin",
-    groupCode: "seller",
-    groupLabel: "Người bán",
-    groupOrder: 20,
-    code: "admin.seller_applications",
-    label: "Hồ sơ chờ duyệt",
-    description: "Hồ sơ seller cần kiểm tra",
-    href: "/admin/sellers/applications",
-    icon: "ClipboardCheck",
-    sortOrder: 10,
-    requiredPermissionCode: Permission.SELLER_APPLICATION_READ,
-  },
-  {
-    area: "admin",
-    groupCode: "seller",
-    groupLabel: "Người bán",
-    groupOrder: 20,
-    code: "admin.shop_profile_changes",
-    label: "Thay đổi hồ sơ shop",
-    description: "Duyệt thay đổi hồ sơ shop",
-    href: "/admin/sellers/profile-changes",
-    icon: "FilePenLine",
-    sortOrder: 20,
-    requiredPermissionCode: Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
-  },
-  {
-    area: "admin",
-    groupCode: "recommendation",
-    groupLabel: "Recommendation",
-    groupOrder: 30,
-    code: "admin.recommendation",
-    label: "Phân tích gợi ý",
-    description: "Hành vi người dùng và ranking",
-    href: "/admin/recommendation",
-    icon: "BarChart3",
-    sortOrder: 10,
-    requiredPermissionCode: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
-  },
-  {
-    area: "admin",
-    groupCode: "system",
-    groupLabel: "Hệ thống",
-    groupOrder: 90,
-    code: "admin.access_control",
-    label: "Phân quyền",
-    description: "Vai trò, quyền và menu",
-    href: "/admin/access-control",
-    icon: "ShieldCheck",
-    sortOrder: 10,
-    requiredPermissionCode: Permission.ADMIN_ACCESS_CONTROL_READ,
-  },
-  {
-    area: "seller",
-    groupCode: "overview",
-    groupLabel: "Tổng quan",
-    groupOrder: 10,
-    code: "seller.dashboard",
-    label: "Bảng điều khiển",
-    description: "Doanh thu và đơn cần xử lý",
-    href: "/seller",
-    icon: "LayoutDashboard",
-    sortOrder: 10,
-    requiredPermissionCode: Permission.SELLER_DASHBOARD_VIEW,
-  },
-  {
-    area: "seller",
-    groupCode: "products",
-    groupLabel: "Quản lý sản phẩm",
-    groupOrder: 20,
-    code: "seller.ai.image_optimization",
-    label: "Tối ưu hình ảnh AI",
-    description: "Nền trắng và lifestyle",
-    href: "/seller/ai/image-optimization",
-    icon: "AiAssistant",
-    sortOrder: 5,
-    requiredPermissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
-    requiredScope: PermissionScope.OWN_SHOP,
-  },
-  {
-    area: "seller",
-    groupCode: "fulfillment",
-    groupLabel: "Vận hành giao nhận",
-    groupOrder: 26,
-    code: "seller.shipping.settings",
-    label: "Thiết lập giao nhận",
-    description: "Địa chỉ và lịch giao nhận",
-    href: "/seller/shipping/settings",
-    icon: "Settings2",
-    sortOrder: 20,
-    requiredPermissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
-    requiredScope: PermissionScope.OWN_SHOP,
-  },
-  {
-    area: "seller",
-    groupCode: "fulfillment",
-    groupLabel: "Vận hành giao nhận",
-    groupOrder: 26,
-    code: "seller.shipping.providers",
-    label: "Đơn vị vận chuyển",
-    description: "Quản lý đơn vị vận chuyển",
-    href: "/seller/shipping/providers",
-    icon: "Truck",
-    sortOrder: 30,
-    requiredPermissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
-    requiredScope: PermissionScope.OWN_SHOP,
-  },
-  {
-    area: "seller",
-    groupCode: "products",
-    groupLabel: "Quản lý sản phẩm",
-    groupOrder: 20,
-    code: "seller.products",
-    label: "Tất cả sản phẩm",
-    description: "Sản phẩm, giá bán và tồn kho",
-    href: "/seller/products",
-    icon: "PackageSearch",
-    sortOrder: 10,
-    requiredPermissionCode: Permission.SELLER_PRODUCT_READ,
-  },
-  {
-    area: "seller",
-    groupCode: "products",
-    groupLabel: "Quản lý sản phẩm",
-    groupOrder: 20,
-    code: "seller.products.create",
-    label: "Thêm sản phẩm",
-    description: "Tạo sản phẩm và quản lý giá",
-    href: "/seller/products/new",
-    icon: "PackagePlus",
-    sortOrder: 20,
-    requiredPermissionCode: Permission.SELLER_PRODUCT_CREATE,
-  },
-  {
-    area: "seller",
-    groupCode: "orders",
-    groupLabel: "Quản lý đơn hàng",
-    groupOrder: 25,
-    code: "seller.orders",
-    label: "Đơn hàng",
-    description: "Theo dõi đơn hàng của shop",
-    href: "/seller/orders",
-    icon: "ClipboardList",
-    sortOrder: 10,
-    requiredPermissionCode: Permission.SELLER_ORDER_READ,
-    requiredScope: PermissionScope.OWN_SHOP,
-  },
-  {
-    area: "seller",
-    groupCode: "shop",
-    groupLabel: "Quản lý shop",
-    groupOrder: 30,
-    code: "seller.shop_profile",
-    label: "Hồ sơ shop",
-    description: "Thông tin và cài đặt shop",
-    href: "/seller/shop",
-    icon: "Store",
-    sortOrder: 10,
-    requiredPermissionCode: Permission.SELLER_SHOP_PROFILE_READ,
-  },
-  {
-    area: "seller",
-    groupCode: "orders",
-    groupLabel: "Quản lý đơn hàng",
-    groupOrder: 25,
-    code: "seller.returns",
-    label: "Xử lý hoàn hàng",
-    description: "Duyệt và xử lý hàng hoàn",
-    href: "/seller/returns",
-    icon: "RotateCcw",
-    sortOrder: 20,
-    requiredPermissionCode: Permission.RETURN_READ,
-    requiredScope: PermissionScope.OWN_SHOP,
-  },
+    {
+        area: 'admin',
+        groupCode: 'overview',
+        groupLabel: 'Tổng quan',
+        groupOrder: 10,
+        code: 'admin.dashboard',
+        label: 'Bảng điều khiển',
+        description: 'Tình trạng hệ thống và việc cần xử lý',
+        href: '/admin/dashboard',
+        icon: 'LayoutDashboard',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.ADMIN_DASHBOARD_VIEW,
+    },
+    {
+        area: 'admin',
+        groupCode: 'seller',
+        groupLabel: 'Người bán',
+        groupOrder: 20,
+        code: 'admin.seller_applications',
+        label: 'Hồ sơ chờ duyệt',
+        description: 'Hồ sơ seller cần kiểm tra',
+        href: '/admin/sellers/applications',
+        icon: 'ClipboardCheck',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.SELLER_APPLICATION_READ,
+    },
+    {
+        area: 'admin',
+        groupCode: 'seller',
+        groupLabel: 'Người bán',
+        groupOrder: 20,
+        code: 'admin.shop_profile_changes',
+        label: 'Thay đổi hồ sơ shop',
+        description: 'Duyệt thay đổi hồ sơ shop',
+        href: '/admin/sellers/profile-changes',
+        icon: 'FilePenLine',
+        sortOrder: 20,
+        requiredPermissionCode:
+            Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
+    },
+    {
+        area: 'admin',
+        groupCode: 'recommendation',
+        groupLabel: 'Recommendation',
+        groupOrder: 30,
+        code: 'admin.recommendation',
+        label: 'Phân tích gợi ý',
+        description: 'Hành vi người dùng và ranking',
+        href: '/admin/recommendation',
+        icon: 'BarChart3',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
+    },
+    {
+        area: 'admin',
+        groupCode: 'system',
+        groupLabel: 'Hệ thống',
+        groupOrder: 90,
+        code: 'admin.access_control',
+        label: 'Phân quyền',
+        description: 'Vai trò, quyền và menu',
+        href: '/admin/access-control',
+        icon: 'ShieldCheck',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.ADMIN_ACCESS_CONTROL_READ,
+    },
+    {
+        area: 'admin',
+        groupCode: 'system',
+        groupLabel: 'Hệ thống',
+        groupOrder: 90,
+        code: 'admin.users',
+        label: 'Quản lý người dùng',
+        description: 'Tài khoản, role, trạng thái và session',
+        href: '/admin/users',
+        icon: 'Users',
+        sortOrder: 20,
+        requiredPermissionCode: Permission.ADMIN_USER_MANAGEMENT,
+    },
+    {
+        area: 'seller',
+        groupCode: 'overview',
+        groupLabel: 'Tổng quan',
+        groupOrder: 10,
+        code: 'seller.dashboard',
+        label: 'Bảng điều khiển',
+        description: 'Doanh thu và đơn cần xử lý',
+        href: '/seller',
+        icon: 'LayoutDashboard',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.SELLER_DASHBOARD_VIEW,
+    },
+    {
+        area: 'seller',
+        groupCode: 'products',
+        groupLabel: 'Quản lý sản phẩm',
+        groupOrder: 20,
+        code: 'seller.ai.image_optimization',
+        label: 'Tối ưu hình ảnh AI',
+        description: 'Nền trắng và lifestyle',
+        href: '/seller/ai/image-optimization',
+        icon: 'AiAssistant',
+        sortOrder: 5,
+        requiredPermissionCode: Permission.SELLER_AI_IMAGE_OPTIMIZATION_VIEW,
+        requiredScope: PermissionScope.OWN_SHOP,
+    },
+    {
+        area: 'seller',
+        groupCode: 'fulfillment',
+        groupLabel: 'Vận hành giao nhận',
+        groupOrder: 26,
+        code: 'seller.shipping.settings',
+        label: 'Thiết lập giao nhận',
+        description: 'Địa chỉ và lịch giao nhận',
+        href: '/seller/shipping/settings',
+        icon: 'Settings2',
+        sortOrder: 20,
+        requiredPermissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
+        requiredScope: PermissionScope.OWN_SHOP,
+    },
+    {
+        area: 'seller',
+        groupCode: 'fulfillment',
+        groupLabel: 'Vận hành giao nhận',
+        groupOrder: 26,
+        code: 'seller.shipping.providers',
+        label: 'Đơn vị vận chuyển',
+        description: 'Quản lý đơn vị vận chuyển',
+        href: '/seller/shipping/providers',
+        icon: 'Truck',
+        sortOrder: 30,
+        requiredPermissionCode: Permission.SELLER_SHIPPING_SETTINGS_READ,
+        requiredScope: PermissionScope.OWN_SHOP,
+    },
+    {
+        area: 'seller',
+        groupCode: 'products',
+        groupLabel: 'Quản lý sản phẩm',
+        groupOrder: 20,
+        code: 'seller.products',
+        label: 'Tất cả sản phẩm',
+        description: 'Sản phẩm, giá bán và tồn kho',
+        href: '/seller/products',
+        icon: 'PackageSearch',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.SELLER_PRODUCT_READ,
+    },
+    {
+        area: 'seller',
+        groupCode: 'products',
+        groupLabel: 'Quản lý sản phẩm',
+        groupOrder: 20,
+        code: 'seller.products.create',
+        label: 'Thêm sản phẩm',
+        description: 'Tạo sản phẩm và quản lý giá',
+        href: '/seller/products/new',
+        icon: 'PackagePlus',
+        sortOrder: 20,
+        requiredPermissionCode: Permission.SELLER_PRODUCT_CREATE,
+    },
+    {
+        area: 'seller',
+        groupCode: 'orders',
+        groupLabel: 'Quản lý đơn hàng',
+        groupOrder: 25,
+        code: 'seller.orders',
+        label: 'Đơn hàng',
+        description: 'Theo dõi đơn hàng của shop',
+        href: '/seller/orders',
+        icon: 'ClipboardList',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.SELLER_ORDER_READ,
+        requiredScope: PermissionScope.OWN_SHOP,
+    },
+    {
+        area: 'seller',
+        groupCode: 'shop',
+        groupLabel: 'Quản lý shop',
+        groupOrder: 30,
+        code: 'seller.shop_profile',
+        label: 'Hồ sơ shop',
+        description: 'Thông tin và cài đặt shop',
+        href: '/seller/shop',
+        icon: 'Store',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.SELLER_SHOP_PROFILE_READ,
+    },
+    {
+        area: 'seller',
+        groupCode: 'orders',
+        groupLabel: 'Quản lý đơn hàng',
+        groupOrder: 25,
+        code: 'seller.returns',
+        label: 'Xử lý hoàn hàng',
+        description: 'Duyệt và xử lý hàng hoàn',
+        href: '/seller/returns',
+        icon: 'RotateCcw',
+        sortOrder: 20,
+        requiredPermissionCode: Permission.RETURN_READ,
+        requiredScope: PermissionScope.OWN_SHOP,
+    },
 ];
