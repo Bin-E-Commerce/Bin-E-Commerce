@@ -431,6 +431,7 @@ export class ProductServiceImportRepository implements ProductImportRepository {
                 graph.product.externalId,
                 graph.product.sourceUrl,
                 JSON.stringify({
+                    ...(graph.product.metadata ?? {}),
                     sourceCategoryChain: graph.categoryChain,
                     rawAttributeCount: graph.attributes.length,
                 }),

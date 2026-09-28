@@ -147,7 +147,13 @@ export { ProductCrawlerService } from './services/product-crawler.service';
 export { TikiSourceAdapter } from './adapters/tiki-source.adapter';
 export { TikiProductClient } from './clients/tiki-product.client';
 export { ProductMapper } from './mappers/product.mapper';
+export { ShopProductBatchCrawlerService } from './services/shop-product-batch-crawler.service';
+export { ShopProductBatchPlannerService } from './services/shop-product-batch-planner.service';
 export { PostgresProductImportRepository } from './repositories/postgres-product-import.repository';
 export type { ProductCrawlOptions } from './types/product-crawl-options.type';
+export type {
+    ShopProductBatchOptions,
+    ShopProductBatchPlan,
+} from './types/shop-product-batch.type';
 export type { ImportProductGraph } from './types/import-product.type';
 export type { SourceProductDetail } from './types/source-product.type';

@@ -24,11 +24,17 @@ import type {
 import { toNullableNumber } from '../utils/number';
 import { slugify, sourceSlug } from '../utils/slug';
 import { buildTikiProductUrl } from '../utils/tiki-url';
+import {
+    buildCanonicalGroupKey,
+    buildTikiListingKey,
+    getListingKey,
+} from '../utils/listing-key';
 
 export class TikiSourceAdapter implements ProductSourceAdapter {
     readonly platform = 'tiki' as const;
     private readonly productSourceUrls = new Map<string, string>();
     private readonly productListItems = new Map<string, TikiProductListItem>();
+    private readonly listingItems = new Map<string, TikiProductListItem>();
     private sellerContext: { id: string; name: string; slug?: string } | null =
         null;
     private readonly shopProfilePromises = new Map<
@@ -84,8 +90,14 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
         });
 
         const items = (response.data ?? []).map((item) => {
-            const mappedItem = this.mapListItem(item);
+            const mappedItem = {
+                ...this.mapListItem(item),
+                categoryExternalId: request.categoryExternalId,
+            };
             this.productListItems.set(mappedItem.externalId, item);
+            if (mappedItem.listingKey) {
+                this.listingItems.set(mappedItem.listingKey, item);
+            }
             this.productSourceUrls.set(
                 mappedItem.externalId,
                 mappedItem.sourceUrl,
@@ -115,6 +127,73 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
         }
         const shopProfile = await this.fetchShopProfile(detail.current_seller);
         return this.mapDetail(detail, [], shopProfile);
+    }
+
+    // Lấy detail theo đúng listing context để cùng một product Tiki ở nhiều shop không bị dùng nhầm seller.
+    // Adapter ưu tiên product id trong listing, xác minh seller, rồi mới thử seller_product_id; nếu nguồn vẫn
+    // không trả đúng seller thì dùng listing fallback tối thiểu để giữ dữ liệu shop hoặc ném lỗi rõ ràng.
+    async getProductDetailForListing(
+        listing: SourceProductListItem,
+    ): Promise<SourceProductDetail> {
+        const rawListing = this.listingItems.get(getListingKey(listing));
+        const sellerId = listing.sellerExternalId;
+        const sourceUrl = listing.sourceUrl;
+        const catalogExternalId =
+            listing.catalogExternalId ?? listing.externalId;
+
+        let detail: TikiProductDetailResponse | null = null;
+        try {
+            detail = await this.client.fetchProductDetail(
+                Number(catalogExternalId),
+                sourceUrl,
+            );
+        } catch {
+            detail = null;
+        }
+
+        if (
+            detail &&
+            (!sellerId || String(detail.current_seller?.id) === sellerId)
+        ) {
+            const shopProfile = await this.fetchShopProfile(
+                detail.current_seller,
+            );
+            return this.mapDetail(detail, [], shopProfile, listing);
+        }
+
+        if (
+            listing.sellerProductExternalId &&
+            listing.sellerProductExternalId !== catalogExternalId
+        ) {
+            try {
+                detail = await this.client.fetchProductDetail(
+                    Number(listing.sellerProductExternalId),
+                );
+                if (
+                    !sellerId ||
+                    String(detail.current_seller?.id) === sellerId
+                ) {
+                    const shopProfile = await this.fetchShopProfile(
+                        detail.current_seller,
+                    );
+                    return this.mapDetail(detail, [], shopProfile, listing);
+                }
+            } catch {
+                // Nguồn có thể không cho phép truy cập seller_product_id; tiếp tục dùng fallback listing nếu đủ dữ liệu.
+            }
+        }
+
+        if (rawListing && sellerId && listing.sellerName) {
+            const fallbackDetail = this.mapListItemToDetail(rawListing, {
+                id: sellerId,
+                name: listing.sellerName,
+            });
+            return this.mapDetail(fallbackDetail, [], null, listing);
+        }
+
+        throw new Error(
+            `Tiki detail seller mismatch for listing ${getListingKey(listing)}`,
+        );
     }
 
     // Lấy profile shop một lần rồi tái sử dụng cho các product cùng seller để giảm request và giữ metric đồng nhất.
@@ -204,8 +283,45 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
 
     // Chuẩn hóa item danh sách để crawler biết product id và URL trước khi lấy detail.
     private mapListItem(item: TikiProductListItem): SourceProductListItem {
+        const catalogExternalId = String(item.id);
+        const sellerExternalId = item.seller_id
+            ? String(item.seller_id)
+            : undefined;
+        const sellerProductExternalId = item.seller_product_id
+            ? String(item.seller_product_id)
+            : undefined;
+        const listingKey = buildTikiListingKey(
+            catalogExternalId,
+            sellerExternalId,
+            sellerProductExternalId,
+        );
+        const amplitude = item.visible_impression_info?.amplitude;
+        const brandName = item.brand?.name ?? amplitude?.brand_name;
+        const categoryName =
+            amplitude?.category_l4_name ??
+            amplitude?.primary_category_name ??
+            amplitude?.category_l3_name;
+        const masterProductSku = amplitude?.master_product_sku?.trim();
+
         return {
-            externalId: String(item.id),
+            externalId: catalogExternalId,
+            listingKey,
+            catalogExternalId,
+            sellerExternalId,
+            sellerProductExternalId,
+            sellerName: sellerExternalId
+                ? `Tiki seller ${sellerExternalId}`
+                : undefined,
+            brandName,
+            categoryName,
+            canonicalGroupKey: masterProductSku
+                ? `tiki-master-product:${masterProductSku}`
+                : buildCanonicalGroupKey({
+                      catalogExternalId,
+                      brandName,
+                      name: item.name ?? `Tiki product ${item.id}`,
+                      categoryName,
+                  }),
             name: item.name ?? `Tiki product ${item.id}`,
             sourceUrl: buildTikiProductUrl(item.url_path),
         };
@@ -276,17 +392,48 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
         detail: TikiProductDetailResponse,
         reviews: SourceProductReview[],
         shopProfile: TikiShopProfile | null = null,
+        listing?: SourceProductListItem,
     ): SourceProductDetail {
         const name = detail.name ?? `Tiki product ${detail.id}`;
         const options = this.collectOptions(detail);
-        const variants = this.collectVariants(detail, options);
+        const listingKey = listing ? getListingKey(listing) : String(detail.id);
+        const variants = this.collectVariants(detail, options, listingKey);
+        const sellerExternalId =
+            listing?.sellerExternalId ??
+            (detail.current_seller?.id
+                ? String(detail.current_seller.id)
+                : undefined);
+        // Tên từ listing chỉ là fallback "Tiki seller <id>"; ưu tiên tên thật từ detail/profile để không ghi tên giả vào shop.
+        const sellerName =
+            shopProfile?.name?.trim() ??
+            detail.current_seller?.name?.trim() ??
+            listing?.sellerName;
 
         return {
             platform: this.platform,
-            externalId: String(detail.id),
+            externalId: listingKey,
+            metadata: listing
+                ? {
+                      tikiCatalogProductId:
+                          listing.catalogExternalId ?? String(detail.id),
+                      tikiSellerId: sellerExternalId ?? null,
+                      tikiSellerProductId:
+                          listing.sellerProductExternalId ?? null,
+                      canonicalGroupKey:
+                          listing.canonicalGroupKey ??
+                          buildCanonicalGroupKey({
+                              catalogExternalId:
+                                  listing.catalogExternalId ??
+                                  String(detail.id),
+                              brandName: detail.brand?.name,
+                              name,
+                              categoryName: listing.categoryName,
+                          }),
+                  }
+                : undefined,
             sku: detail.sku ?? null,
             name,
-            slug: sourceSlug(name, String(detail.id)),
+            slug: sourceSlug(name, listingKey),
             sourceUrl: buildTikiProductUrl(detail.url_path),
             description: detail.description ?? null,
             shortDescription: detail.short_description ?? null,
@@ -310,21 +457,20 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
                       description: null,
                   }
                 : null,
-            shop: detail.current_seller?.name
+            shop: sellerName
                 ? {
-                      externalId: detail.current_seller.id
-                          ? String(detail.current_seller.id)
-                          : null,
-                      name: detail.current_seller.name,
-                      slug: sourceSlug(
-                          detail.current_seller.name,
-                          String(detail.current_seller.id ?? ''),
-                      ),
-                      avatarUrl: detail.current_seller.logo ?? null,
+                      externalId: sellerExternalId ?? null,
+                      name: sellerName,
+                      slug: sourceSlug(sellerName, sellerExternalId ?? ''),
+                      avatarUrl:
+                          shopProfile?.avatarUrl ??
+                          this.resolveSellerAssetUrl(
+                              detail.current_seller?.logo,
+                          ),
                       description: null,
                       sourceUrl:
                           shopProfile?.sourceUrl ??
-                          detail.current_seller.link ??
+                          detail.current_seller?.link ??
                           null,
                       ratingAverage: shopProfile?.ratingAverage ?? null,
                       reviewCount: shopProfile?.reviewCount ?? null,
@@ -338,6 +484,21 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
             attributes: this.collectAttributes(detail),
             reviews,
         };
+    }
+
+    // Tiki có thể trả logo seller dưới dạng path tương đối; adapter cần trả URL tuyệt đối cho mapper/importer.
+    private resolveSellerAssetUrl(value: string | undefined): string | null {
+        if (!value?.trim()) return null;
+        const normalized = value.trim();
+        if (/^https?:\/\//i.test(normalized)) return normalized;
+        if (normalized.startsWith('//')) return `https:${normalized}`;
+        if (normalized.startsWith('/ts/seller/')) {
+            return `https://vcdn.tikicdn.com${normalized}`;
+        }
+        if (normalized.startsWith('ts/seller/')) {
+            return `https://vcdn.tikicdn.com/${normalized}`;
+        }
+        return `https://vcdn.tikicdn.com/ts/seller/${normalized.replace(/^\/+/, '')}`;
     }
 
     // Lấy options từ configurable_options; đây là nơi Tiki mô tả màu sắc, dung lượng, size.
@@ -358,13 +519,14 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
     private collectVariants(
         detail: TikiProductDetailResponse,
         options: Array<{ name: string; values: string[] }>,
+        listingKey = String(detail.id),
     ): SourceProductVariant[] {
         const configurableProducts = detail.configurable_products ?? [];
         if (configurableProducts.length === 0) {
             return [
                 {
-                    externalId: String(detail.id),
-                    sku: detail.sku ?? `tiki-${detail.id}`,
+                    externalId: `${listingKey}:variant:${detail.id}`,
+                    sku: `${listingKey}:sku:${detail.sku ?? detail.id}`,
                     name: detail.name ?? `Tiki product ${detail.id}`,
                     price: toNullableNumber(detail.price) ?? 0,
                     originalPrice: toNullableNumber(detail.original_price),
@@ -377,8 +539,8 @@ export class TikiSourceAdapter implements ProductSourceAdapter {
         }
 
         return configurableProducts.map((variant) => ({
-            externalId: variant.id ? String(variant.id) : (variant.sku ?? null),
-            sku: variant.sku ?? `tiki-${detail.id}-${variant.id ?? 'variant'}`,
+            externalId: `${listingKey}:variant:${variant.id ?? variant.sku ?? 'default'}`,
+            sku: `${listingKey}:sku:${variant.sku ?? variant.id ?? 'variant'}`,
             name: variant.name ?? detail.name ?? `Tiki variant ${variant.id}`,
             price:
                 toNullableNumber(variant.price) ??

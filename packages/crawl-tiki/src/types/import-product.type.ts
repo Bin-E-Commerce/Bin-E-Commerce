@@ -49,6 +49,7 @@ export interface ImportProduct {
     ratingAverage: number | null;
     reviewCount: number;
     viewCount: number;
+    metadata?: Record<string, unknown>;
 }
 
 export interface ImportProductImage {

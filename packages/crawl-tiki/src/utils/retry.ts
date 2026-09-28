@@ -5,6 +5,7 @@ export interface RetryOptions {
     baseDelayMs: number;
     maxDelayMs?: number;
     resolveDelayMs?: (error: unknown, attempt: number) => number | undefined;
+    shouldRetry?: (error: unknown, attempt: number) => boolean;
 }
 
 // Chạy lại tác vụ lỗi với exponential backoff và jitter để nhiều request không đồng loạt retry vào cùng thời điểm.
@@ -20,6 +21,9 @@ export async function retry<T>(
         } catch (error) {
             lastError = error;
             if (attempt >= options.retries) break;
+            if (options.shouldRetry && !options.shouldRetry(error, attempt)) {
+                break;
+            }
 
             // Cho HTTP client ưu tiên Retry-After hoặc cooldown riêng khi nguồn trả HTML chống tải.
             const strategyDelay = options.resolveDelayMs?.(error, attempt);

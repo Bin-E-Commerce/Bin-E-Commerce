@@ -12,6 +12,15 @@ export interface SourceCategory {
 
 export interface SourceProductListItem {
     externalId: string;
+    listingKey?: string;
+    catalogExternalId?: string;
+    sellerExternalId?: string;
+    sellerProductExternalId?: string;
+    sellerName?: string;
+    brandName?: string;
+    categoryExternalId?: string;
+    categoryName?: string;
+    canonicalGroupKey?: string;
     name: string;
     sourceUrl: string;
 }
@@ -57,6 +66,7 @@ export interface SourceProductReview {
 export interface SourceProductDetail {
     platform: SourcePlatform;
     externalId: string;
+    metadata?: Record<string, unknown>;
     sku?: string | null;
     name: string;
     slug?: string;

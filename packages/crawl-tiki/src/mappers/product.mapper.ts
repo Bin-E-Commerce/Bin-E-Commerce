@@ -83,6 +83,7 @@ export class ProductMapper {
                 ratingAverage: source.ratingAverage ?? null,
                 reviewCount: source.reviewCount ?? source.reviews.length,
                 viewCount: source.viewCount ?? 0,
+                metadata: source.metadata,
             },
             images: this.mapImages(source),
             options: this.mapOptions(source),

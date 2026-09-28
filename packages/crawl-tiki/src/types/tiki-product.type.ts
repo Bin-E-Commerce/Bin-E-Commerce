@@ -51,9 +51,12 @@ export interface TikiProductListItem {
     visible_impression_info?: {
         amplitude?: {
             primary_category_name?: string;
+            category_l4_name?: string;
             category_l1_name?: string;
             category_l2_name?: string;
             category_l3_name?: string;
+            brand_name?: string;
+            master_product_sku?: string;
         };
     };
 }
