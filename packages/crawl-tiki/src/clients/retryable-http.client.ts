@@ -6,6 +6,7 @@ export interface RetryableHttpClientOptions {
     userAgent: string;
     maxDelayMs?: number;
     nonJsonDelayMs?: number;
+    timeoutMs?: number;
     referer?: string;
     acceptLanguage?: string;
 }
@@ -32,7 +33,7 @@ export class RetryableHttpClient {
     ): Promise<T> {
         return retry(
             async () => {
-                const response = await fetch(url, {
+                const response = await this.fetchWithTimeout(url, {
                     headers: {
                         accept: 'application/json, text/plain, */*',
                         'accept-language':
@@ -84,6 +85,11 @@ export class RetryableHttpClient {
                 baseDelayMs: this.options.baseDelayMs,
                 maxDelayMs: this.options.maxDelayMs,
                 resolveDelayMs: (error) => this.resolveRetryDelay(error),
+                shouldRetry: (error) =>
+                    !(
+                        error instanceof RetryableHttpError &&
+                        error.responseKind === 'non_json'
+                    ),
             },
         );
     }
@@ -96,7 +102,7 @@ export class RetryableHttpClient {
     ): Promise<string> {
         return retry(
             async () => {
-                const response = await fetch(url, {
+                const response = await this.fetchWithTimeout(url, {
                     headers: {
                         accept: 'text/html,application/xhtml+xml',
                         'accept-language':
@@ -139,6 +145,11 @@ export class RetryableHttpClient {
                 baseDelayMs: this.options.baseDelayMs,
                 maxDelayMs: this.options.maxDelayMs,
                 resolveDelayMs: (error) => this.resolveRetryDelay(error),
+                shouldRetry: (error) =>
+                    !(
+                        error instanceof RetryableHttpError &&
+                        error.responseKind === 'non_json'
+                    ),
             },
         );
     }
@@ -153,6 +164,33 @@ export class RetryableHttpClient {
         return error.status === 429 || error.status === 403
             ? (this.options.nonJsonDelayMs ?? 30_000)
             : undefined;
+    }
+
+    // Chặn một request Tiki treo vô hạn; timeout được retry như lỗi HTTP tạm thời để
+    // một listing lỗi rơi vào failed.jsonl thay vì giữ cả batch ở trạng thái crawling.
+    private async fetchWithTimeout(
+        url: URL,
+        init: RequestInit,
+    ): Promise<Response> {
+        const controller = new AbortController();
+        const timeoutMs = this.options.timeoutMs ?? 30_000;
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            return await fetch(url, { ...init, signal: controller.signal });
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                throw new RetryableHttpError(
+                    `Request timeout sau ${timeoutMs}ms: ${url.toString()}`,
+                    408,
+                    null,
+                    'http_error',
+                );
+            }
+            throw error;
+        } finally {
+            clearTimeout(timeout);
+        }
     }
 
     // Chuyển Retry-After dạng số giây hoặc HTTP date thành milliseconds để tôn trọng giới hạn của nguồn.

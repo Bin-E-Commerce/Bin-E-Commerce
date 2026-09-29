@@ -115,6 +115,58 @@ npm run crawl -w @bin-ecommerce/crawl-tiki -- --category 1789 --pages 1 --limit 
 
 Mở file output để kiểm tra `categoryChain`, `product`, `variants`, `images`, `attributes` trước khi bật `--import`.
 
+## Crawl batch theo shop và ghi JSONL
+
+Batch crawler tự discover seller từ nhiều category, chọn mỗi shop 20–30 listing,
+giữ coverage 5–10 shop cho một canonical product, sau đó crawl detail tuần tự.
+Batch chỉ ghi staging, không import database trực tiếp:
+
+```bash
+npm run crawl:batch -w @bin-ecommerce/crawl-tiki -- --target 10000 --delay 2000 --delay-jitter 1000 --output-dir data/tiki-batch/10k
+```
+
+Pilot giới hạn 4 shop, mỗi shop 20–25 listing (khoảng 100 listing):
+
+```bash
+npm run crawl:batch -w @bin-ecommerce/crawl-tiki -- --target 100 --min-products-per-shop 20 --max-products-per-shop 25 --min-shops-per-group 1 --max-shops-per-group 10 --max-shops 4 --discovery-pages 1 --discovery-limit 100 --delay 3000 --delay-jitter 1000 --output-dir data/tiki-batch/pilot-4shops
+```
+
+Khi dùng `--max-shops`, cả bước crawl lại listing và planner đều chỉ dùng đúng
+tập shop đã chọn; nhờ đó pilot không bị dồn toàn bộ quota vào một shop đầu tiên.
+
+Nếu Tiki trả HTML challenge, batch sẽ dừng và lưu candidate/cursor discovery vào
+`checkpoint.json`. Sau khi cooldown, chạy lại cùng lệnh với `--resume` để tiếp tục
+từ category/shop đã lưu, không gửi lại toàn bộ discovery.
+
+Có thể giới hạn category hoặc bổ sung keyword để discovery:
+
+```bash
+npm run crawl:batch -w @bin-ecommerce/crawl-tiki -- --target 1000 --category-ids 1789,1882 --keywords "điện thoại,giày nam" --output-dir data/tiki-batch/pilot
+```
+
+Các file quan trọng trong output:
+
+```text
+shops.jsonl       # shop đã được chọn và số listing tương ứng
+listings.jsonl    # listing plan sau khi dedupe/quota
+products.jsonl    # product graph đã validate, dùng để import
+failed.jsonl      # listing lỗi hoặc bị skip
+manifest.json     # thống kê coverage, quota và shortfall
+checkpoint.json   # trạng thái resume theo discovery và listing
+```
+
+Kiểm tra staging trước khi import:
+
+```bash
+npm run import:product-service -w @bin-ecommerce/crawl-tiki -- --input data/tiki-batch/10k/products.jsonl --dry-run
+```
+
+Import JSONL theo từng product, có thể resume sau khi process dừng:
+
+```bash
+npm run import:product-service -w @bin-ecommerce/crawl-tiki -- --input data/tiki-batch/10k/products.jsonl --resume
+```
+
 ## Ví dụ raw Tiki rút gọn
 
 ```json

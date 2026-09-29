@@ -71,10 +71,11 @@ export class TikiShopClient {
             externalId: fallback.externalId,
             name: this.readString(payload.name) ?? fallback.name,
             slug: this.extractSlug(resolvedUrl, fallback.slug),
-            avatarUrl:
+            avatarUrl: this.resolveSellerAssetUrl(
                 this.readString(payload.logo) ??
-                this.readString(payload.icon) ??
-                fallback.avatarUrl,
+                    this.readString(payload.icon) ??
+                    fallback.avatarUrl,
+            ),
             description:
                 this.readString(payload.description) ??
                 this.readString(payload.meta_description),
@@ -182,6 +183,20 @@ export class TikiShopClient {
     // Đọc string an toàn từ payload không có schema TypeScript đáng tin cậy.
     private readString(value: unknown): string | null {
         return typeof value === 'string' && value.trim() ? value.trim() : null;
+    }
+
+    // Tiki đôi khi trả logo seller là path tương đối; chuẩn hóa thành URL đầy đủ để frontend không rơi về avatar mặc định.
+    private resolveSellerAssetUrl(value: string | null): string | null {
+        if (!value) return null;
+        if (/^https?:\/\//i.test(value)) return value;
+        if (value.startsWith('//')) return `https:${value}`;
+        if (value.startsWith('/ts/seller/')) {
+            return `https://vcdn.tikicdn.com${value}`;
+        }
+        if (value.startsWith('ts/seller/')) {
+            return `https://vcdn.tikicdn.com/${value}`;
+        }
+        return `https://vcdn.tikicdn.com/ts/seller/${value.replace(/^\/+/, '')}`;
     }
 
     // Giữ slug ổn định từ URL profile, fallback về slug đã chuẩn hóa ở product detail nếu URL thiếu.

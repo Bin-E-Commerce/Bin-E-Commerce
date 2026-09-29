@@ -25,6 +25,11 @@ export interface TikiProductPageParams {
 }
 
 export class TikiProductClient {
+    private readonly categoryUrlKeyPromises = new Map<
+        number,
+        Promise<string | undefined>
+    >();
+
     constructor(
         private readonly http = new RetryableHttpClient({
             retries: getCrawlerNumber('TIKI_CRAWLER_RETRIES', 4),
@@ -63,6 +68,24 @@ export class TikiProductClient {
 
     // Lấy url_key của category để listing endpoint không bị Tiki từ chối request category.
     async fetchCategoryUrlKey(categoryId: number): Promise<string | undefined> {
+        const cached = this.categoryUrlKeyPromises.get(categoryId);
+        if (cached) return cached;
+
+        const request = this.loadCategoryUrlKey(categoryId);
+        this.categoryUrlKeyPromises.set(categoryId, request);
+        try {
+            return await request;
+        } catch (error) {
+            this.categoryUrlKeyPromises.delete(categoryId);
+            throw error;
+        }
+    }
+
+    // Cache URL key theo category để 5 trang cùng category không tạo thêm 5 request metadata,
+    // giảm tải cho Tiki nhưng vẫn xóa cache khi request lỗi để lần resume có thể thử lại.
+    private async loadCategoryUrlKey(
+        categoryId: number,
+    ): Promise<string | undefined> {
         const url = new URL(`${TIKI_API_BASE_URL}/categories/${categoryId}`);
         const category = await this.http.getJson<TikiCategoryResponse>(url);
         return category.url_key?.trim() || undefined;

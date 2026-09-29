@@ -7,7 +7,9 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "type-check": "tsc -p tsconfig.json --noEmit",
+        "test": "npm run build && node --test test/shop-product-batch-planner.test.cjs",
         "crawl": "npm run build && node dist/index.js",
+        "crawl:batch": "npm run build && node dist/crawl-shop-products.js",
         "crawl:sample": "npm run crawl -- --keyword laptop --pages 1 --limit 10 --details",
         "crawl:brands": "npm run build && node dist/crawl-brands.js",
         "crawl:brands:tiki": "npm run crawl:brands -- --source storefront --skip-country --sample-products 0 --discovery-delay 500 --output data/tiki-brands.json --report data/tiki-brands.report.json --checkpoint data/tiki-brands.checkpoint.json",
