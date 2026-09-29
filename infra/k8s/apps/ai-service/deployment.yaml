@@ -37,13 +37,12 @@ spec:
               value: ai-service
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: kafka.bin-ecommerce-data.svc.cluster.local:9092
-            # Image hiện tại chưa đóng gói artifacts/ranking.txt nên dùng fallback an toàn.
-            # Khi có model đã train, thay giá trị này bằng /app/artifacts/ranking.txt
-            # và build image có kèm artifact tương ứng.
+            # Model được đóng gói bất biến trong image AI Service; pod mới không
+            # phụ thuộc vào file được chép thủ công trên máy chủ hoặc pod cũ.
             - name: RANKING_MODEL_PATH
-              value: ""
+              value: /app/artifacts/synthetic/ranking-lgbm-synthetic-v1-full.txt
             - name: RANKING_MODEL_VERSION
-              value: ranking-fallback-v1
+              value: ranking-lgbm-synthetic-v1-full
             # Ứng dụng FastAPI dùng tên chuẩn DATABASE_URL/REDIS_URL.
             # Secret runtime đang lưu hai giá trị này với tiền tố AI_ để phân biệt cấu hình.
             - name: DATABASE_URL
