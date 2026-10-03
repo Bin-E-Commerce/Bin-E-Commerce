@@ -60,6 +60,7 @@ export enum Permission {
     SELLER_PRODUCT_RESTORE = 'seller.product.restore',
     // 4. Seller AI: chỉ cấp cho thao tác sinh nội dung trong phạm vi shop của seller.
     SELLER_AI_PRODUCT_CONTENT_GENERATE = 'seller.ai.product_content.generate',
+    SELLER_AI_COPILOT_CHAT = 'seller.ai.copilot.chat',
     SELLER_AI_IMAGE_OPTIMIZATION_VIEW = 'seller.ai.image_optimization.view',
     SELLER_AI_IMAGE_OPTIMIZATION_GENERATE = 'seller.ai.image_optimization.generate',
     SELLER_AI_IMAGE_OPTIMIZATION_APPLY = 'seller.ai.image_optimization.apply',

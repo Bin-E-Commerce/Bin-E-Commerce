@@ -7,7 +7,7 @@ import { PermissionScope } from '../contracts/permission-scope.enum';
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.09.24.1';
+export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.09.29.1';
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -321,6 +321,14 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
             'Cho phép người bán xem danh sách sản phẩm thuộc shop do mình sở hữu.',
         resource: 'seller.product',
         action: 'read',
+    },
+    {
+        code: Permission.SELLER_AI_COPILOT_CHAT,
+        name: 'Sử dụng BinGPT',
+        description:
+            'Cho phép người bán hỏi AI về doanh thu, sản phẩm, đơn hàng, tồn kho và chính sách của shop mình.',
+        resource: 'seller.ai.copilot',
+        action: 'chat',
     },
     {
         code: Permission.SELLER_PRODUCT_CREATE,
@@ -689,6 +697,11 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     },
     {
         roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_AI_COPILOT_CHAT,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
         permissionCode: Permission.SELLER_PRODUCT_CREATE,
         scope: PermissionScope.OWN_SHOP,
     },
@@ -902,9 +915,9 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
 export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     {
         area: 'admin',
-        groupCode: 'overview',
-        groupLabel: 'Tổng quan',
-        groupOrder: 10,
+        groupCode: 'ai',
+        groupLabel: 'AI & BinGPT',
+        groupOrder: 15,
         code: 'admin.dashboard',
         label: 'Bảng điều khiển',
         description: 'Tình trạng hệ thống và việc cần xử lý',
@@ -991,6 +1004,20 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
         icon: 'LayoutDashboard',
         sortOrder: 10,
         requiredPermissionCode: Permission.SELLER_DASHBOARD_VIEW,
+    },
+    {
+        area: 'seller',
+        groupCode: 'ai',
+        groupLabel: 'AI & BinGPT',
+        groupOrder: 15,
+        code: 'seller.ai.copilot',
+        label: 'BinGPT',
+        description: 'Phân tích shop với AI',
+        href: '/seller/ai/bingpt',
+        icon: 'AiAssistant',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.SELLER_AI_COPILOT_CHAT,
+        requiredScope: PermissionScope.OWN_SHOP,
     },
     {
         area: 'seller',
