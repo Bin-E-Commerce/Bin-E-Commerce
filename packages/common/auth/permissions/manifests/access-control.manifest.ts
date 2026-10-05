@@ -7,7 +7,7 @@ import { PermissionScope } from '../contracts/permission-scope.enum';
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.09.29.1';
+export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.10.04.1';
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -118,6 +118,42 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
         name: 'Rollback policy Recommendation',
         description: 'Khôi phục một phiên bản policy đã lưu trong lịch sử.',
         resource: 'admin.recommendation.policy',
+        action: 'rollback',
+    },
+    {
+        code: Permission.ADMIN_SELLER_KNOWLEDGE_READ,
+        name: 'Xem kho tri thức BinGPT',
+        description:
+            'Xem tài liệu, domain và trạng thái lập chỉ mục của BinGPT.',
+        resource: 'admin.seller_knowledge',
+        action: 'read',
+    },
+    {
+        code: Permission.ADMIN_SELLER_KNOWLEDGE_WRITE,
+        name: 'Soạn tài liệu BinGPT',
+        description: 'Tạo và cập nhật bản nháp tài liệu trong kho tri thức.',
+        resource: 'admin.seller_knowledge',
+        action: 'write',
+    },
+    {
+        code: Permission.ADMIN_SELLER_KNOWLEDGE_PUBLISH,
+        name: 'Xuất bản tài liệu BinGPT',
+        description: 'Lập chỉ mục và kích hoạt revision tài liệu cho chatbot.',
+        resource: 'admin.seller_knowledge',
+        action: 'publish',
+    },
+    {
+        code: Permission.ADMIN_SELLER_KNOWLEDGE_DOMAIN_MANAGE,
+        name: 'Quản lý domain BinGPT',
+        description: 'Tạo, sửa hoặc lưu trữ domain tri thức động.',
+        resource: 'admin.seller_knowledge.domain',
+        action: 'manage',
+    },
+    {
+        code: Permission.ADMIN_SELLER_KNOWLEDGE_ROLLBACK,
+        name: 'Khôi phục tài liệu BinGPT',
+        description: 'Khôi phục một revision đã xuất bản trước đó.',
+        resource: 'admin.seller_knowledge',
         action: 'rollback',
     },
     {
@@ -855,6 +891,31 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     },
     {
         roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_SELLER_KNOWLEDGE_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_SELLER_KNOWLEDGE_WRITE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_SELLER_KNOWLEDGE_PUBLISH,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_SELLER_KNOWLEDGE_DOMAIN_MANAGE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_SELLER_KNOWLEDGE_ROLLBACK,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
         permissionCode: Permission.SELLER_APPLICATION_READ,
         scope: PermissionScope.GLOBAL,
     },
@@ -915,9 +976,9 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
 export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
     {
         area: 'admin',
-        groupCode: 'ai',
-        groupLabel: 'AI & BinGPT',
-        groupOrder: 15,
+        groupCode: 'overview',
+        groupLabel: 'Tổng quan',
+        groupOrder: 10,
         code: 'admin.dashboard',
         label: 'Bảng điều khiển',
         description: 'Tình trạng hệ thống và việc cần xử lý',
@@ -965,6 +1026,19 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
         icon: 'BarChart3',
         sortOrder: 10,
         requiredPermissionCode: Permission.ADMIN_RECOMMENDATION_ANALYTICS_READ,
+    },
+    {
+        area: 'admin',
+        groupCode: 'ai',
+        groupLabel: 'AI & BinGPT',
+        groupOrder: 15,
+        code: 'admin.seller_knowledge',
+        label: 'Tài liệu AI',
+        description: 'Quản lý tài liệu và domain của BinGPT',
+        href: '/admin/seller-knowledge',
+        icon: 'LibraryBig',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.ADMIN_SELLER_KNOWLEDGE_READ,
     },
     {
         area: 'admin',

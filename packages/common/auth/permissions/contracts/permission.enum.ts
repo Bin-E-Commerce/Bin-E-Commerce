@@ -19,6 +19,12 @@ export enum Permission {
     ADMIN_RECOMMENDATION_POLICY_WRITE = 'admin.recommendation.policy.write',
     // Quyền rollback policy về một version đã audit.
     ADMIN_RECOMMENDATION_POLICY_ROLLBACK = 'admin.recommendation.policy.rollback',
+    // Quyền xem kho tri thức BinGPT; quyền sửa, phát hành domain/tài liệu và rollback được tách riêng phía dưới.
+    ADMIN_SELLER_KNOWLEDGE_READ = 'admin.seller_knowledge.read',
+    ADMIN_SELLER_KNOWLEDGE_WRITE = 'admin.seller_knowledge.write',
+    ADMIN_SELLER_KNOWLEDGE_PUBLISH = 'admin.seller_knowledge.publish',
+    ADMIN_SELLER_KNOWLEDGE_DOMAIN_MANAGE = 'admin.seller_knowledge.domain.manage',
+    ADMIN_SELLER_KNOWLEDGE_ROLLBACK = 'admin.seller_knowledge.rollback',
 
     // Cart dùng chung cho Customer và Seller
     CART_READ = 'cart.read',
