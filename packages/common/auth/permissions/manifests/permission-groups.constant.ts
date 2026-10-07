@@ -5,6 +5,7 @@ import { Permission } from '../contracts/permission.enum';
 export const ADMIN_CENTER_PERMISSIONS = [
     Permission.ADMIN_ACCESS,
     Permission.ADMIN_DASHBOARD_VIEW,
+    Permission.ADMIN_SELLER_KNOWLEDGE_READ,
     Permission.ADMIN_ACCESS_CONTROL_READ,
     Permission.SELLER_APPLICATION_READ,
 ] as const;

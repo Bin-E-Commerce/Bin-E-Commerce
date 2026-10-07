@@ -19,6 +19,12 @@ export enum Permission {
     ADMIN_RECOMMENDATION_POLICY_WRITE = 'admin.recommendation.policy.write',
     // Quyền rollback policy về một version đã audit.
     ADMIN_RECOMMENDATION_POLICY_ROLLBACK = 'admin.recommendation.policy.rollback',
+    // Quyền xem kho tri thức BinGPT; quyền sửa, phát hành domain/tài liệu và rollback được tách riêng phía dưới.
+    ADMIN_SELLER_KNOWLEDGE_READ = 'admin.seller_knowledge.read',
+    ADMIN_SELLER_KNOWLEDGE_WRITE = 'admin.seller_knowledge.write',
+    ADMIN_SELLER_KNOWLEDGE_PUBLISH = 'admin.seller_knowledge.publish',
+    ADMIN_SELLER_KNOWLEDGE_DOMAIN_MANAGE = 'admin.seller_knowledge.domain.manage',
+    ADMIN_SELLER_KNOWLEDGE_ROLLBACK = 'admin.seller_knowledge.rollback',
 
     // Cart dùng chung cho Customer và Seller
     CART_READ = 'cart.read',
@@ -60,6 +66,7 @@ export enum Permission {
     SELLER_PRODUCT_RESTORE = 'seller.product.restore',
     // 4. Seller AI: chỉ cấp cho thao tác sinh nội dung trong phạm vi shop của seller.
     SELLER_AI_PRODUCT_CONTENT_GENERATE = 'seller.ai.product_content.generate',
+    SELLER_AI_COPILOT_CHAT = 'seller.ai.copilot.chat',
     SELLER_AI_IMAGE_OPTIMIZATION_VIEW = 'seller.ai.image_optimization.view',
     SELLER_AI_IMAGE_OPTIMIZATION_GENERATE = 'seller.ai.image_optimization.generate',
     SELLER_AI_IMAGE_OPTIMIZATION_APPLY = 'seller.ai.image_optimization.apply',
