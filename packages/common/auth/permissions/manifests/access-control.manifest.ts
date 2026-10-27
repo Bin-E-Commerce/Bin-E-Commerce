@@ -7,7 +7,7 @@ import { PermissionScope } from '../contracts/permission-scope.enum';
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.10.04.1';
+export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.10.18.1';
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -82,6 +82,30 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
             'Cho phép bật hoặc tắt permission cho từng role trong Admin Center.',
         resource: 'admin.access_control',
         action: 'update',
+    },
+    {
+        code: Permission.ADMIN_FINANCE_READ,
+        name: 'Xem tài chính nền tảng',
+        description:
+            'Xem sổ tiền mô phỏng, giao dịch nạp và yêu cầu rút của seller.',
+        resource: 'admin.finance',
+        action: 'read',
+    },
+    {
+        code: Permission.ADMIN_FINANCE_RECONCILE,
+        name: 'Đối soát COD và hoàn tiền',
+        description:
+            'Cho phép ghi nhận remittance COD và xác nhận hoàn tiền thủ công.',
+        resource: 'admin.finance',
+        action: 'reconcile',
+    },
+    {
+        code: Permission.ADMIN_FINANCE_PAYOUT,
+        name: 'Xử lý yêu cầu rút tiền',
+        description:
+            'Xem chi tiết tài khoản nhận và xác nhận kết quả payout seller.',
+        resource: 'admin.finance',
+        action: 'payout',
     },
     {
         code: Permission.ADMIN_USER_MANAGEMENT,
@@ -272,6 +296,14 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
         description:
             'Cho phép Seller xem các đơn hàng có sản phẩm thuộc shop của mình.',
         resource: 'seller.order',
+        action: 'read',
+    },
+    {
+        code: Permission.SELLER_FINANCE_READ,
+        name: 'Xem ví và giao dịch của shop',
+        description:
+            'Cho phép seller xem số dư và lịch sử ghi nhận tiền hàng của shop mình.',
+        resource: 'seller.finance',
         action: 'read',
     },
     {
@@ -683,6 +715,11 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     },
     {
         roleCode: UserRole.SELLER,
+        permissionCode: Permission.SELLER_FINANCE_READ,
+        scope: PermissionScope.OWN_SHOP,
+    },
+    {
+        roleCode: UserRole.SELLER,
         permissionCode: Permission.SELLER_ORDER_MANAGE,
         scope: PermissionScope.OWN_SHOP,
     },
@@ -864,6 +901,21 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
         scope: PermissionScope.GLOBAL,
     },
     {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_FINANCE_READ,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_FINANCE_RECONCILE,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
+        roleCode: UserRole.ADMIN,
+        permissionCode: Permission.ADMIN_FINANCE_PAYOUT,
+        scope: PermissionScope.GLOBAL,
+    },
+    {
         // Grant riêng cho ADMIN để SUPPORT_AGENT vẫn có thể vào các màn hình hỗ trợ nhưng không thấy/quản lý user.
         roleCode: UserRole.ADMIN,
         permissionCode: Permission.ADMIN_USER_MANAGEMENT,
@@ -1013,6 +1065,19 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
         sortOrder: 20,
         requiredPermissionCode:
             Permission.ADMIN_SHOP_PROFILE_CHANGE_REQUEST_READ,
+    },
+    {
+        area: 'admin',
+        groupCode: 'finance',
+        groupLabel: 'Tài chính',
+        groupOrder: 25,
+        code: 'admin.finance',
+        label: 'Quản lý dòng tiền',
+        description: 'Ví seller, yêu cầu rút và sổ tiền nền tảng mô phỏng',
+        href: '/admin/finance',
+        icon: 'Landmark',
+        sortOrder: 10,
+        requiredPermissionCode: Permission.ADMIN_FINANCE_READ,
     },
     {
         area: 'admin',
@@ -1173,6 +1238,20 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
         icon: 'ClipboardList',
         sortOrder: 10,
         requiredPermissionCode: Permission.SELLER_ORDER_READ,
+        requiredScope: PermissionScope.OWN_SHOP,
+    },
+    {
+        area: 'seller',
+        groupCode: 'shop',
+        groupLabel: 'Quản lý shop',
+        groupOrder: 30,
+        code: 'seller.finance',
+        label: 'Ví shop',
+        description: 'Số dư và lịch sử giao dịch',
+        href: '/seller/finance',
+        icon: 'WalletCards',
+        sortOrder: 5,
+        requiredPermissionCode: Permission.SELLER_FINANCE_READ,
         requiredScope: PermissionScope.OWN_SHOP,
     },
     {
