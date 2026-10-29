@@ -9,6 +9,9 @@ export enum Permission {
     // 3. Admin Access Control
     ADMIN_ACCESS_CONTROL_READ = 'admin.access_control.read',
     ADMIN_ACCESS_CONTROL_UPDATE = 'admin.access_control.update',
+    ADMIN_FINANCE_READ = 'admin.finance.read',
+    ADMIN_FINANCE_RECONCILE = 'admin.finance.reconcile',
+    ADMIN_FINANCE_PAYOUT = 'admin.finance.payout',
     // Chỉ ADMIN được xem và vận hành module quản lý tài khoản; SUPPORT_AGENT không nhận grant này.
     ADMIN_USER_MANAGEMENT = 'admin.user_management',
     // Quyền xem dữ liệu hành vi và KPI của Recommendation Center.
@@ -46,6 +49,7 @@ export enum Permission {
     SHOP_FOLLOW = 'shop.follow',
     SELLER_ORDER_READ = 'seller.order.read',
     SELLER_ORDER_MANAGE = 'seller.order.manage',
+    SELLER_FINANCE_READ = 'seller.finance.read',
     SELLER_SHIPPING_SETTINGS_READ = 'seller.shipping.settings.read',
     SELLER_SHIPPING_SETTINGS_MANAGE = 'seller.shipping.settings.manage',
     SELLER_SHIPPING_READ = 'seller.shipping.read',

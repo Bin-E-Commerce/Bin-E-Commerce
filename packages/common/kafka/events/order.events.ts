@@ -48,7 +48,7 @@ export interface OrderEventItem {
 export interface OrderCreatedPayload {
     orderId: string;
     orderNumber: string;
-    paymentMethod: 'COD';
+    paymentMethod: 'COD' | 'PAY2S';
     totalAmount: string;
     createdAt: string;
     customerUserId: string;
@@ -65,7 +65,7 @@ export type OrderCreatedEvent = IntegrationEventEnvelope<
 export interface OrderCancelledPayload {
     orderId: string;
     orderNumber: string;
-    paymentMethod: 'COD';
+    paymentMethod: 'COD' | 'PAY2S';
     totalAmount: string;
     createdAt: string;
     cancelledAt: string;

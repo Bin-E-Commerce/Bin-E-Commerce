@@ -5,4 +5,5 @@ export * from './review.events';
 export * from './seller.events';
 export * from './shipping.events';
 export * from './user.events';
+export * from './wallet-finance.events';
 export * from '../contracts';
