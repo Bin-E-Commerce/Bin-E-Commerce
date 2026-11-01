@@ -59,14 +59,12 @@ export type RecommendationCatalogEventType =
 
 export interface RecommendationCatalogProductPayload {
     productId: string;
-    originType: 'INTERNAL' | 'EXTERNAL';
     name: string;
     slug: string;
     imageUrl: string | null;
     categoryId: string | null;
     brandId: string | null;
     sellerShopId: string | null;
-    externalShopId: string | null;
     minPrice: string;
     maxPrice: string;
     ratingAvg: string | null;
