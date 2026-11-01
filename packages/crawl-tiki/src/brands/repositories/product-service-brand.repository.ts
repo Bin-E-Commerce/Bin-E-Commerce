@@ -1,4 +1,4 @@
-import type { DatabaseExecutor } from '../../repositories/postgres-product-import.repository';
+import type { DatabaseExecutor } from '../../database/database-executor';
 import type {
     BrandCrawlCatalog,
     CrawledBrand,
@@ -98,7 +98,7 @@ export class ProductServiceBrandRepository {
         }
     }
 
-    // Tìm theo external ID trước, fallback slug để hợp nhất brand đã được product crawler tạo từ trước.
+    // Tìm theo ID Tiki trước, rồi fallback slug để hợp nhất brand đã có trong hệ thống.
     private async findExistingBrand(
         brand: CrawledBrand,
     ): Promise<string | null> {
@@ -121,21 +121,15 @@ export class ProductServiceBrandRepository {
         return queryResult.rows[0]?.id ?? null;
     }
 
-    // Upsert một brand; chỉ ghi country khi đã resolve, đồng thời giữ logo/mô tả admin nếu crawler không có giá trị mới.
+    // Tiki Open API không cung cấp quốc gia đáng tin cậy; ghi null cho brand mới và giữ nguyên giá trị admin đã xác minh.
     private async upsertBrand(brand: CrawledBrand): Promise<boolean> {
         const existingId = await this.findExistingBrand(brand);
-        const countryCode =
-            brand.country.status === 'resolved' ? brand.country.code : null;
-        const countryName =
-            brand.country.status === 'resolved' ? brand.country.name : null;
+        const countryCode = null;
+        const countryName = null;
         const sourceMetadata = JSON.stringify({
             tiki: {
                 externalBrandId: brand.externalBrandId,
                 sourceUrl: brand.sourceUrl,
-                observedProductCount: brand.observedProductCount,
-                categories: brand.categories,
-                country: brand.country,
-                countryEvidence: brand.countryEvidence,
                 firstObservedAt: brand.firstObservedAt,
                 lastObservedAt: brand.lastObservedAt,
             },

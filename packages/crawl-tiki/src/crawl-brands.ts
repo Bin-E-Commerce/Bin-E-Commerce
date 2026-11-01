@@ -2,14 +2,11 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { loadEnvFile } from 'node:process';
-import { TikiBrandClient } from './brands/clients/tiki-brand.client';
 import { TikiOpenApiBrandClient } from './brands/clients/tiki-open-api-brand.client';
 import { parseBrandCliOptions } from './brands/cli/brand-cli-options.parser';
-import { FileBrandCheckpointStore } from './brands/checkpoints/file-brand-checkpoint.store';
 import { writeBrandCrawlOutput } from './brands/exporters/brand-catalog.exporter';
 import { BrandCatalogMapper } from './brands/mappers/brand-catalog.mapper';
 import { ProductServiceBrandRepository } from './brands/repositories/product-service-brand.repository';
-import { BrandCrawlerService } from './brands/services/brand-crawler.service';
 import { OfficialBrandCrawlerService } from './brands/services/official-brand-crawler.service';
 import type { BrandCrawlCatalog } from './brands/types/brand-catalog.type';
 import type { BrandCrawlOptions } from './brands/types/brand-crawl-options.type';
@@ -47,27 +44,15 @@ async function readCatalog(inputFile: string): Promise<BrandCrawlCatalog> {
     return parsed;
 }
 
-// Chọn adapter theo CLI; official dùng Open API, storefront chỉ giữ cho pilot thu bằng chứng từ sản phẩm public.
+// Chỉ dùng Tiki Open API chính thức; luồng storefront và product sample đã bị gỡ.
 async function crawlCatalog(
     options: BrandCrawlOptions,
-    checkpoint: FileBrandCheckpointStore,
     logger: ConsoleCrawlerLogger,
 ): Promise<BrandCrawlResult> {
-    const mapper = new BrandCatalogMapper();
-    if (options.source === 'official') {
-        const token = process.env['TIKI_API_TOKEN']?.trim() ?? '';
-        const crawler = new OfficialBrandCrawlerService({
-            client: new TikiOpenApiBrandClient(token),
-            mapper,
-            logger,
-        });
-        return crawler.crawl(options);
-    }
-
-    const crawler = new BrandCrawlerService({
-        client: new TikiBrandClient(),
-        checkpoint,
-        mapper,
+    const token = process.env['TIKI_API_TOKEN']?.trim() ?? '';
+    const crawler = new OfficialBrandCrawlerService({
+        client: new TikiOpenApiBrandClient(token),
+        mapper: new BrandCatalogMapper(),
         logger,
     });
     return crawler.crawl(options);
@@ -110,26 +95,19 @@ async function main(): Promise<void> {
             brands: catalog.brands.length,
         });
     } else {
-        const checkpoint = new FileBrandCheckpointStore(options.checkpointFile);
-        await checkpoint.acquireLock();
-        try {
-            const result = await crawlCatalog(options, checkpoint, logger);
-            catalog = result.catalog;
-            const paths = await writeBrandCrawlOutput(
-                result.catalog,
-                result.report,
-                options.outputFile,
-                options.reportFile,
-            );
-            logger.info('brand crawl output saved', {
-                ...paths,
-                source: options.source,
-                completed: result.catalog.completed,
-                ...result.catalog.summary,
-            });
-        } finally {
-            await checkpoint.releaseLock();
-        }
+        const result = await crawlCatalog(options, logger);
+        catalog = result.catalog;
+        const paths = await writeBrandCrawlOutput(
+            result.catalog,
+            result.report,
+            options.outputFile,
+            options.reportFile,
+        );
+        logger.info('brand crawl output saved', {
+            ...paths,
+            completed: result.catalog.completed,
+            ...result.catalog.summary,
+        });
     }
 
     if (!options.importToDatabase) return;

@@ -1,4 +1,4 @@
-// Tạo slug ổn định từ tên để chống trùng brand/category/shop/product khi nguồn không có slug.
+// Tạo slug ổn định từ tên brand khi nguồn không cung cấp slug.
 export function slugify(value: string): string {
     const normalized = value
         .normalize('NFD')
@@ -10,10 +10,4 @@ export function slugify(value: string): string {
         .replace(/^-+|-+$/g, '');
 
     return normalized || 'unknown';
-}
-
-// Gắn external id vào slug để product từ nguồn crawl ít va chạm với product local.
-export function sourceSlug(name: string, externalId?: string | null): string {
-    const base = slugify(name);
-    return externalId ? `${base}-${externalId}` : base;
 }

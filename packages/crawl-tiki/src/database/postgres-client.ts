@@ -1,9 +1,6 @@
 import { Client } from 'pg';
 import type { QueryResultRow } from 'pg';
-import type {
-    DatabaseExecutor,
-    QueryResult,
-} from '../repositories/postgres-product-import.repository';
+import type { DatabaseExecutor, QueryResult } from './database-executor';
 
 export class PostgresClient implements DatabaseExecutor {
     private readonly client: Client;
