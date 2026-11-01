@@ -42,17 +42,9 @@ function assertBrand(value: unknown): asserts value is CrawledBrand {
         }
     }
 
-    if (
-        !Array.isArray(value['aliases']) ||
-        !Array.isArray(value['categories'])
-    ) {
+    if (!Array.isArray(value['aliases'])) {
         throw new Error(
-            `Brand ${value['externalBrandId']} có aliases/categories không hợp lệ.`,
-        );
-    }
-    if (!isRecord(value['country'])) {
-        throw new Error(
-            `Brand ${value['externalBrandId']} thiếu dữ liệu country.`,
+            `Brand ${value['externalBrandId']} có aliases không hợp lệ.`,
         );
     }
 }

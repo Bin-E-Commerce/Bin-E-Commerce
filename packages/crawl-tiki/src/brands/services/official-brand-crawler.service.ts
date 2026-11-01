@@ -55,13 +55,6 @@ export class OfficialBrandCrawlerService {
             selectedBrands: selectedBrands.length,
             completed,
         });
-        if (options.includeCountryEvidence) {
-            this.dependencies.logger.warn(
-                'official brand endpoint does not expose brand country; unresolved countries remain null',
-                { missingCountryCount: summary.missingCountryCount },
-            );
-        }
-
         return {
             catalog: {
                 schemaVersion: 1,
@@ -80,32 +73,13 @@ export class OfficialBrandCrawlerService {
         };
     }
 
-    // Tính summary trực tiếp từ kết quả cuối để giới hạn pilot không làm sai tổng số brand đã xuất.
+    // Tính số liệu từ catalog đã chuẩn hóa; giới hạn pilot chỉ làm catalog chưa hoàn tất.
     private buildSummary(
         finalized: Array<ReturnType<BrandCatalogMapper['finalize']>>,
         issues: BrandCrawlQualityIssue[],
     ): BrandCrawlSummary {
-        const brands = finalized.map((item) => item.brand);
         return {
-            rootCategoryCount: 0,
-            discoveredCategoryCount: 0,
-            processedCategoryCount: 0,
-            discoveredBrandCount: brands.length,
-            enrichedBrandCount: brands.filter(
-                (brand) => brand.countryEvidence.length > 0,
-            ).length,
-            resolvedCountryCount: brands.filter(
-                (brand) => brand.country.status === 'resolved',
-            ).length,
-            conflictCountryCount: brands.filter(
-                (brand) => brand.country.status === 'conflict',
-            ).length,
-            unknownCountryAliasCount: brands.filter(
-                (brand) => brand.country.status === 'unknown_alias',
-            ).length,
-            missingCountryCount: brands.filter(
-                (brand) => brand.country.status === 'missing',
-            ).length,
+            discoveredBrandCount: finalized.length,
             failedRequestCount: issues.filter(
                 (issue) => issue.type === 'request_failed',
             ).length,
