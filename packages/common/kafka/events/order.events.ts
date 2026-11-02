@@ -15,6 +15,8 @@ export const OrderEvents = {
     RETURN_REJECTED: 'return.rejected',
     RETURN_CANCELLED: 'return.cancelled',
     RETURN_IN_TRANSIT: 'return.in_transit',
+    RETURN_SHIPMENT_FAILED: 'return.shipment_failed',
+    RETURN_SHIPMENT_RETRY_STARTED: 'return.shipment_retry_started',
     RETURN_RECEIVED: 'return.received',
     RETURN_INSPECTION_PASSED: 'return.inspection.passed',
     RETURN_INSPECTION_FAILED: 'return.inspection.failed',
@@ -114,6 +116,8 @@ export type ReturnChangedEvent = IntegrationEventEnvelope<
     | typeof OrderEvents.RETURN_REJECTED
     | typeof OrderEvents.RETURN_CANCELLED
     | typeof OrderEvents.RETURN_IN_TRANSIT
+    | typeof OrderEvents.RETURN_SHIPMENT_FAILED
+    | typeof OrderEvents.RETURN_SHIPMENT_RETRY_STARTED
     | typeof OrderEvents.RETURN_RECEIVED
     | typeof OrderEvents.RETURN_INSPECTION_PASSED
     | typeof OrderEvents.RETURN_INSPECTION_FAILED,
