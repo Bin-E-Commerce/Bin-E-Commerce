@@ -146,6 +146,7 @@ services:
             KEYCLOAK_WEB_CLIENT_ID: web-client
             KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_WEB_CLIENT_SECRET:-}
             SELLER_SERVICE_URL: http://seller-service:3007
+            ORDER_SERVICE_URL: http://order-service:3011
             FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
             SOCIAL_AUTH_CALLBACK_URL: ${SOCIAL_AUTH_CALLBACK_URL:-http://localhost:5173/callback}
             KAFKA_BROKERS: kafka:9092
