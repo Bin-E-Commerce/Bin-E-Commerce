@@ -11,6 +11,7 @@ export const OrderEvents = {
     DELIVERY_ISSUE_REPORTED: 'order.delivery.issue_reported',
     DELIVERY_AUTO_CONFIRMED: 'order.delivery.auto_confirmed',
     RETURN_REQUESTED: 'return.requested',
+    RETURN_UPDATED: 'return.updated',
     RETURN_APPROVED: 'return.approved',
     RETURN_REJECTED: 'return.rejected',
     RETURN_CANCELLED: 'return.cancelled',
@@ -20,6 +21,7 @@ export const OrderEvents = {
     RETURN_RECEIVED: 'return.received',
     RETURN_INSPECTION_PASSED: 'return.inspection.passed',
     RETURN_INSPECTION_FAILED: 'return.inspection.failed',
+    REFUND_COMPLETED: 'refund.completed',
     PURCHASE_COMPLETED: 'order.purchase.completed',
     PURCHASE_RETURNED: 'order.purchase.returned',
 } as const;
@@ -112,6 +114,7 @@ export interface ReturnChangedPayload {
 
 export type ReturnChangedEvent = IntegrationEventEnvelope<
     | typeof OrderEvents.RETURN_REQUESTED
+    | typeof OrderEvents.RETURN_UPDATED
     | typeof OrderEvents.RETURN_APPROVED
     | typeof OrderEvents.RETURN_REJECTED
     | typeof OrderEvents.RETURN_CANCELLED
@@ -122,6 +125,20 @@ export type ReturnChangedEvent = IntegrationEventEnvelope<
     | typeof OrderEvents.RETURN_INSPECTION_PASSED
     | typeof OrderEvents.RETURN_INSPECTION_FAILED,
     ReturnChangedPayload
+>;
+
+export interface RefundCompletedPayload {
+    refundId: string;
+    sourceType: 'PAYMENT_ATTEMPT' | 'ORDER_RETURN' | 'DELIVERY_ISSUE';
+    orderId: string;
+    orderNumber: string;
+    customerUserId: string;
+    refundAmount: string;
+}
+
+export type RefundCompletedEvent = IntegrationEventEnvelope<
+    typeof OrderEvents.REFUND_COMPLETED,
+    RefundCompletedPayload
 >;
 
 // Payload dành riêng cho Recommendation, chỉ chứa item snapshot cần tính preference và không chứa dữ liệu thanh toán.
