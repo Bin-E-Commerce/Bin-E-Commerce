@@ -7,7 +7,7 @@ import { PermissionScope } from '../contracts/permission-scope.enum';
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.10.18.1';
+export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.11.07.1';
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -1077,6 +1077,19 @@ export const NAVIGATION_ITEM_DEFINITIONS: NavigationItemDefinition[] = [
         href: '/admin/finance',
         icon: 'Landmark',
         sortOrder: 10,
+        requiredPermissionCode: Permission.ADMIN_FINANCE_READ,
+    },
+    {
+        area: 'admin',
+        groupCode: 'finance',
+        groupLabel: 'Tài chính',
+        groupOrder: 25,
+        code: 'admin.finance.seller-debts',
+        label: 'Công nợ seller',
+        description: 'Theo dõi khoản nợ, hạn thanh toán và shop đang khóa',
+        href: '/admin/finance/debts',
+        icon: 'BadgeAlert',
+        sortOrder: 20,
         requiredPermissionCode: Permission.ADMIN_FINANCE_READ,
     },
     {
