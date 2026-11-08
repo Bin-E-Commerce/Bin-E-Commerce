@@ -99,10 +99,12 @@ function resolveRoute(request: HttpRequest): string {
     return normalized.slice(0, 160) || 'unknown';
 }
 
-// Escape nội dung log có thể chứa secret phổ biến trước khi ghi ra stdout và chuyển sang Loki.
+// Chuẩn hóa Error thành tên/message trước khi lọc secret và che email để log không rơi thành `{}`.
 function sanitizeMessage(message: unknown): string {
     let text: string | undefined;
-    if (typeof message === 'string') {
+    if (message instanceof Error) {
+        text = `${message.name}: ${message.message}`;
+    } else if (typeof message === 'string') {
         text = message;
     } else {
         try {
@@ -154,9 +156,14 @@ export class StructuredLogger implements NestLoggerLike {
         this.write('warn', message, context);
     }
 
-    // Ghi lỗi cùng stack tùy chọn, giữ message đã redact trước khi gửi stdout.
+    // Ghi message Error đã redact; nếu Nest không truyền stack riêng thì chỉ bổ sung stack ở development.
     error(message: unknown, trace?: string, context?: string): void {
-        this.write('error', message, context, trace);
+        const safeTrace =
+            trace ??
+            (this.environment === 'development' && message instanceof Error
+                ? message.stack
+                : undefined);
+        this.write('error', message, context, safeTrace);
     }
 
     // Ghi debug khi service chạy development; production vẫn có schema giống các level khác.
