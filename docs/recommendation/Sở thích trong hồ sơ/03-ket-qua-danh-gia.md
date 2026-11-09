@@ -40,7 +40,13 @@ Script [`diagnose-profile-affinity-synthetic.ts`](../../../services/recommendati
 
 ## Kết quả so với phương pháp đã công bố
 
-**Chưa chạy.** Chưa có tập đánh giá từ log thật được chuẩn bị để tái lập phương pháp item–category trong phương trình (10) của [Ok et al. (2019)](https://www.mdpi.com/2076-3417/9/13/2634) và so sánh trên tập test theo thời gian. Nghiên cứu này đã đánh giá phương pháp của họ trong bối cảnh quần áo trực tuyến; điều đó cũng không bảo đảm nó tối ưu cho dự án này.
+| Phương pháp                                                               | Trạng thái                                                              |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Time-aware item-only theo Stefanidis et al. (2012)                        | Chưa chạy trên log thật; hiện mới đối chiếu dạng decay.                 |
+| Item + xác suất mua theo category của Ok et al. (2019), phương trình (10) | Chưa tái lập; cần log click/cart/order và triển khai cả `r_ui`, `p_uk`. |
+| Công thức ba chiều của dự án                                              | Đã triển khai; chưa đánh giá trên log thật.                             |
+
+Nghiên cứu của Ok et al. đánh giá phương pháp trong bối cảnh quần áo trực tuyến; kết quả đó không bảo đảm phương pháp tối ưu cho dự án này. Khi có dữ liệu, chạy được baseline nào thì báo cáo baseline đó cùng công thức dự án trên đúng cùng test. Không điền số cho phương pháp chưa được tái lập.
 
 ## Việc còn cần để bảo vệ hiệu quả trước thầy cô
 

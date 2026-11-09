@@ -28,12 +28,12 @@ Tại mỗi thời điểm dự đoán, chỉ dùng sự kiện đã xảy ra tr
 
 ## Baseline và phương án so sánh
 
-- **Mốc nghiên cứu cho phần thời gian:** [Stefanidis et al. (2012)](https://homepages.tuni.fi/konstantinos.stefanidis/docs/dexa12.pdf) dùng trọng số mũ theo tuổi của **từng** preference. Đối chiếu biểu thức decay và phép cập nhật aggregate trong code với định nghĩa này; đây là kiểm tra tính đúng của triển khai, không phải phép đo chất lượng xếp hạng.
-- **Baseline nghiên cứu để đánh giá xếp hạng, nếu log đủ dữ liệu:** tái lập phép ghép điểm item và xác suất mua theo category ở phương trình (10) của [Ok et al. (2019)](https://www.mdpi.com/2076-3417/9/13/2634): `s_ui = (1−α)r_ui + α p_uk`. Bài báo học `p_uk` từ click/cart theo thời gian và tạo `r_ui` từ các bước trước của phương pháp; phải triển khai cả hai theo mô tả, huấn luyện trên train và chọn `α` trên validation. Chỉ chép phương trình (10) rồi tự thay đầu vào khác không được gọi là tái lập toàn bộ phương pháp.
+- **Baseline nghiên cứu A — time-aware item-only:** tái lập decay theo tuổi của từng preference từ [Stefanidis et al. (2012)](https://homepages.tuni.fi/konstantinos.stefanidis/docs/dexa12.pdf), không ghép category/brand. Bài báo dùng rating phim, nên khi áp dụng vào implicit e-commerce phải công khai cách đổi view/click/cart/purchase thành `q_e`; dùng cùng mapping với công thức dự án trong phép so sánh thành phần.
+- **Baseline nghiên cứu B — item + category:** nếu log đủ click/cart/order, tái lập phương pháp của [Ok et al. (2019)](https://www.mdpi.com/2076-3417/9/13/2634), gồm cả `r_ui` từ các bước trước và xác suất category `p_uk` học từ log; phương trình (10) ghép chúng thành `s_ui = (1−α)r_ui + α p_uk`. Huấn luyện trên train, chọn `α` trên validation. Chỉ chép phương trình (10) rồi tự thay đầu vào không được gọi là tái lập toàn bộ phương pháp.
 - **Phương án dự án:** công thức ba chiều sản phẩm/danh mục/thương hiệu tại [`01-nguon-va-lap-luan.md`](01-nguon-va-lap-luan.md). Dạng decay và tổ hợp có nguồn; ba ngưỡng và ba trọng số mặc định là lựa chọn riêng của dự án, chưa được nghiên cứu trên khách hàng của dự án xác nhận.
 - **Đối chứng kỹ thuật phụ:** phiên bản code cũ và xếp theo độ phổ biến. Kết quả so với chúng chỉ mô tả tác động triển khai và mức cải thiện so với phương án đơn giản, không thay thế baseline nghiên cứu.
 
-Giữ nguyên candidate set, mốc thời gian dự đoán và dữ liệu test. Báo cáo riêng đánh giá `profileAffinity` ở mức feature và đánh giá toàn hệ thống khi ghép với các feature khác. Nếu log không đủ click/cart/order để tái lập Ok et al., ghi rõ baseline nghiên cứu **chưa chạy**, rồi chọn một phương pháp đã công bố khác phù hợp với trường dữ liệu thực có; không tự gọi phiên bản cũ là công thức đã được chứng minh.
+Giữ nguyên candidate set, mốc thời gian dự đoán và dữ liệu test cho cả baseline A, baseline B và công thức dự án. Báo cáo riêng đánh giá `profileAffinity` ở mức feature và đánh giá toàn hệ thống khi ghép với các feature khác. Nếu log không đủ để tái lập baseline B, chạy baseline A và đánh dấu B là chưa chạy; không tự gọi phiên bản code cũ là công thức đã được chứng minh. Bài báo đã công bố cũng không phải đáp án đúng cho mọi tập dữ liệu: kết quả chỉ cho biết phương pháp nào tốt hơn trong giao thức và dataset đang thử.
 
 ## Kiểm tra kỹ thuật trước khi đo hiệu quả
 
@@ -48,11 +48,11 @@ Chọn nhãn chính trước khi chạy. Khuyến nghị dùng mua hoàn tất l
 - `NDCG@10`: chỉ số chính, đánh giá sản phẩm quan tâm có được xếp gần đầu danh sách không.
 - `Recall@10`: chỉ số phụ, đánh giá danh sách top 10 tìm được bao nhiêu sản phẩm người dùng quan tâm trong kỳ test.
 
-Tính chỉ số trên cùng tập người dùng/candidate cho baseline nghiên cứu và phương án dự án. Báo cáo phiên bản code của mỗi phương pháp, số người dùng, impressions, sự kiện dương, khoảng thời gian, định nghĩa nhãn, tham số, metric và mức chênh lệch. Nếu có điều kiện, tính khoảng tin cậy bằng bootstrap theo người dùng.
+Tính chỉ số trên cùng tập người dùng/candidate cho mỗi baseline đã chạy và phương án dự án. Báo cáo phiên bản code của mỗi phương pháp, số người dùng, impressions, sự kiện dương, khoảng thời gian, định nghĩa nhãn, tham số, metric và mức chênh lệch. Nếu có điều kiện, tính khoảng tin cậy bằng bootstrap theo người dùng.
 
 ## Cách kết luận
 
-- Nếu phương án dự án tăng metric so với baseline nghiên cứu trên test đã khóa, có thể nói nó cải thiện xếp hạng **trên tập dữ liệu và giao thức đã thử**.
+- Nếu phương án dự án tăng metric so với baseline nghiên cứu trên test đã khóa, có thể nói nó cải thiện xếp hạng **trên tập dữ liệu và giao thức đã thử**; không khẳng định phương pháp nghiên cứu sai hoặc công thức dự án đúng phổ quát.
 - Nếu metric không tăng hoặc giảm, không được tuyên bố công thức mới tốt hơn; cần xem lại tham số, cách chuẩn hóa hoặc giữ baseline.
 - Đánh giá offline không chứng minh tác động nhân quả lên doanh thu. Muốn kết luận khách hàng mua nhiều hơn cần thử nghiệm A/B khi hệ thống được triển khai.
 
