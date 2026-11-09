@@ -2,7 +2,7 @@
 
 ## Mục tiêu
 
-Đo xem cách tính `profileAffinity` mới có xếp sản phẩm người dùng quan tâm cao hơn bản trước hay không. Phép thử chỉ thay công thức của tiêu chí này; candidate, các feature khác, trọng số ranking tổng và dữ liệu kiểm tra phải giữ giống nhau.
+Đánh giá hai câu hỏi riêng: công thức trong code có thực hiện đúng các tính chất đã nêu không, và công thức dự án có xếp hạng tốt trên dữ liệu thực tế không. So với bản cũ chỉ cho biết tác động của thay đổi code, không phải bằng chứng khoa học cho công thức mới.
 
 ## Dữ liệu cần có
 
@@ -28,17 +28,18 @@ Tại mỗi thời điểm dự đoán, chỉ dùng sự kiện đã xảy ra tr
 
 ## Baseline và phương án so sánh
 
-- **Baseline chính:** lưu score cộng dồn, giảm toàn bộ score theo timestamp cuối và ghép `clamp(P_product + 0.6 P_category + 0.4 P_brand)`; đây là **phiên bản cũ đã thay thế**, chỉ dùng để đối chiếu offline.
-- **Phương án mới đang chạy:** decay từng sự kiện, chuẩn hóa từng chiều và ghép bằng `λ` có tổng bằng `1` như mô tả trong [`01-nguon-va-lap-luan.md`](01-nguon-va-lap-luan.md).
-- **Baseline phụ tùy chọn:** xếp theo độ phổ biến, không dùng hồ sơ cá nhân.
+- **Mốc nghiên cứu cho phần thời gian:** [Stefanidis et al. (2012)](https://homepages.tuni.fi/konstantinos.stefanidis/docs/dexa12.pdf) dùng trọng số mũ theo tuổi của **từng** preference. Đối chiếu biểu thức decay và phép cập nhật aggregate trong code với định nghĩa này; đây là kiểm tra tính đúng của triển khai, không phải phép đo chất lượng xếp hạng.
+- **Baseline nghiên cứu để đánh giá xếp hạng, nếu log đủ dữ liệu:** tái lập phép ghép điểm item và xác suất mua theo category ở phương trình (10) của [Ok et al. (2019)](https://www.mdpi.com/2076-3417/9/13/2634): `s_ui = (1−α)r_ui + α p_uk`. Bài báo học `p_uk` từ click/cart theo thời gian và tạo `r_ui` từ các bước trước của phương pháp; phải triển khai cả hai theo mô tả, huấn luyện trên train và chọn `α` trên validation. Chỉ chép phương trình (10) rồi tự thay đầu vào khác không được gọi là tái lập toàn bộ phương pháp.
+- **Phương án dự án:** công thức ba chiều sản phẩm/danh mục/thương hiệu tại [`01-nguon-va-lap-luan.md`](01-nguon-va-lap-luan.md). Dạng decay và tổ hợp có nguồn; ba ngưỡng và ba trọng số mặc định là lựa chọn riêng của dự án, chưa được nghiên cứu trên khách hàng của dự án xác nhận.
+- **Đối chứng kỹ thuật phụ:** phiên bản code cũ và xếp theo độ phổ biến. Kết quả so với chúng chỉ mô tả tác động triển khai và mức cải thiện so với phương án đơn giản, không thay thế baseline nghiên cứu.
 
-Giữ nguyên candidate set và các thành phần ranking khác; chỉ thay cách tính `profileAffinity`. Nếu muốn đánh giá riêng tiêu chí, cũng có thể xếp hạng candidate chỉ theo profile score, nhưng phải ghi rõ đây là phép thử feature-level.
+Giữ nguyên candidate set, mốc thời gian dự đoán và dữ liệu test. Báo cáo riêng đánh giá `profileAffinity` ở mức feature và đánh giá toàn hệ thống khi ghép với các feature khác. Nếu log không đủ click/cart/order để tái lập Ok et al., ghi rõ baseline nghiên cứu **chưa chạy**, rồi chọn một phương pháp đã công bố khác phù hợp với trường dữ liệu thực có; không tự gọi phiên bản cũ là công thức đã được chứng minh.
 
 ## Kiểm tra kỹ thuật trước khi đo hiệu quả
 
 1. Unit test của feature builder xác nhận ngưỡng, trọng số, half-life và việc tách tổng dương/âm.
 2. Script [`verify-profile-projection-postgres.ts`](../../../services/recommendation-service/src/scripts/verify-profile-projection-postgres.ts) chạy trên PostgreSQL tạm, so sánh SQL projection với tổng trực tiếp của từng event cho nhiều thứ tự đến khác nhau.
-3. Script [`evaluate-profile-affinity-synthetic.ts`](../../../services/recommendation-service/src/scripts/evaluate-profile-affinity-synthetic.ts) đo hai kịch bản kiểm soát: sở thích đổi và sở thích ổn định. Nhãn do kịch bản đặt ra, nên đây chỉ là phép thử hành vi công thức, **không** là bằng chứng khách hàng thật thích công thức mới.
+3. Script [`diagnose-profile-affinity-synthetic.ts`](../../../services/recommendation-service/src/scripts/diagnose-profile-affinity-synthetic.ts) dựng hai lịch sử khác nhau để xem công thức ưu tiên A, B hay hòa điểm. Đây là chẩn đoán hành vi công thức, **không** phải đánh giá độ chính xác hoặc so sánh với nghiên cứu.
 
 ## Nhãn và chỉ số
 
@@ -47,11 +48,11 @@ Chọn nhãn chính trước khi chạy. Khuyến nghị dùng mua hoàn tất l
 - `NDCG@10`: chỉ số chính, đánh giá sản phẩm quan tâm có được xếp gần đầu danh sách không.
 - `Recall@10`: chỉ số phụ, đánh giá danh sách top 10 tìm được bao nhiêu sản phẩm người dùng quan tâm trong kỳ test.
 
-Tính chỉ số trên cùng tập người dùng/candidate cho cả baseline và phương án mới. Báo cáo số người dùng, impressions, sự kiện dương, khoảng thời gian, định nghĩa nhãn, tham số, metric hai phương án và mức chênh lệch. Nếu có điều kiện, tính khoảng tin cậy bằng bootstrap theo người dùng.
+Tính chỉ số trên cùng tập người dùng/candidate cho baseline nghiên cứu và phương án dự án. Báo cáo phiên bản code của mỗi phương pháp, số người dùng, impressions, sự kiện dương, khoảng thời gian, định nghĩa nhãn, tham số, metric và mức chênh lệch. Nếu có điều kiện, tính khoảng tin cậy bằng bootstrap theo người dùng.
 
 ## Cách kết luận
 
-- Nếu phương án mới tăng metric trên test đã khóa, có thể nói nó cải thiện xếp hạng **trên tập dữ liệu và giao thức đã thử**.
+- Nếu phương án dự án tăng metric so với baseline nghiên cứu trên test đã khóa, có thể nói nó cải thiện xếp hạng **trên tập dữ liệu và giao thức đã thử**.
 - Nếu metric không tăng hoặc giảm, không được tuyên bố công thức mới tốt hơn; cần xem lại tham số, cách chuẩn hóa hoặc giữ baseline.
 - Đánh giá offline không chứng minh tác động nhân quả lên doanh thu. Muốn kết luận khách hàng mua nhiều hơn cần thử nghiệm A/B khi hệ thống được triển khai.
 

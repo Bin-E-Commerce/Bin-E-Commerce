@@ -51,13 +51,15 @@ Do `2^{-(a+b)/H} = 2^{-a/H}2^{-b/H}`, quy nạp theo số event cho thấy `A'` 
 
 Các lập luận này chứng minh công thức có các tính chất toán học trên. Chúng không chứng minh công thức sẽ tăng lượt mua hoặc tốt hơn một cách xếp hạng khác; việc đó cần đánh giá thực nghiệm ở file kế hoạch.
 
+**Ranh giới của nguồn:** không bài báo nào ở dưới chứng minh nguyên công thức ba chiều với `H = 7`, các ngưỡng `8/16/8` và trọng số `0.5/0.3/0.2` là tối ưu cho hệ thống này. Công thức dự án là một cách ghép các nguyên lý đã công bố. So với phiên bản code cũ chỉ chứng minh tác động của sửa code; để đánh giá hiệu quả khoa học cần tái lập một phương pháp đã công bố trên cùng dữ liệu và test độc lập.
+
 ## 3. Nguồn nghiên cứu
 
 - **Decay theo từng preference:** [Stefanidis et al., _A Framework for Time-aware Recommendations_ (DEXA 2012)](https://homepages.tuni.fi/konstantinos.stefanidis/docs/dexa12.pdf) gắn timestamp cho từng preference và dùng trọng số mũ `2^(-λ age)`. Đặt `λ = 1/H` cho dạng half-life ở trên. Nguồn này không xác nhận `H = 7` ngày cho dự án.
 - **Half-life trong recommender system:** [Ardagelou & Arampatzis, _A Half-Life Decaying Model for Recommender Systems_](https://ceur-ws.org/Vol-2038/paper1.pdf) đánh giá half-life decay trên dữ liệu phim. Khoảng 150 ngày là kết quả trên bộ dữ liệu đó, không chuyển thẳng sang thương mại điện tử của dự án.
 - **Tổng đặc trưng có trọng số:** [Debnath et al., WWW 2008, _Feature Weighting in Content Based Recommendation System Using Social Network Analysis_](https://cse.iitkgp.ac.in/~pabitra/paper/www08_recom.pdf) dùng tổ hợp tuyến tính đặc trưng và ước lượng trọng số từ dữ liệu. Bài báo không đưa ra trọng số sản phẩm/danh mục/thương hiệu cho dự án.
-- **Ví dụ thương mại điện tử:** [_Recommendation Framework Combining User Interests with Fashion Trends in Apparel Online Shopping_ (2019)](https://www.mdpi.com/2076-3417/9/13/2634) kết hợp sở thích sản phẩm với nhu cầu theo danh mục và tinh chỉnh tham số trên dữ liệu nghiên cứu. Tham số đó không tự chứng minh hệ số trong dự án.
+- **Phương pháp so sánh từ thương mại điện tử:** [Ok et al., _Recommendation Framework Combining User Interests with Fashion Trends in Apparel Online Shopping_ (2019)](https://www.mdpi.com/2076-3417/9/13/2634), phương trình (10), ghép điểm item với xác suất mua theo category bằng trung bình có trọng số. Bài báo học xác suất category từ log click/cart và đánh giá trên dữ liệu quần áo; không dùng hệ số sản phẩm/danh mục/thương hiệu của dự án.
 
 ## Câu trả lời khi bảo vệ
 
-> “Nghiên cứu hỗ trợ dạng decay half-life và tổng có trọng số. Em chứng minh được decay bằng 1 tại thời điểm phát sinh, còn một nửa sau một half-life, điểm từng chiều được chặn trong `[0,1]` và tổng có trọng số vẫn nằm trong `[0,1]`. Các tham số của đồ án là giả thuyết cần hiệu chỉnh và so sánh với baseline trên dữ liệu lịch sử; em không khẳng định chúng đúng phổ quát.”
+> “Em chứng minh được các tính chất toán học và đối chiếu phần giảm theo từng sự kiện với nghiên cứu time-aware. Công thức ghép ba chiều và các tham số là thiết kế của đồ án, chưa có bài báo chứng minh đúng nguyên dạng này. Bản code cũ chỉ là đối chứng kỹ thuật; để chứng minh chất lượng xếp hạng, em phải tái lập một phương pháp đã công bố, như mô hình item–category của Ok và cộng sự nếu log đủ dữ liệu, rồi so sánh trên cùng tập test theo thời gian.”

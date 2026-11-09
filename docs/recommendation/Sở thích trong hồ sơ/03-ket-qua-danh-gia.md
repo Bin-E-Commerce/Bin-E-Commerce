@@ -19,30 +19,35 @@ Unit test bao phủ ngưỡng từng chiều, tổng trọng số, half-life, đ
 
 Phép thử PostgreSQL dùng database tạm `profile_affinity_test` ở localhost và đã dừng container sau khi đo. Có thể chạy lại bằng script [`verify-profile-projection-postgres.ts`](../../../services/recommendation-service/src/scripts/verify-profile-projection-postgres.ts). Đây là kiểm tra công thức trong code, không đo chất lượng gợi ý.
 
-Từ thư mục `services/recommendation-service`, chạy lại phép đo mô phỏng bằng:
+Từ thư mục `services/recommendation-service`, chạy lại phép chẩn đoán mô phỏng bằng:
 
 ```bash
-node -r ts-node/register -r tsconfig-paths/register src/scripts/evaluate-profile-affinity-synthetic.ts
+node -r ts-node/register -r tsconfig-paths/register src/scripts/diagnose-profile-affinity-synthetic.ts
 ```
 
 Để chạy kiểm tra PostgreSQL, cung cấp `PROFILE_AFFINITY_TEST_DATABASE_URL` trỏ tới database **tạm** `profile_affinity_test` ở localhost rồi chạy script tương ứng với cùng lệnh `node -r ts-node/register -r tsconfig-paths/register`. Script từ chối database tên khác.
 
-## Phép đo mô phỏng
+## Chẩn đoán bằng dữ liệu dựng sẵn
 
-Script [`evaluate-profile-affinity-synthetic.ts`](../../../services/recommendation-service/src/scripts/evaluate-profile-affinity-synthetic.ts) chạy seed `1..1000`, cố định thời điểm tham chiếu `2026-11-09T00:00:00Z`. Mỗi ca có hai sản phẩm: A có 1–4 lần mua cũ và một tín hiệu mới yếu; B có một tín hiệu mới mạnh. Chỉ điểm **sản phẩm** tham gia phép đo này. Hai phương án dùng cùng lịch sử và cùng cách phá hòa; metric là tỷ lệ chọn đúng sản phẩm đứng đầu (`accuracy@1`).
+Script [`diagnose-profile-affinity-synthetic.ts`](../../../services/recommendation-service/src/scripts/diagnose-profile-affinity-synthetic.ts) chạy seed `1..1000` cho **hai lịch sử riêng**. Cả hai có A được mua nhiều trong quá khứ; trường hợp ổn định cho A tín hiệu mới mạnh và B tín hiệu yếu, trường hợp đổi sở thích cho B tín hiệu mới mạnh và A tín hiệu yếu. Chỉ chiều sản phẩm được tính. Kết quả là **thứ tự điểm**, không phải `accuracy@1` hay chất lượng thực tế:
 
-| Nhãn giả định của kịch bản                  |      Phiên bản cũ |     Công thức mới |   Chênh lệch |
-| ------------------------------------------- | ----------------: | ----------------: | -----------: |
-| Người dùng đã chuyển sang thích B: 1.000 ca | 293/1.000 = 29,3% | 774/1.000 = 77,4% | +48,1 điểm % |
-| Người dùng vẫn thích A: 1.000 ca            | 707/1.000 = 70,7% | 226/1.000 = 22,6% | −48,1 điểm % |
+| Lịch sử dựng sẵn                         | Bản cũ: A / B / hòa | Công thức mới: A / B / hòa |
+| ---------------------------------------- | ------------------: | -------------------------: |
+| Sở thích ổn định, A có tín hiệu mới mạnh |       1.000 / 0 / 0 |              1.000 / 0 / 0 |
+| Sở thích đổi, B có tín hiệu mới mạnh     |       485 / 0 / 515 |             206 / 741 / 53 |
 
-**Diễn giải:** công thức mới phản ứng tốt hơn trong kịch bản sở thích thay đổi, nhưng kém hơn trong kịch bản sở thích ổn định. Đây là cùng một lịch sử với **hai nhãn do người tạo kịch bản gán**, nên không có căn cứ chọn một hàng làm kết luận chung. Kết quả cũng không đánh giá phần danh mục/thương hiệu, candidate retrieval, các feature ranking khác, NDCG hay doanh thu. Không dùng các số này để tuyên bố cải thiện thực tế hoặc để hiệu chỉnh `H`, `M` và `λ`.
+Ở hàng thứ hai, bản cũ thường giữ A ở điểm tối đa hoặc hòa vì một tín hiệu mới yếu làm **cả tổng cũ** có timestamp mới; kết quả phụ thuộc cách phá hòa. Công thức mới giảm điểm từng event cũ nên ưu tiên B trong nhiều ca hơn. Hai lịch sử do người viết script dựng theo giả định của mình, nên kết quả này chỉ minh họa khác biệt cơ chế. Phiên bản cũ không phải phương pháp nghiên cứu đã xác nhận; thắng nó không chứng minh công thức mới tốt hơn.
+
+## Kết quả so với phương pháp đã công bố
+
+**Chưa chạy.** Chưa có tập đánh giá từ log thật được chuẩn bị để tái lập phương pháp item–category trong phương trình (10) của [Ok et al. (2019)](https://www.mdpi.com/2076-3417/9/13/2634) và so sánh trên tập test theo thời gian. Nghiên cứu này đã đánh giá phương pháp của họ trong bối cảnh quần áo trực tuyến; điều đó cũng không bảo đảm nó tối ưu cho dự án này.
 
 ## Việc còn cần để bảo vệ hiệu quả trước thầy cô
 
 1. Thu thập impression và hành động sau impression có timestamp; chỉ dùng dữ liệu đã xảy ra trước thời điểm xếp hạng.
 2. Chia train/validation/test theo thời gian. Chọn `H`, ba ngưỡng `M` và ba trọng số `λ` trên validation; khóa cấu hình trước khi xem test.
-3. So sánh phiên bản cũ và mới trên cùng candidate set bằng `NDCG@10` và `Recall@10`, báo cáo số người dùng, số impression, nhãn, khoảng thời gian và độ bất định theo người dùng.
-4. Nếu log cũ không còn timestamp từng event, không thể replay chính xác profile lịch sử từ `score` cộng dồn. Khi đó phải thu thập giai đoạn mới đủ dữ liệu trước khi kết luận.
+3. Tái lập một baseline đã công bố phù hợp với log thực có. Nếu đủ click/cart/order, ưu tiên phương pháp item–category của Ok và cộng sự; ghi rõ mọi phần không thể tái lập nguyên bản.
+4. So sánh baseline nghiên cứu và công thức dự án trên cùng candidate set bằng `NDCG@10` và `Recall@10`, báo cáo số người dùng, số impression, nhãn, khoảng thời gian và độ bất định theo người dùng. Giữ bản code cũ như đối chứng phụ nếu cần.
+5. Nếu log cũ không còn timestamp từng event, không thể replay chính xác profile lịch sử từ `score` cộng dồn. Khi đó phải thu thập giai đoạn mới đủ dữ liệu trước khi kết luận.
 
-**Câu trả lời hiện tại:** “Em chứng minh được các tính chất toán học và đã kiểm tra SQL với 600 event mô phỏng đến lệch thứ tự, cùng phép gộp hồ sơ khách. Thử nghiệm kịch bản cho thấy công thức mới có ưu và nhược điểm tùy hành vi người dùng. Em chưa có bằng chứng trên log khách hàng thật để khẳng định nó tăng chất lượng xếp hạng; bước tiếp theo là kiểm định theo thời gian với baseline và các metric đã định trước.”
+**Câu trả lời hiện tại:** “Em chứng minh được các tính chất toán học và đã kiểm tra SQL với 600 event mô phỏng đến lệch thứ tự. Em không coi bản code cũ là công thức đã được chứng minh. Phần decay có nguồn nghiên cứu, còn công thức ba chiều là thiết kế riêng của đồ án. Để chứng minh chất lượng, em cần tái lập một phương pháp đã công bố trên cùng dữ liệu thật và so sánh ở tập test theo thời gian; việc đó hiện chưa hoàn thành.”
