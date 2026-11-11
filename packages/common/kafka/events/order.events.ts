@@ -147,6 +147,8 @@ export interface OrderPurchaseItem {
     productId: string;
     variantId: string | null;
     categoryId: string | null;
+    // Optional để consumer vẫn chấp nhận purchase event v1 đã phát trước khi có brand snapshot.
+    brandId?: string | null;
     quantity: number;
 }
 
