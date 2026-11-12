@@ -59,7 +59,7 @@ Ding & Li (2005) báo cáo cải thiện precision cho time-weighted item-based 
 
 | Kiểm tra                                                   | Kết quả                                                               |
 | ---------------------------------------------------------- | --------------------------------------------------------------------- |
-| Recommendation: feature, simulator và AI adapter           | 26/26 unit test đạt.                                                  |
+| Recommendation: feature, simulator và AI adapter           | 51/51 unit test đạt.                                                  |
 | Recommendation: thứ tự và impression của session context   | 2/2 unit test đạt.                                                    |
 | Recommendation: type-check, lint, build                    | Đạt.                                                                  |
 | AI: trainer, registry, baseline evaluator và route ranking | 18/18 test đạt bằng Python hệ thống; request schema v2 bị trả `422`.  |

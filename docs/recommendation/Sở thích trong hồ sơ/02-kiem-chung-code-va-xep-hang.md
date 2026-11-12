@@ -55,7 +55,7 @@ Các test cấu hình trong [recommendation-rule.service.spec.ts](../../../servi
 
 ### Baseline nghiên cứu để so công thức
 
-Content-based recommendation xây dựng hồ sơ sở thích người dùng từ tín hiệu phản hồi, biểu diễn sản phẩm bằng thuộc tính nội dung, rồi so độ tương tự giữa hồ sơ và sản phẩm. Pazzani và Billsus trình bày họ phương pháp này; trong vector space, cosine là một cách đo độ tương tự. Đây là **phương pháp tham chiếu có cơ sở nghiên cứu**, không phải một công thức duy nhất đã được chứng minh luôn tốt nhất cho mọi cửa hàng. [Pazzani & Billsus, *Content-Based Recommendation Systems*, 2007](https://cs.fit.edu/~pkc/apweb/related/pazzani07aw.pdf).
+Content-based recommendation xây dựng hồ sơ sở thích người dùng từ tín hiệu phản hồi, biểu diễn sản phẩm bằng thuộc tính nội dung, rồi so độ tương tự giữa hồ sơ và sản phẩm. Pazzani và Billsus trình bày họ phương pháp này; trong vector space, cosine là một cách đo độ tương tự. Đây là **phương pháp tham chiếu có cơ sở nghiên cứu**, không phải một công thức duy nhất đã được chứng minh luôn tốt nhất cho mọi cửa hàng. [Pazzani & Billsus, _Content-Based Recommendation Systems_, 2007](https://cs.fit.edu/~pkc/apweb/related/pazzani07aw.pdf).
 
 Với baseline cosine, đặt `u` là vector hồ sơ và `p` là vector thuộc tính sản phẩm:
 
@@ -69,10 +69,10 @@ Trong phạm vi tiêu chí này, các chiều là sản phẩm, danh mục và t
 
 Evaluator [profile_cosine_evaluator.py](../../../services/ai-service/app/modules/ranking/infrastructure/training/profile_cosine_evaluator.py) chạy trên test split của dataset `synthetic-catalog-500-1000u-5000s-seed42`. Nó so `profileAffinity` do production feature builder tạo với cosine trên cùng 15.000 dòng, 750 request và cùng nhãn; các tie được xử lý theo `itemId` tăng dần để không thừa hưởng thứ tự candidate trong file. Report đầy đủ nằm tại [comparison-content-profile-cosine.json](../../../services/ai-service/data/ranking-synthetic/synthetic-catalog-500-1000u-5000s-seed42/comparison-content-profile-cosine.json).
 
-| Phương pháp | NDCG@10 | Recall@10 |
-| --- | ---: | ---: |
-| `profileAffinity` hiện tại | 0.5152 | 0.5936 |
-| Content-profile cosine | 0.5376 | 0.6042 |
+| Phương pháp                  |                            NDCG@10 |                          Recall@10 |
+| ---------------------------- | ---------------------------------: | ---------------------------------: |
+| `profileAffinity` hiện tại   |                             0.5152 |                             0.5936 |
+| Content-profile cosine       |                             0.5376 |                             0.6042 |
 | Cosine trừ `profileAffinity` | **+0.0224** (+2.24 điểm phần trăm) | **+0.0105** (+1.05 điểm phần trăm) |
 
 Trong kịch bản synthetic này, cosine xếp tốt hơn theo cả hai metric. Đây **chưa phải kết luận chọn cosine**: mô phỏng đã sinh hồ sơ và nhãn theo một cơ chế biết trước, chưa có độ tin cậy thống kê hoặc quan sát độc lập từ người mua.
@@ -96,10 +96,10 @@ NDCG@10/Recall@10 chỉ đánh giá thứ hạng theo nhãn đã chọn; chúng 
 | Mệnh đề                                                                            | Bằng chứng hiện có                                                                  | Kết luận được phép                                                                                       |
 | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | Công thức có half-life đúng nghĩa, bounded và không tăng khi tín hiệu cũ đi xa hơn | Suy ra đại số từ định nghĩa; ví dụ đã có unit test                                  | Có thể chứng minh tính chất toán học theo giả định đã nêu                                                |
-| Code tính đúng các ví dụ đã kiểm tra                                               | Unit test feature và config                                                        | Có thể nói các trường hợp kiểm tra khớp công thức; không nên nói đã chứng minh mọi đường chạy production |
-| Cách suy giảm theo thời gian có nền tảng nghiên cứu                                | Các nghiên cứu time-aware recommender ở tài liệu 01                                | Có thể nói phương pháp đã được nghiên cứu; không thể gán tham số của paper cho dự án                     |
-| Phương pháp cosine có nền tảng content-based recommendation                       | Pazzani & Billsus (2007); công thức cosine/vector-space được mô tả trong nghiên cứu | Có cơ sở chọn làm baseline; nghiên cứu không khẳng định nó tối ưu cho dữ liệu dự án                       |
-| Công thức giúp model của dự án xếp hạng tốt                                        | Chưa có kết quả trên impression log thật                                           | **Chưa kết luận được**                                                                                   |
+| Code tính đúng các ví dụ đã kiểm tra                                               | Unit test feature và config                                                         | Có thể nói các trường hợp kiểm tra khớp công thức; không nên nói đã chứng minh mọi đường chạy production |
+| Cách suy giảm theo thời gian có nền tảng nghiên cứu                                | Các nghiên cứu time-aware recommender ở tài liệu 01                                 | Có thể nói phương pháp đã được nghiên cứu; không thể gán tham số của paper cho dự án                     |
+| Phương pháp cosine có nền tảng content-based recommendation                        | Pazzani & Billsus (2007); công thức cosine/vector-space được mô tả trong nghiên cứu | Có cơ sở chọn làm baseline; nghiên cứu không khẳng định nó tối ưu cho dữ liệu dự án                      |
+| Công thức giúp model của dự án xếp hạng tốt                                        | Chưa có kết quả trên impression log thật                                            | **Chưa kết luận được**                                                                                   |
 
 Phép đo synthetic ở trên không huấn luyện LambdaRank và không đo hiệu quả người dùng. Artifact AI cần được train lại sau khi đổi monotonic constraint; registry từ chối artifact cũ thiếu constraint profileAffinity tăng. Monotonic constraint chứng minh chiều tác động có điều kiện của feature, không chứng minh model cải thiện NDCG/Recall. Repository hiện chưa có impression log thật đủ điều kiện để kết luận hiệu quả ranking.
 
