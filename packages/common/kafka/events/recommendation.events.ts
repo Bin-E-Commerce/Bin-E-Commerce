@@ -37,9 +37,10 @@ export interface RecommendationInteractionPayload {
     recommendationRank?: number | null;
     surface?: 'home' | 'product_detail' | 'recommendations_page' | null;
     recommendationPolicyVersion?: string | null;
-    recommendationRankingMode?: 'HYBRID' | 'ML_HYBRID' | null;
+    recommendationRankingMode?: 'AI_MODEL' | 'HYBRID' | 'ML_HYBRID' | null;
     recommendationExperimentId?: string | null;
-    recommendationExperimentVariant?: 'CONTROL' | 'HYBRID' | 'ML_HYBRID' | null;
+    recommendationExperimentVariant?:
+        'CONTROL' | 'AI_MODEL' | 'HYBRID' | 'ML_HYBRID' | null;
 }
 
 export type RecommendationInteractionRecordedEvent = IntegrationEventEnvelope<
@@ -106,6 +107,8 @@ export interface RecommendationPurchaseItemPayload {
     productId: string;
     variantId: string | null;
     categoryId: string | null;
+    // Optional để tương thích event lịch sử; event mới sẽ gửi brand snapshot nếu catalog có thương hiệu.
+    brandId?: string | null;
     quantity: number;
 }
 
