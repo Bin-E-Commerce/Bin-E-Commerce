@@ -16,12 +16,8 @@ export enum Permission {
     ADMIN_USER_MANAGEMENT = 'admin.user_management',
     // Quyền xem dữ liệu hành vi và KPI của Recommendation Center.
     ADMIN_RECOMMENDATION_ANALYTICS_READ = 'admin.recommendation.analytics.read',
-    // Quyền xem policy ranking đang chạy và lịch sử policy.
+    // Quyền xem trạng thái model ranking và lịch sử cấu hình Recommendation.
     ADMIN_RECOMMENDATION_POLICY_READ = 'admin.recommendation.policy.read',
-    // Quyền thay đổi trọng số/flag ranking; endpoint vẫn ghi audit version immutable.
-    ADMIN_RECOMMENDATION_POLICY_WRITE = 'admin.recommendation.policy.write',
-    // Quyền rollback policy về một version đã audit.
-    ADMIN_RECOMMENDATION_POLICY_ROLLBACK = 'admin.recommendation.policy.rollback',
     // Quyền xem kho tri thức BinGPT; quyền sửa, phát hành domain/tài liệu và rollback được tách riêng phía dưới.
     ADMIN_SELLER_KNOWLEDGE_READ = 'admin.seller_knowledge.read',
     ADMIN_SELLER_KNOWLEDGE_WRITE = 'admin.seller_knowledge.write',

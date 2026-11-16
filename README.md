@@ -117,8 +117,8 @@ The browser uses the API Gateway as its backend boundary. Domain services enforc
 - **Seller operations:** shop onboarding, products and inventory, order processing, shipping settings, finance, and AI-assisted product workflows.
 - **Returns and refunds:** customers can request returns or cancel eligible orders; seller and admin workspaces track the next action. For paid Pay2S cancellations, the customer supplies a recipient bank account and an admin performs and records the refund. VietQR helps prepare a bank transfer; it does not transfer money itself.
 - **Payments and shipping:** cash on delivery and Pay2S payment flows; GHN integration with a configurable demo mode.
-- **Recommendations:** candidate generation and ranking with a standard fallback when optional AI ranking is unavailable.
-- **Administration:** seller review, access control, finance/refund queues, and recommendation policy tools.
+- **Recommendations:** candidate generation and LambdaRank ranking; model-unavailable requests return an error instead of a substitute ranking.
+- **Administration:** seller review, access control, finance/refund queues, and recommendation model status and analytics.
 
 ## Services and ownership
 
