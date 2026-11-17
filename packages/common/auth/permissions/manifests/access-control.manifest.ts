@@ -7,7 +7,7 @@ import { PermissionScope } from '../contracts/permission-scope.enum';
 
 // Version quyền dùng để vô hiệu Redis access-profile cache khi contract permission/menu thay đổi.
 // Mỗi lần đổi shape accessProfile, thêm permission hoặc đổi menu quan trọng thì tăng version này.
-export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.11.07.1';
+export const ACCESS_CONTROL_PERMISSION_VERSION = '2026.11.16.1';
 
 // Danh sách permission, role, scope và menu chính thức của hệ thống.
 export interface PermissionDefinition {
@@ -125,24 +125,11 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     },
     {
         code: Permission.ADMIN_RECOMMENDATION_POLICY_READ,
-        name: 'Xem policy Recommendation',
-        description: 'Xem trọng số, feature flag và lịch sử cấu hình ranking.',
+        name: 'Xem trạng thái Recommendation',
+        description:
+            'Xem chế độ ranking, trạng thái model, candidate source và lịch sử cấu hình.',
         resource: 'admin.recommendation.policy',
         action: 'read',
-    },
-    {
-        code: Permission.ADMIN_RECOMMENDATION_POLICY_WRITE,
-        name: 'Chỉnh policy Recommendation',
-        description: 'Thay đổi trọng số và flag ranking đang chạy.',
-        resource: 'admin.recommendation.policy',
-        action: 'write',
-    },
-    {
-        code: Permission.ADMIN_RECOMMENDATION_POLICY_ROLLBACK,
-        name: 'Rollback policy Recommendation',
-        description: 'Khôi phục một phiên bản policy đã lưu trong lịch sử.',
-        resource: 'admin.recommendation.policy',
-        action: 'rollback',
     },
     {
         code: Permission.ADMIN_SELLER_KNOWLEDGE_READ,
@@ -929,16 +916,6 @@ export const ROLE_PERMISSION_DEFINITIONS: RolePermissionDefinition[] = [
     {
         roleCode: UserRole.ADMIN,
         permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_READ,
-        scope: PermissionScope.GLOBAL,
-    },
-    {
-        roleCode: UserRole.ADMIN,
-        permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_WRITE,
-        scope: PermissionScope.GLOBAL,
-    },
-    {
-        roleCode: UserRole.ADMIN,
-        permissionCode: Permission.ADMIN_RECOMMENDATION_POLICY_ROLLBACK,
         scope: PermissionScope.GLOBAL,
     },
     {

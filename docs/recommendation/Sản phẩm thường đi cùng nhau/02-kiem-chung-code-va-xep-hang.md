@@ -60,7 +60,7 @@ Phép chứng minh ở tài liệu 01 diễn ra trên số thực. Code đã đ�
 
 Không có một “công thức đúng duy nhất” thắng ở mọi dữ liệu. Các baseline bên dưới là các phương pháp đã có định nghĩa nghiên cứu và phù hợp câu hỏi “hai sản phẩm có thường đi cùng nhau không?”. Tất cả phải dùng cùng request, candidate set, dữ liệu đến trước request và nhãn tương tác sau impression.
 
-Các baseline này chỉ dùng để đánh giá và giải thích bằng chứng; chúng không đề xuất thay AI ranker hiện tại bằng một standard/hybrid ranker.
+Các baseline này chỉ dùng trong phép đánh giá để giải thích bằng chứng; chúng không tham gia luồng serving sản phẩm.
 
 ### A. Raw weighted co-occurrence
 
