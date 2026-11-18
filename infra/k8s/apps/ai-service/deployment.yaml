@@ -3,96 +3,93 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bin-ecommerce-ai-service
-  namespace: bin-ecommerce-app
-  labels:
-    app.kubernetes.io/name: bin-ecommerce-ai-service
-    app.kubernetes.io/part-of: bin-ecommerce
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: bin-ecommerce-ai-service
-  template:
-    metadata:
-      labels:
+    name: bin-ecommerce-ai-service
+    namespace: bin-ecommerce-app
+    labels:
         app.kubernetes.io/name: bin-ecommerce-ai-service
         app.kubernetes.io/part-of: bin-ecommerce
-    spec:
-      imagePullSecrets:
-        - name: ghcr-pull-secret
-      containers:
-        - name: ai-service
-          image: ghcr.io/daongocanh25092004/bin-ecommerce-ai-service:c5aebdb5942a
-          imagePullPolicy: IfNotPresent
-          ports:
-            - name: http
-              containerPort: 3009
-          env:
-            - name: PORT
-              value: "3009"
-            - name: NODE_ENV
-              value: production
-            - name: APP_NAME
-              value: ai-service
-            - name: KAFKA_BOOTSTRAP_SERVERS
-              value: kafka.bin-ecommerce-data.svc.cluster.local:9092
-            # Model được đóng gói bất biến trong image AI Service; pod mới không
-            # phụ thuộc vào file được chép thủ công trên máy chủ hoặc pod cũ.
-            - name: RANKING_MODEL_PATH
-              value: /app/artifacts/synthetic/ranking-lgbm-synthetic-v1-full.txt
-            - name: RANKING_MODEL_VERSION
-              value: ranking-lgbm-synthetic-v1-full
-            # Ứng dụng FastAPI dùng tên chuẩn DATABASE_URL/REDIS_URL.
-            # Secret runtime đang lưu hai giá trị này với tiền tố AI_ để phân biệt cấu hình.
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: bin-ecommerce-runtime-secrets
-                  key: AI_DATABASE_URL
-            - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: bin-ecommerce-runtime-secrets
-                  key: AI_REDIS_URL
-          envFrom:
-            - secretRef:
-                name: bin-ecommerce-runtime-secrets
-            - configMapRef:
-                name: bin-ecommerce-internal-services
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 768Mi
-          readinessProbe:
-            httpGet:
-              path: /api/health
-              port: http
-            initialDelaySeconds: 20
-            timeoutSeconds: 5
-            periodSeconds: 10
-            failureThreshold: 12
-          livenessProbe:
-            httpGet:
-              path: /api/health
-              port: http
-            initialDelaySeconds: 60
-            timeoutSeconds: 5
-            periodSeconds: 20
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: bin-ecommerce-ai-service
+    template:
+        metadata:
+            labels:
+                app.kubernetes.io/name: bin-ecommerce-ai-service
+                app.kubernetes.io/part-of: bin-ecommerce
+        spec:
+            imagePullSecrets:
+                - name: ghcr-pull-secret
+            containers:
+                - name: ai-service
+                  image: ghcr.io/daongocanh25092004/bin-ecommerce-ai-service:c5aebdb5942a
+                  imagePullPolicy: IfNotPresent
+                  ports:
+                      - name: http
+                        containerPort: 3009
+                  env:
+                      - name: PORT
+                        value: '3009'
+                      - name: NODE_ENV
+                        value: production
+                      - name: APP_NAME
+                        value: ai-service
+                      - name: KAFKA_BOOTSTRAP_SERVERS
+                        value: kafka.bin-ecommerce-data.svc.cluster.local:9092
+                      # Chỉ cấu hình RANKING_MODEL_PATH sau khi mount artifact LambdaRank
+                      # đã được đánh giá bằng dữ liệu thật cùng sidecar metadata. Không trỏ
+                      # tới model synthetic development; registry sẽ fail-closed khi chưa có model.
+                      # Ứng dụng FastAPI dùng tên chuẩn DATABASE_URL/REDIS_URL.
+                      # Secret runtime đang lưu hai giá trị này với tiền tố AI_ để phân biệt cấu hình.
+                      - name: DATABASE_URL
+                        valueFrom:
+                            secretKeyRef:
+                                name: bin-ecommerce-runtime-secrets
+                                key: AI_DATABASE_URL
+                      - name: REDIS_URL
+                        valueFrom:
+                            secretKeyRef:
+                                name: bin-ecommerce-runtime-secrets
+                                key: AI_REDIS_URL
+                  envFrom:
+                      - secretRef:
+                            name: bin-ecommerce-runtime-secrets
+                      - configMapRef:
+                            name: bin-ecommerce-internal-services
+                  resources:
+                      requests:
+                          cpu: 100m
+                          memory: 256Mi
+                      limits:
+                          cpu: 500m
+                          memory: 768Mi
+                  readinessProbe:
+                      httpGet:
+                          path: /api/health
+                          port: http
+                      initialDelaySeconds: 20
+                      timeoutSeconds: 5
+                      periodSeconds: 10
+                      failureThreshold: 12
+                  livenessProbe:
+                      httpGet:
+                          path: /api/health
+                          port: http
+                      initialDelaySeconds: 60
+                      timeoutSeconds: 5
+                      periodSeconds: 20
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: ai-service
-  namespace: bin-ecommerce-app
+    name: ai-service
+    namespace: bin-ecommerce-app
 spec:
-  type: ClusterIP
-  selector:
-    app.kubernetes.io/name: bin-ecommerce-ai-service
-  ports:
-    - name: http
-      port: 3009
-      targetPort: http
+    type: ClusterIP
+    selector:
+        app.kubernetes.io/name: bin-ecommerce-ai-service
+    ports:
+        - name: http
+          port: 3009
+          targetPort: http
