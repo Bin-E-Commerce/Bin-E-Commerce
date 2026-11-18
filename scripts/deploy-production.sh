@@ -37,6 +37,7 @@ set +a
 : "${RELEASE_SHA:?RELEASE_SHA is required}"
 : "${CHANGED_SERVICES:?CHANGED_SERVICES is required}"
 AI_WORKERS_CREATED="${AI_WORKERS_CREATED:-false}"
+AI_API_APPLIED=false
 
 if [[ "$AI_WORKERS_CREATED" != true && "$AI_WORKERS_CREATED" != false ]]; then
   echo "AI_WORKERS_CREATED must be true or false." >&2
@@ -372,9 +373,14 @@ rollback() {
   if [[ -f "$previous_file" ]]; then
     while IFS=$'\t' read -r deployment container previous_image; do
       [[ -n "$deployment" && -n "$container" && -n "$previous_image" ]] || continue
-      kubectl -n "$NAMESPACE" set image \
-        "deployment/$deployment" \
-        "$container=$previous_image" >/dev/null
+      if [[ "$deployment" == "bin-ecommerce-ai-service" && "$AI_API_APPLIED" == true ]]; then
+        # Manifest đổi cả env và image; undo khôi phục cùng một Pod template cũ.
+        kubectl -n "$NAMESPACE" rollout undo "deployment/$deployment" >/dev/null
+      else
+        kubectl -n "$NAMESPACE" set image \
+          "deployment/$deployment" \
+          "$container=$previous_image" >/dev/null
+      fi
     done < <(sudo cat "$previous_file")
 
     for deployment in "${APPLIED[@]}"; do
@@ -399,6 +405,21 @@ rollback() {
 
 trap rollback ERR
 
+# Kiểm tra đúng endpoint nội bộ của model sau rollout; health chung không xác nhận artifact.
+assert_ai_ranking_ready() {
+  kubectl -n "$NAMESPACE" exec deployment/bin-ecommerce-ai-service -- python -c '
+import json, os, urllib.request
+request = urllib.request.Request(
+    "http://127.0.0.1:3009/api/v1/ranking/status",
+    headers={"x-internal-service-token": os.environ["INTERNAL_SERVICE_TOKEN"]},
+)
+with urllib.request.urlopen(request, timeout=10) as response:
+    status = json.load(response)
+expected = os.environ["RANKING_MODEL_VERSION"]
+raise SystemExit(0 if status.get("ready") is True and status.get("modelVersion") == expected and status.get("featureCount") == 9 else 1)
+'
+}
+
 for service in "${DEPLOY_ORDER[@]}"; do
   [[ " ${CHANGED[*]} " == *" $service "* ]] || continue
 
@@ -406,6 +427,10 @@ for service in "${DEPLOY_ORDER[@]}"; do
   container="$(container_name "$service")"
 
   if [[ "$service" == "ai-service" ]]; then
+    [[ -f "$K3S_MANIFEST_PATH/apps/ai-service/deployment.yaml" ]] || {
+      echo "AI Service manifest not found in release." >&2
+      exit 1
+    }
     prepull_ai_image "$image"
     ensure_ai_worker_deployments
   fi
@@ -434,7 +459,13 @@ for service in "${DEPLOY_ORDER[@]}"; do
   # Với AI, image đã được pre-pull nên API và worker không tranh nhau tải image lớn.
   for deployment in "${SERVICE_DEPLOYMENTS[@]}"; do
     echo "Deploying $service workload $deployment..."
-    kubectl -n "$NAMESPACE" set image "deployment/$deployment" "$container=$image" >/dev/null
+    if [[ "$deployment" == "bin-ecommerce-ai-service" ]]; then
+      # Workflow đã thay tag trong manifest; apply env và image cùng một lần rollout.
+      kubectl apply -f "$K3S_MANIFEST_PATH/apps/ai-service/deployment.yaml" >/dev/null
+      AI_API_APPLIED=true
+    else
+      kubectl -n "$NAMESPACE" set image "deployment/$deployment" "$container=$image" >/dev/null
+    fi
   done
 
   rollout_timeout="$(rollout_timeout_for "$service")"
@@ -445,6 +476,10 @@ for service in "${DEPLOY_ORDER[@]}"; do
       exit 1
     fi
   done
+
+  if [[ "$service" == "ai-service" ]]; then
+    assert_ai_ranking_ready
+  fi
 
   printf '%s\n' "$service" | sudo tee -a "$applied_file" >/dev/null
 done
