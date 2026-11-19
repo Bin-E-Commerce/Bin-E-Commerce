@@ -37,9 +37,12 @@ spec:
                         value: ai-service
                       - name: KAFKA_BOOTSTRAP_SERVERS
                         value: kafka.bin-ecommerce-data.svc.cluster.local:9092
-                      # Chỉ cấu hình RANKING_MODEL_PATH sau khi mount artifact LambdaRank
-                      # đã được đánh giá bằng dữ liệu thật cùng sidecar metadata. Không trỏ
-                      # tới model synthetic development; registry sẽ fail-closed khi chưa có model.
+                      # Model LambdaRank demo được đóng gói trong image AI Service.
+                      # Metadata ghi rõ dataset synthetic; không xem metric là hiệu quả người dùng thật.
+                      - name: RANKING_MODEL_PATH
+                        value: /app/artifacts/development/ranking-lambdarank-v2.txt
+                      - name: RANKING_MODEL_VERSION
+                        value: ranking-lambdarank-v2
                       # Ứng dụng FastAPI dùng tên chuẩn DATABASE_URL/REDIS_URL.
                       # Secret runtime đang lưu hai giá trị này với tiền tố AI_ để phân biệt cấu hình.
                       - name: DATABASE_URL
