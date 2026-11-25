@@ -103,6 +103,9 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/bin-ecommerce-${{ matrix.name }}:${{ needs.detect.outputs.release_sha }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          # Debian security packages change independently of Dockerfile inputs;
+          # refresh only AI runtime so its apt layer cannot retain a stale CVE.
+          no-cache-filters: ${{ matrix.name == 'ai-service' && 'runtime' || '' }}
           provenance: mode=max
           sbom: true
 
