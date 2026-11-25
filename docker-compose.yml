@@ -79,7 +79,7 @@ services:
             dockerfile: services/api-gateway/Dockerfile
         image: bin-ecommerce/api-gateway:local
         ports:
-            - '3000:3000'
+            - '127.0.0.1:3000:3000'
         environment:
             PORT: 3000
             NODE_ENV: ${NODE_ENV:-development}
