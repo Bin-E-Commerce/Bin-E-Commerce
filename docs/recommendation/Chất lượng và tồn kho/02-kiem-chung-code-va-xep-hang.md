@@ -88,7 +88,7 @@ Chỉ dùng simulator để xác nhận pipeline/schema hoặc minh họa một 
 
 ## 5. Phép đo synthetic riêng cho feature quality
 
-Đã thêm evaluator tái lập tại [`evaluate-criterion-7-quality.ts`](../../../services/recommendation-service/src/scripts/evaluate-criterion-7-quality.ts). Script gọi `RankingFeatureService.build()` thật để lấy điểm `quality` hiện tại; không sửa công thức production, không huấn luyện model và không gọi dịch vụ ngoài.
+Đã thêm evaluator tái lập tại [`evaluate-criterion-7-quality.ts`](../../../services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-7-quality.ts). Script gọi `RankingFeatureService.build()` thật để lấy điểm `quality` hiện tại; không sửa công thức production, không huấn luyện model và không gọi dịch vụ ngoài.
 
 ### Thiết kế
 
@@ -107,7 +107,7 @@ Lệnh chạy từ thư mục recommendation-service:
 
 ```powershell
 npm run build
-node dist/services/recommendation-service/src/scripts/evaluate-criterion-7-quality.js
+node dist/services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-7-quality.js
 ```
 
 Kết quả chạy ngày 11/11/2026:

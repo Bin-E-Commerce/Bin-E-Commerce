@@ -98,7 +98,7 @@ Không chọn `ε`, `α` hoặc threshold bằng cách xem test nhiều lần. C
 
 ## 7. Mô phỏng policy tuần tự (synthetic, không phải đánh giá production)
 
-Để minh họa đúng bài toán exploration/exploitation, script [`evaluate-criterion-8-exploration.ts`](../../../services/recommendation-service/src/scripts/evaluate-criterion-8-exploration.ts) mô phỏng **chính sách chọn một item mỗi lượt**. Nó không coi cờ `exploration` là một ranker, không thay đổi code chấm điểm production và không dùng NDCG/Recall cho một action đơn lẻ.
+Để minh họa đúng bài toán exploration/exploitation, script [`evaluate-criterion-8-exploration.ts`](../../../services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-8-exploration.ts) mô phỏng **chính sách chọn một item mỗi lượt**. Nó không coi cờ `exploration` là một ranker, không thay đổi code chấm điểm production và không dùng NDCG/Recall cho một action đơn lẻ.
 
 ### Thiết kế
 
@@ -122,7 +122,7 @@ Chạy thủ công theo từng bước:
 
 ```powershell
 npm run build
-node .\dist\services\recommendation-service\src\scripts\evaluate-criterion-8-exploration.js
+node .\dist\services\recommendation-service\src\scripts\ranking-evaluation\criteria\evaluate-criterion-8-exploration.js
 ```
 
 | Policy synthetic                       | Reward/lượt | Pseudo-regret/lượt | Item duy nhất trung bình (2.000 action) | Phủ catalog | Danh mục duy nhất (2.000 action) |

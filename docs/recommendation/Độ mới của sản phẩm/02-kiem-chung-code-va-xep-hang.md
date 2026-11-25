@@ -11,7 +11,7 @@
 | Model xếp hạng       | [`recommendation-ml-ranking.service.ts`](../../../services/recommendation-service/src/modules/recommendation/application/services/ranking/ml/recommendation-ml-ranking.service.ts)                      | Đưa `freshness` cùng các feature khác vào LambdaRank. Điểm freshness không được nhân riêng với “trọng số 8%”; model học cách kết hợp các cột đầu vào. |
 | Giao diện giải thích | [`RankingWeightFreshnessDetails.tsx`](<../../../web/src/app/(public)/showcase/recommendation/components/ranking/criteria/RankingWeightFreshnessDetails.tsx>)                                            | Hiển thị các mốc bucket đang dùng.                                                                                                                    |
 | Kiểm thử đơn vị      | [`ranking-feature.service.spec.ts`](../../../services/recommendation-service/src/modules/recommendation/application/services/ranking/features/ranking-feature.service.spec.ts)                          | Kiểm tra các mốc, ngay sau mốc và ngày tạo trong tương lai.                                                                                           |
-| Evaluator riêng      | [`evaluate-criterion-6-freshness.ts`](../../../services/recommendation-service/src/scripts/evaluate-criterion-6-freshness.ts)                                                                           | Gọi feature builder production để lấy bucket thật; so với hàm mũ và baseline không freshness trên dữ liệu synthetic.                                  |
+| Evaluator riêng      | [`evaluate-criterion-6-freshness.ts`](../../../services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-6-freshness.ts)                                               | Gọi feature builder production để lấy bucket thật; so với hàm mũ và baseline không freshness trên dữ liệu synthetic.                                  |
 
 ### Công thức code đang chạy
 
@@ -85,10 +85,10 @@ $$
 | Kịch bản nhãn | Phương pháp       | `H` (ngày) | NDCG@10 trung bình ± SD | Recall@10 trung bình ± SD |
 | ------------- | ----------------- | ---------: | ----------------------: | ------------------------: |
 | Age-sensitive | Bucket production |          — |         0.4749 ± 0.0178 |           0.5072 ± 0.0235 |
-| Age-sensitive | Exponential decay |         7* |         0.4853 ± 0.0186 |           0.5237 ± 0.0236 |
+| Age-sensitive | Exponential decay |        7\* |         0.4853 ± 0.0186 |           0.5237 ± 0.0236 |
 | Age-sensitive | Không freshness   |          — |         0.2984 ± 0.0140 |           0.3311 ± 0.0152 |
 | Age-neutral   | Bucket production |          — |         0.2171 ± 0.0165 |           0.3261 ± 0.0310 |
-| Age-neutral   | Exponential decay |         7* |         0.2131 ± 0.0167 |           0.3160 ± 0.0322 |
+| Age-neutral   | Exponential decay |        7\* |         0.2131 ± 0.0167 |           0.3160 ± 0.0322 |
 | Age-neutral   | Không freshness   |          — |         0.2172 ± 0.0170 |           0.3205 ± 0.0250 |
 
 `*` Validation cho mọi `H` trong lưới cùng NDCG (age-sensitive `0.4851`, age-neutral `0.2310` khi làm tròn bốn chữ số). Lý do là với `H>0`, `F_exp(a)` giảm nghiêm ngặt theo tuổi; thay `H` đổi khoảng cách score nhưng **không đổi thứ tự candidate** khi chỉ xếp bằng freshness. Code chọn `H=7` như tie-break cố định cho kết quả chạy được, chứ dữ liệu validation không xác định được half-life tối ưu. Nếu cần chọn `H` có ý nghĩa, phải kiểm tra nó bên trong score tổng hợp/model ranker, nơi tương tác với feature khác có thể đổi thứ tự.
@@ -118,7 +118,7 @@ Chạy thủ công theo từng bước:
 
 ```powershell
 npm run build --workspace=@bin-ecommerce/recommendation-service
-node services/recommendation-service/dist/services/recommendation-service/src/scripts/evaluate-criterion-6-freshness.js
+node services/recommendation-service/dist/services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-6-freshness.js
 ```
 
 Lần chạy được ghi trong tài liệu này: cả lệnh build và evaluator hoàn tất với exit code `0`. Script in bảng tóm tắt, khoảng bootstrap và JSON đầy đủ; toàn bộ giá trị có thể tái tạo từ seed cố định. Nó không đọc database, không gọi mạng và không sửa catalog thật.

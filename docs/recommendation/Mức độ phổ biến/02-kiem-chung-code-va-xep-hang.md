@@ -62,7 +62,7 @@ Baseline dùng cùng candidate pool, request, nhãn và tie-breaker với Projec
 
 ## 4. Phép đo mô phỏng có thể chạy lại
 
-Evaluator nằm ở [`evaluate-criterion-5-popularity.ts`](../../../services/recommendation-service/src/scripts/evaluate-criterion-5-popularity.ts). Chạy từ thư mục gốc repository:
+Evaluator nằm ở [`evaluate-criterion-5-popularity.ts`](../../../services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-5-popularity.ts). Chạy từ thư mục gốc repository:
 
 ```bash
 npm run recommendation:criterion-5-popularity-evaluate

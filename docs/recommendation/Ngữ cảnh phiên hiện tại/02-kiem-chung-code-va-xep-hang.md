@@ -76,7 +76,7 @@ Từ thư mục gốc repository, chạy:
 npm run recommendation:session-context-evaluate
 ```
 
-Lệnh build recommendation-service rồi chạy [`evaluate-session-context-formulas.ts`](../../../services/recommendation-service/src/scripts/evaluate-session-context-formulas.ts). Seed cố định `20261111` giúp cùng code cho cùng kết quả. Script so sánh ba cách chấm **trên đúng cùng candidate pool**:
+Lệnh build recommendation-service rồi chạy [`evaluate-session-context-formulas.ts`](../../../services/recommendation-service/src/scripts/ranking-evaluation/evaluate-session-context-formulas.ts). Seed cố định `20261111` giúp cùng code cho cùng kết quả. Script so sánh ba cách chấm **trên đúng cùng candidate pool**:
 
 1. **Binary match:** trung bình hai cờ “danh mục từng xuất hiện” và “thương hiệu từng xuất hiện”. Đây là baseline đơn giản theo kiểu có/không; không phải cài đặt đầy đủ thuật toán SKNN.
 2. **Production linear position:** gọi `RankingFeatureService.build()` để lấy đúng `sessionContext` đang gửi vào model.
