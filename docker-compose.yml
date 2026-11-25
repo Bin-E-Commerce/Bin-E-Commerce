@@ -79,7 +79,7 @@ services:
             dockerfile: services/api-gateway/Dockerfile
         image: bin-ecommerce/api-gateway:local
         ports:
-            - '3000:3000'
+            - '127.0.0.1:3000:3000'
         environment:
             PORT: 3000
             NODE_ENV: ${NODE_ENV:-development}
@@ -414,6 +414,12 @@ services:
             PRODUCT_SERVICE_URL: http://product-service:3008
             AUTH_SERVICE_URL: http://auth-service:3001
             AI_SERVICE_URL: http://ai-service:3009
+            # URL Media phải tới container service, không dùng localhost của Recommendation.
+            MEDIA_SERVICE_URL: ${MEDIA_SERVICE_URL:?Set MEDIA_SERVICE_URL in .env}
+            IMAGE_SEARCH_ENABLED: ${IMAGE_SEARCH_ENABLED:-false}
+            IMAGE_SEARCH_MODEL_VERSION: ${IMAGE_SEARCH_MODEL_VERSION:-pe-core-s16-384-r255fa76e}
+            IMAGE_QDRANT_COLLECTION_VERSION: ${IMAGE_QDRANT_COLLECTION_VERSION:-2}
+            IMAGE_SEARCH_MIN_SIMILARITY_SCORE: ${IMAGE_SEARCH_MIN_SIMILARITY_SCORE:-0.75}
             REDIS_URL: ${REDIS_URL:?Set REDIS_URL in .env}
             REDIS_HOST: ${REDIS_HOST:-}
             REDIS_PORT: ${REDIS_PORT:-6379}
@@ -517,6 +523,10 @@ services:
             EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
             EMBEDDING_MODEL_VERSION: ${EMBEDDING_MODEL_VERSION:-text-embedding-3-small}
             EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
+            IMAGE_SEARCH_MODEL_PATH: ${IMAGE_SEARCH_MODEL_PATH:-}
+            IMAGE_SEARCH_MODEL_VERSION: ${IMAGE_SEARCH_MODEL_VERSION:-pe-core-s16-384-r255fa76e}
+            IMAGE_SEARCH_DIMENSIONS: ${IMAGE_SEARCH_DIMENSIONS:-512}
+            IMAGE_SEARCH_IMAGE_SIZE: ${IMAGE_SEARCH_IMAGE_SIZE:-384}
             EMBEDDING_TIMEOUT_SECONDS: ${EMBEDDING_TIMEOUT_SECONDS:-30}
             EMBEDDING_MAX_RETRY_ATTEMPTS: ${EMBEDDING_MAX_RETRY_ATTEMPTS:-5}
             EMBEDDING_REQUESTED_TOPIC: ${EMBEDDING_REQUESTED_TOPIC:-recommendation.product-embedding.requested.v1}

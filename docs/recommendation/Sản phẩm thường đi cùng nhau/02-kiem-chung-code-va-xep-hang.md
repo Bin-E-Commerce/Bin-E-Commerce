@@ -146,7 +146,7 @@ Dataset AI synthetic hiện có khai báo `featureSchemaVersion = ranking-featur
 
 ### Phép đo synthetic có thể chạy lại
 
-Script [`evaluate-criterion-4-cobehavior.ts`](../../../services/recommendation-service/src/scripts/evaluate-criterion-4-cobehavior.ts) chấm trực tiếp `coBehavior` bằng `RankingFeatureService` hiện hành. Từ cùng 8 seed, mỗi lần sinh 600 basket huấn luyện, 80 request validation, 100 request test; catalog có 152 sản phẩm, mỗi request có 2 anchor và cùng 150 ứng viên cho tất cả phương pháp. Basket train nằm trong ngày 0–60; validation ở ngày 61–81 và test ở ngày 81–101. Script kiểm tra mọi basket được dùng xảy ra trước cutoff của từng request. Dữ liệu relation được tổng hợp train-only; baseline cosine dùng vector đồng xuất hiện binary trên basket positive, còn confidence/lift chỉ dùng order mua thành công, không tính order return.
+Script [`evaluate-criterion-4-cobehavior.ts`](../../../services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-4-cobehavior.ts) chấm trực tiếp `coBehavior` bằng `RankingFeatureService` hiện hành. Từ cùng 8 seed, mỗi lần sinh 600 basket huấn luyện, 80 request validation, 100 request test; catalog có 152 sản phẩm, mỗi request có 2 anchor và cùng 150 ứng viên cho tất cả phương pháp. Basket train nằm trong ngày 0–60; validation ở ngày 61–81 và test ở ngày 81–101. Script kiểm tra mọi basket được dùng xảy ra trước cutoff của từng request. Dữ liệu relation được tổng hợp train-only; baseline cosine dùng vector đồng xuất hiện binary trên basket positive, còn confidence/lift chỉ dùng order mua thành công, không tính order return.
 
 Nhãn binary độc lập với score của mọi phương pháp: simulator lấy bundle ẩn làm intent, rồi sinh click với xác suất 0,42 cho item cùng bundle, 0,12 cho item hub phổ biến và 0,006 cho item ở bundle khác. Đây là giả định tạo tín hiệu kiểm soát, không phải log impression; kết quả tương tác được sinh cho toàn candidate pool. Metric là macro `NDCG@10` trên mọi request (request không có positive nhận 0), macro `Recall@10` chỉ trên request có positive; tie-break dựa hash ổn định theo request-item rồi product ID nên không phụ thuộc thứ tự candidate đầu vào. Báo cáo `mean ± sample SD` qua seed, không phải confidence interval.
 
@@ -162,7 +162,7 @@ Lệnh trên chạy từ thư mục gốc repository và tự build trước khi
 
 ```powershell
 npm run build
-node dist/services/recommendation-service/src/scripts/evaluate-criterion-4-cobehavior.js
+node dist/services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-4-cobehavior.js
 ```
 
 Kết quả lần chạy hiện tại:

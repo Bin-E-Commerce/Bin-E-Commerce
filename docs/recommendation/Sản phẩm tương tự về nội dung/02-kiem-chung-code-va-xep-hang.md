@@ -18,7 +18,7 @@ Luồng này xác nhận công thức không chỉ là `cosine(product A, produc
 
 ## 2. Đối chiếu unit specs đã có
 
-Các unit specs hiện có kiểm tra code path; một benchmark synthetic riêng đã được thêm tại [`evaluate-criterion-3-semantic.ts`](../../../services/recommendation-service/src/scripts/evaluate-criterion-3-semantic.ts). Xem kết quả và giới hạn tại mục 4.3. Unit specs là kiểm chứng code path, benchmark synthetic không phải phép đo hiệu quả trên người dùng thật.
+Các unit specs hiện có kiểm tra code path; một benchmark synthetic riêng đã được thêm tại [`evaluate-criterion-3-semantic.ts`](../../../services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-3-semantic.ts). Xem kết quả và giới hạn tại mục 4.3. Unit specs là kiểm chứng code path, benchmark synthetic không phải phép đo hiệu quả trên người dùng thật.
 
 | Spec                                                                                                                                                                                   | Trường hợp đang bảo vệ                                                                                                                                                                  | Chưa chứng minh                                                                                                                      |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -82,7 +82,7 @@ Không so feature project với một model nghiên cứu trên dataset khác r�
 
 ### 4.3. Benchmark synthetic có thể chạy lại
 
-Script [`evaluate-criterion-3-semantic.ts`](../../../services/recommendation-service/src/scripts/evaluate-criterion-3-semantic.ts) đã được chạy trên 20 seed, mỗi seed 500 request và catalog 48 sản phẩm. Mỗi seed chia theo thời gian thành 300 train, 100 validation, 100 test. Không có model nào được train trong benchmark feature này nên split train được giữ để thể hiện protocol nhưng không dùng để fit. Validation chỉ chọn một hệ số nhân recent-signal trong `{0,25; 0,5; 1; 2; 4}`; kết quả test không tham gia chọn hệ số. Mọi baseline chấm cùng candidate pool, nhãn và tie-break.
+Script [`evaluate-criterion-3-semantic.ts`](../../../services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-3-semantic.ts) đã được chạy trên 20 seed, mỗi seed 500 request và catalog 48 sản phẩm. Mỗi seed chia theo thời gian thành 300 train, 100 validation, 100 test. Không có model nào được train trong benchmark feature này nên split train được giữ để thể hiện protocol nhưng không dùng để fit. Validation chỉ chọn một hệ số nhân recent-signal trong `{0,25; 0,5; 1; 2; 4}`; kết quả test không tham gia chọn hệ số. Mọi baseline chấm cùng candidate pool, nhãn và tie-break.
 
 Nhãn sinh độc lập với vector/score: grade `2` = cùng latent topic, `1` = cùng family, `0` = family khác. Vì nhãn vẫn được tạo từ kịch bản synthetic, chúng chỉ dùng để kiểm tra evaluator và so hành vi trên kịch bản định trước, không thay nhãn giảng viên hay người mua.
 
@@ -117,7 +117,7 @@ npm run recommendation:criterion-3-semantic-evaluate
 Lệnh trực tiếp đã dùng để sinh các số ở bảng trên (không build/ghi `dist`):
 
 ```powershell
-npx --no-install ts-node --project services/recommendation-service/tsconfig.json -r tsconfig-paths/register services/recommendation-service/src/scripts/evaluate-criterion-3-semantic.ts
+npx --no-install ts-node --project services/recommendation-service/tsconfig.json -r tsconfig-paths/register services/recommendation-service/src/scripts/ranking-evaluation/criteria/evaluate-criterion-3-semantic.ts
 ```
 
 Script in bảng tóm tắt và số liệu từng seed. Qdrant được thay bằng adapter exact-cosine; vì vậy phép đo không kiểm tra ANN recall, lọc collection, latency hay tính đúng của vector embedding thật. Không có LambdaRank training, impression logs, feedback propensities, hoặc nhãn người dùng trong phép đo này.

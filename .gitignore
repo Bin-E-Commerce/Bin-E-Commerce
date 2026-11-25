@@ -51,3 +51,8 @@ skills-lock.json
 
 # ─── Keycloak ──────────────────────────────────────────────────────
 infra/keycloak/realm-export.json
+
+# ─── Scientific paper ─────────────────────────────────────────────────────
+scientific paper
+.codex-tmp
+.playwright-cli
