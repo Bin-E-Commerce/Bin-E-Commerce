@@ -58,11 +58,23 @@ export const RecommendationCatalogEvents = {
 export type RecommendationCatalogEventType =
     (typeof RecommendationCatalogEvents)[keyof typeof RecommendationCatalogEvents];
 
+// Giới hạn chung giữa Product và Recommendation để snapshot, fingerprint và multivector có cùng gallery.
+export const IMAGE_SEARCH_MAX_PRODUCT_IMAGES = 5;
+
+// Reference nội bộ để Media resolve asset đúng owner mà không nhận URL do event caller điều khiển.
+export interface RecommendationPrimaryImageMedia {
+    ownerId: string;
+    assetId: string;
+    purpose: 'product_image';
+}
+
 export interface RecommendationCatalogProductPayload {
     productId: string;
     name: string;
     slug: string;
     imageUrl: string | null;
+    // Reference có cấu trúc để Recommendation tải đúng asset qua Media; event legacy được phép thiếu field này.
+    primaryImageMedia?: RecommendationPrimaryImageMedia | null;
     categoryId: string | null;
     brandId: string | null;
     sellerShopId: string | null;
