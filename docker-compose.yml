@@ -414,6 +414,12 @@ services:
             PRODUCT_SERVICE_URL: http://product-service:3008
             AUTH_SERVICE_URL: http://auth-service:3001
             AI_SERVICE_URL: http://ai-service:3009
+            # URL Media phải tới container service, không dùng localhost của Recommendation.
+            MEDIA_SERVICE_URL: ${MEDIA_SERVICE_URL:?Set MEDIA_SERVICE_URL in .env}
+            IMAGE_SEARCH_ENABLED: ${IMAGE_SEARCH_ENABLED:-false}
+            IMAGE_SEARCH_MODEL_VERSION: ${IMAGE_SEARCH_MODEL_VERSION:-pe-core-s16-384-r255fa76e}
+            IMAGE_QDRANT_COLLECTION_VERSION: ${IMAGE_QDRANT_COLLECTION_VERSION:-2}
+            IMAGE_SEARCH_MIN_SIMILARITY_SCORE: ${IMAGE_SEARCH_MIN_SIMILARITY_SCORE:-0.75}
             REDIS_URL: ${REDIS_URL:?Set REDIS_URL in .env}
             REDIS_HOST: ${REDIS_HOST:-}
             REDIS_PORT: ${REDIS_PORT:-6379}
