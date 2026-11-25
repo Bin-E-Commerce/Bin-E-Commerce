@@ -5,6 +5,18 @@
 import { randomUUID } from 'crypto';
 import { MetricsRegistry } from './metrics-registry';
 
+const KNOWN_HTTP_METHODS = new Set([
+    'CONNECT',
+    'DELETE',
+    'GET',
+    'HEAD',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+    'TRACE',
+]);
+
 // Chỉ mô tả phần contract mà observability cần từ Nest để package common không
 // phải kéo dependency framework vào mọi Docker build compile trực tiếp source này.
 interface NestLoggerLike {
@@ -35,7 +47,7 @@ interface HttpRequest {
 interface HttpResponse {
     statusCode?: number;
     setHeader(name: string, value: string): void;
-    on(event: 'finish', callback: () => void): void;
+    once(event: 'finish' | 'close', callback: () => void): void;
     end(body?: string): void;
 }
 
@@ -81,10 +93,11 @@ function resolveSafeIdentity(request: HttpRequest): Record<string, string> {
     };
 }
 
-// Chuẩn hóa route template để metrics không tạo series riêng cho từng ID động.
+// Chỉ dùng route template của Express; URL lạ được gom vào nhãn cố định để client không tạo series tùy ý.
+// Route template giữ placeholder động như `:id`, không chứa giá trị thực từ request.
+// Giới hạn độ dài cuối cùng để cấu hình route sai không phình metrics hoặc structured log.
 function resolveRoute(request: HttpRequest): string {
-    const route =
-        request.route?.path ?? request.path ?? request.originalUrl ?? 'unknown';
+    const route = request.route?.path ?? 'unmatched';
     const [path = 'unknown'] = route.split('?', 1);
     const normalized = path
         .split('/')
@@ -97,6 +110,12 @@ function resolveRoute(request: HttpRequest): string {
         )
         .join('/');
     return normalized.slice(0, 160) || 'unknown';
+}
+
+// Chuẩn hóa method về tập hữu hạn để HTTP method mở rộng không làm tăng cardinality metrics.
+function resolveMethod(method: string | undefined): string {
+    const normalized = method?.toUpperCase() ?? 'UNKNOWN';
+    return KNOWN_HTTP_METHODS.has(normalized) ? normalized : 'OTHER';
 }
 
 // Chuẩn hóa Error thành tên/message trước khi lọc secret và che email để log không rơi thành `{}`.
@@ -207,7 +226,9 @@ export class StructuredLogger implements NestLoggerLike {
     }
 }
 
-// Gắn request ID, access log và RED metrics vào HTTP adapter mà không đụng vào controller/business code.
+// Gắn request ID và RED metrics mà không chạm business code.
+// `finish` ghi status/latency một lần; `close` chỉ ghi counter hủy nếu response chưa hoàn tất.
+// Cả hai listener cùng dùng release idempotent để gauge luôn khớp request còn mở.
 export function setupHttpObservability(
     app: NestApplicationLike,
     service: string,
@@ -235,59 +256,88 @@ export function setupHttpObservability(
         response.setHeader('x-request-id', requestId);
         registry.addGauge('http_requests_in_flight', 1, { service });
 
-        response.on('finish', () => {
-            const durationSeconds =
-                Number(process.hrtime.bigint() - startedAt) / 1_000_000_000;
-            const route = resolveRoute(request);
-            const method = request.method ?? 'UNKNOWN';
-            const statusCode = response.statusCode ?? 0;
-            const statusClass = `${Math.floor(statusCode / 100)}xx`;
-            registry.increment('http_requests_total', {
-                service,
-                method,
-                route,
-            });
-            registry.observeHistogram(
-                'http_request_duration_seconds',
-                durationSeconds,
-                {
+        let responseFinished = false;
+        let inFlightReleased = false;
+        // Listener finish và close có thể cùng chạy; release idempotent giữ gauge không âm hoặc tăng giả.
+        const releaseInFlight = (): void => {
+            if (inFlightReleased) return;
+            inFlightReleased = true;
+            registry.addGauge('http_requests_in_flight', -1, { service });
+        };
+
+        response.once('finish', () => {
+            responseFinished = true;
+            try {
+                const durationSeconds =
+                    Number(process.hrtime.bigint() - startedAt) / 1_000_000_000;
+                const route = resolveRoute(request);
+                const method = resolveMethod(request.method);
+                const statusCode = response.statusCode ?? 0;
+                const statusClass = `${Math.floor(statusCode / 100)}xx`;
+                registry.increment('http_requests_total', {
+                    service,
+                    method,
+                    route,
+                });
+                registry.observeHistogram(
+                    'http_request_duration_seconds',
+                    durationSeconds,
+                    {
+                        service,
+                        method,
+                        route,
+                        status_class: statusClass,
+                    },
+                );
+                registry.increment('http_responses_total', {
                     service,
                     method,
                     route,
                     status_class: statusClass,
-                },
-            );
-            registry.increment('http_responses_total', {
-                service,
-                method,
-                route,
-                status_class: statusClass,
-            });
-            registry.addGauge('http_requests_in_flight', -1, { service });
+                });
 
-            const isHealthRequest =
-                route.includes('health') || route === '/metrics';
-            if (
-                !isHealthRequest ||
-                statusCode >= 400 ||
-                durationSeconds >= 0.5
-            ) {
-                logger.logEvent(
-                    'http.request.completed',
-                    {
-                        requestId,
-                        method,
-                        route,
-                        statusCode,
-                        durationMs: Math.round(durationSeconds * 1000),
-                        ...resolveSafeIdentity(request),
-                    },
-                    statusCode >= 500
-                        ? 'error'
-                        : statusCode >= 400
-                          ? 'warn'
-                          : 'info',
-                );
+                const isHealthRequest =
+                    route.includes('health') || route === '/metrics';
+                if (
+                    !isHealthRequest ||
+                    statusCode >= 400 ||
+                    durationSeconds >= 0.5
+                ) {
+                    logger.logEvent(
+                        'http.request.completed',
+                        {
+                            requestId,
+                            method,
+                            route,
+                            statusCode,
+                            durationMs: Math.round(durationSeconds * 1000),
+                            ...resolveSafeIdentity(request),
+                        },
+                        statusCode >= 500
+                            ? 'error'
+                            : statusCode >= 400
+                              ? 'warn'
+                              : 'info',
+                    );
+                }
+            } finally {
+                // Metrics hoặc logger lỗi cũng không được giữ gauge tăng sau response hoàn tất.
+                releaseInFlight();
+            }
+        });
+
+        response.once('close', () => {
+            // close sau finish là vòng đời bình thường; chỉ đếm và giải phóng khi response chưa hoàn tất.
+            if (responseFinished) return;
+            try {
+                registry.increment('http_requests_aborted_total', {
+                    service,
+                    method: resolveMethod(request.method),
+                    route: resolveRoute(request),
+                });
+            } finally {
+                // Metrics lỗi không được giữ lại gauge của response đã đóng.
+                releaseInFlight();
             }
         });
 
