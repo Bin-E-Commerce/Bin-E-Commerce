@@ -6,11 +6,19 @@ kind: Kustomization
 # Các nhóm được tách theo trách nhiệm
 # để dễ review, dễ cập nhật độc lập và tránh một manifest phình to khó rollback.
 resources:
-  - core/namespace.yaml
-  - metrics/prometheus.yaml
-  - metrics/node-exporter.yaml
-  - metrics/kube-state-metrics.yaml
-  - grafana/grafana.yaml
-  - grafana/ingress.yaml
-  - logging/loki.yaml
-  - logging/alloy.yaml
+    - core/namespace.yaml
+    - metrics/prometheus.yaml
+    - metrics/node-exporter.yaml
+    - metrics/kube-state-metrics.yaml
+    - grafana/grafana.yaml
+    - grafana/ingress.yaml
+    - logging/loki.yaml
+    - logging/alloy.yaml
+
+# Gộp dashboard production vào ConfigMap Grafana đang mount để tự nạp cấu hình.
+configMapGenerator:
+    - name: grafana-dashboard-bin-ecommerce
+      namespace: bin-ecommerce-observability
+      behavior: merge
+      files:
+          - grafana/production-workloads.json

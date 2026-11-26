@@ -1,0 +1,155 @@
+{
+    "uid": "bin-ecommerce-prod-workloads",
+    "title": "Bin E-Commerce / K3s Production",
+    "editable": false,
+    "refresh": "1m",
+    "schemaVersion": 39,
+    "tags": ["bin-ecommerce", "k3s", "production"],
+    "time": { "from": "now-1h", "to": "now" },
+    "templating": {
+        "list": [
+            {
+                "name": "workload",
+                "label": "Workload",
+                "type": "query",
+                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "definition": "label_values(kube_deployment_spec_replicas{namespace=\"bin-ecommerce-app\"}, deployment)",
+                "query": {
+                    "query": "label_values(kube_deployment_spec_replicas{namespace=\"bin-ecommerce-app\"}, deployment)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "includeAll": true,
+                "allValue": ".*",
+                "current": {
+                    "selected": true,
+                    "text": "All",
+                    "value": "$__all"
+                },
+                "refresh": 1,
+                "sort": 1
+            }
+        ]
+    },
+    "panels": [
+        {
+            "id": 1,
+            "type": "stat",
+            "title": "Replica yêu cầu",
+            "description": "Tổng replica theo cấu hình Deployment đang chọn.",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+            "fieldConfig": {
+                "defaults": { "unit": "short", "decimals": 0 },
+                "overrides": []
+            },
+            "targets": [
+                {
+                    "expr": "sum(kube_deployment_spec_replicas{namespace=\"bin-ecommerce-app\",deployment=~\"${workload:regex}\"})",
+                    "instant": true,
+                    "range": false,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "type": "stat",
+            "title": "Replica hoạt động",
+            "description": "Tổng replica khả dụng theo trạng thái Kubernetes.",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+            "fieldConfig": {
+                "defaults": { "unit": "short", "decimals": 0 },
+                "overrides": []
+            },
+            "targets": [
+                {
+                    "expr": "sum(kube_deployment_status_replicas_available{namespace=\"bin-ecommerce-app\",deployment=~\"${workload:regex}\"})",
+                    "instant": true,
+                    "range": false,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "type": "stat",
+            "title": "Pod chưa sẵn sàng",
+            "description": "Số Pod chưa đạt điều kiện Ready trong các Deployment đang chọn.",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+            "fieldConfig": {
+                "defaults": { "unit": "short", "decimals": 0 },
+                "overrides": []
+            },
+            "targets": [
+                {
+                    "expr": "sum(kube_pod_status_ready{namespace=\"bin-ecommerce-app\",pod=~\"(${workload:regex})-[a-z0-9]+-[a-z0-9]+\",condition=\"true\"} == bool 0)",
+                    "instant": true,
+                    "range": false,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "type": "stat",
+            "title": "Lượt restart trong 1 giờ",
+            "description": "Mức tăng bộ đếm restart của các container thuộc workload đang chọn.",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+            "fieldConfig": {
+                "defaults": { "unit": "short", "decimals": 0 },
+                "overrides": []
+            },
+            "targets": [
+                {
+                    "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=\"bin-ecommerce-app\",pod=~\"(${workload:regex})-[a-z0-9]+-[a-z0-9]+\"}[1h]))",
+                    "instant": true,
+                    "range": false,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "type": "timeseries",
+            "title": "Replica hoạt động theo workload",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "gridPos": { "h": 9, "w": 24, "x": 0, "y": 4 },
+            "fieldConfig": {
+                "defaults": { "unit": "short", "decimals": 0, "min": 0 },
+                "overrides": []
+            },
+            "targets": [
+                {
+                    "expr": "max by (deployment) (kube_deployment_status_replicas_available{namespace=\"bin-ecommerce-app\",deployment=~\"${workload:regex}\"})",
+                    "legendFormat": "{{deployment}}",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 6,
+            "type": "logs",
+            "title": "Log của workload",
+            "datasource": { "type": "loki", "uid": "loki" },
+            "gridPos": { "h": 13, "w": 24, "x": 0, "y": 13 },
+            "options": {
+                "showTime": true,
+                "showLabels": true,
+                "wrapLines": true,
+                "enableLogDetails": true,
+                "sortOrder": "Descending"
+            },
+            "targets": [
+                {
+                    "expr": "{namespace=\"bin-ecommerce-app\",app=~\"${workload:regex}\"}",
+                    "maxLines": 100,
+                    "refId": "A"
+                }
+            ]
+        }
+    ],
+    "version": 1
+}
