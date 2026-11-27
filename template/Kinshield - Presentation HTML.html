@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KinShield Flow — System Design Chống Lừa Đảo Ba Lớp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" />
+  <style>
+    /* ==========================================================================
+       KinShield Flow — Calm Animated Models Design System (SysMotion Style)
+       Warm Cream + Eucalyptus Sage (Light) / Soft Dusk Everforest (Dark)
+       ========================================================================== */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --bg: #f6f4ee;
+      --bg-subtle: #edeae0;
+      --surface: #ffffff;
+      --surface-warm: #faf8f3;
+      --canvas-bg: #fcfbf8;
+      --border: #e4dfd3;
+      --border-strong: #d3ccb9;
+
+      --text: #1f2933;
+      --text-secondary: #52606d;
+      --text-muted: #7b8794;
+
+      --accent: #2a7b6f;
+      --accent-hover: #216359;
+      --accent-soft: #e6f3f0;
+      --accent-border: #bfe0d8;
+
+      --producer: #b86a3a;
+      --producer-bg: #fdf2ea;
+      --producer-border: #efcfae;
+
+      --broker: #2a7b6f;
+      --broker-bg: #e7f4f1;
+      --broker-border: #b8ded5;
+
+      --consumer: #5363b5;
+      --consumer-bg: #eef0fa;
+      --consumer-border: #cbd3f1;
+
+      --kraft: #7c5c91;
+      --kraft-bg: #f4eff8;
+      --kraft-border: #dccce8;
+
+      --good: #2f7d54;
+      --good-bg: #e8f5ed;
+      --good-border: #bae0c9;
+
+      --warn: #b57724;
+      --warn-bg: #fdf5e7;
+      --warn-border: #ecd5ac;
+
+      --danger: #bf4e4e;
+      --danger-bg: #fcecec;
+      --danger-border: #ecc3c3;
+
+      --wire: #cfc8b8;
+      --wire-active: #2a7b6f;
+
+      --shadow-sm: 0 2px 6px rgba(45, 42, 34, 0.04);
+      --shadow-md: 0 10px 28px rgba(45, 42, 34, 0.06);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --radius-pill: 999px;
+
+      --font-ui: "Be Vietnam Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --font-mono-ui: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+      color-scheme: light;
+    }
+
+    [data-theme="dark"] {
+      --bg: #1a2025;
+      --bg-subtle: #21282f;
+      --surface: #242d35;
+      --surface-warm: #29333c;
+      --canvas-bg: #1f272e;
+      --border: #35414c;
+      --border-strong: #465563;
+
+      --text: #e9e6de;
+      --text-secondary: #adb7c0;
+      --text-muted: #7f8c97;
+
+      --accent: #68b8a8;
+      --accent-hover: #7ec8b9;
+      --accent-soft: #1f3634;
+      --accent-border: #335854;
+
+      --producer: #e09c6d;
+      --producer-bg: #36281f;
+      --producer-border: #593f2e;
+
+      --broker: #68b8a8;
+      --broker-bg: #1e3533;
+      --broker-border: #335955;
+
+      --consumer: #9aa7ea;
+      --consumer-bg: #252a42;
+      --consumer-border: #3c446b;
+
+      --kraft: #c3a4db;
+      --kraft-bg: #30253a;
+      --kraft-border: #4e3c5e;
+
+      --good: #7bc79a;
+      --good-bg: #1e3428;
+      --good-border: #315742;
+
+      --warn: #e2b167;
+      --warn-bg: #382f1e;
+      --warn-border: #5b4b2e;
+
+      --danger: #e48484;
+      --danger-bg: #3b2325;
+      --danger-border: #61383b;
+
+      --wire: #465460;
+      --wire-active: #68b8a8;
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.22);
+      --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.3);
+      color-scheme: dark;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 15px;
+      line-height: 1.58;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(42, 123, 111, 0.065), transparent 36%),
+        radial-gradient(circle at 88% 12%, rgba(184, 106, 58, 0.05), transparent 34%),
+        radial-gradient(circle at 75% 86%, rgba(83, 99, 181, 0.05), transparent 38%);
+    }
+    button { font-family: inherit; font-size: inherit; color: inherit; }
+    code {
+      font-family: var(--font-mono-ui);
+      font-size: 0.88em;
+      background: var(--bg-subtle);
+      padding: 1px 6px;
+      border-radius: 5px;
+    }
+
+    /* Sticky Topbar */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-inner {
+      max-width: 1420px; margin: 0 auto; padding: 11px 22px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 14px; flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--accent); display: grid; place-items: center;
+      box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 26%, transparent);
+    }
+    .brand-title { font-weight: 800; font-size: 16px; letter-spacing: -0.02em; line-height: 1.15; }
+    .brand-sub { font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
+
+    .global-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pill-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 13px; border-radius: var(--radius-pill);
+      border: 1px solid var(--border-strong);
+      background: var(--surface); color: var(--text-secondary);
+      font-size: 12.5px; font-weight: 600; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .pill-btn:hover { background: var(--surface-warm); color: var(--text); }
+    .pill-btn.active { background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent); }
+
+    .deck-progress-track { height: 3px; background: var(--border); width: 100%; overflow: hidden; }
+    .deck-progress-fill { height: 100%; background: var(--accent); transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+
+    /* Workspace 2-column layout */
+    .workspace-shell {
+      max-width: 1420px; margin: 0 auto; padding: 20px 22px 48px;
+      display: grid; grid-template-columns: 274px minmax(0, 1fr);
+      gap: 22px; align-items: start;
+    }
+
+    /* Sticky Left Sidebar */
+    .side-menu {
+      position: sticky; top: 76px;
+      max-height: calc(100dvh - 94px); overflow-y: auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 12px;
+      box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .side-cover {
+      border-radius: var(--radius-md); padding: 14px 14px 12px;
+      border: 1px solid var(--accent-border);
+      background: linear-gradient(135deg, var(--accent-soft), var(--surface-warm));
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .side-cover-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .side-cover-title { font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
+    .side-cover-count {
+      font-family: var(--font-mono-ui); font-size: 10.5px; font-weight: 700;
+      color: #ffffff; background: var(--accent); padding: 2px 8px; border-radius: 99px;
+    }
+    [data-theme="dark"] .side-cover-count { color: #10201d; }
+    .side-cover-sub { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+
+    .side-menu-group { display: flex; flex-direction: column; gap: 3px; }
+    .side-menu-heading {
+      font-size: 10.5px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text-muted); padding: 2px 10px 4px;
+    }
+    .side-menu-item {
+      width: 100%; border: 1px solid transparent; background: transparent;
+      padding: 8px 10px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; gap: 9px; text-align: left;
+      cursor: pointer; color: var(--text-secondary);
+      font-size: 13px; font-weight: 600; line-height: 1.3;
+      transition: all 0.14s ease;
+    }
+    .side-menu-item:hover { background: var(--surface-warm); color: var(--text); }
+    .side-menu-item.active { background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent); }
+    .side-menu-num {
+      width: 24px; height: 24px; border-radius: 7px;
+      background: var(--bg-subtle); color: var(--text-muted);
+      font-family: var(--font-mono-ui); font-size: 11px; font-weight: 700;
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .side-menu-item.active .side-menu-num { background: var(--accent); color: #ffffff; }
+    [data-theme="dark"] .side-menu-item.active .side-menu-num { color: #10201d; }
+
+    /* Stage Card */
+    .stage-column { min-width: 0; }
+    .model-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+      overflow: hidden;
+      animation: slideFadeIn 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes slideFadeIn {
+      from { opacity: 0; transform: translateY(7px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .model-header {
+      padding: 20px 26px 16px; border-bottom: 1px solid var(--border);
+      background: var(--surface-warm);
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .model-title-group { display: flex; flex-direction: column; gap: 6px; max-width: 650px; }
+    .model-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: var(--radius-pill);
+      font-size: 11.5px; font-weight: 700;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary);
+    }
+    .badge.producer { background: var(--producer-bg); color: var(--producer); border-color: var(--producer-border); }
+    .badge.broker { background: var(--broker-bg); color: var(--broker); border-color: var(--broker-border); }
+    .badge.consumer { background: var(--consumer-bg); color: var(--consumer); border-color: var(--consumer-border); }
+    .badge.kraft { background: var(--kraft-bg); color: var(--kraft); border-color: var(--kraft-border); }
+    .badge.danger { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+    .badge.good { background: var(--good-bg); color: var(--good); border-color: var(--good-border); }
+    .badge.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-border); }
+
+    .model-header h2 { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.28; }
+    .model-subtitle { margin: 0; color: var(--text-secondary); font-size: 13.8px; }
+
+    .model-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ctrl-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 13px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
+      font-size: 12.8px; font-weight: 600; cursor: pointer;
+      transition: all 0.15s ease; white-space: nowrap;
+    }
+    .ctrl-btn:hover { background: var(--bg-subtle); transform: translateY(-1px); }
+    .ctrl-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .ctrl-btn.danger { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
+    .ctrl-btn.warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn); }
+    .ctrl-btn.good { background: var(--good-bg); border-color: var(--good-border); color: var(--good); }
+
+    .stage-canvas-wrap {
+      padding: 18px 22px; background: var(--canvas-bg);
+      position: relative; overflow-x: auto;
+    }
+    .stage-svg {
+      width: 100%; min-width: 780px; height: auto;
+      display: block; margin: 0 auto; user-select: none;
+    }
+
+    .status-banner {
+      margin: 0 22px 16px; padding: 10px 14px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: var(--surface-warm);
+      font-size: 13px; color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .status-banner.danger { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
+    .status-banner.good { background: var(--good-bg); border-color: var(--good-border); color: var(--good); }
+    .status-banner.warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn); }
+    .status-metric { font-family: var(--font-mono-ui); font-weight: 700; }
+
+    .model-takeaways {
+      padding: 16px 26px 20px; border-top: 1px solid var(--border);
+      background: var(--surface);
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    }
+    .takeaway-item {
+      background: var(--surface-warm); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px 14px;
+    }
+    .takeaway-item strong { display: block; font-size: 13px; margin-bottom: 3px; color: var(--text); }
+    .takeaway-item span { font-size: 12.5px; color: var(--text-secondary); line-height: 1.46; display: block; }
+
+    /* Compact Scenario Detail + Matrix (Model 02) */
+    .sc-detail-grid {
+      margin: 0 22px 14px;
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+    }
+    .sc-detail-box {
+      background: var(--surface-warm); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 13px;
+    }
+    .sc-detail-box .sc-lbl {
+      display: block; font-size: 10.5px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 3px;
+    }
+    .sc-detail-box .sc-val { font-size: 12.6px; color: var(--text); line-height: 1.45; }
+    .sc-detail-box.hit { border-color: var(--good-border); background: var(--good-bg); }
+    .sc-detail-box.hit .sc-lbl { color: var(--good); }
+    .sc-detail-box.atk { border-color: var(--danger-border); background: var(--danger-bg); }
+    .sc-detail-box.atk .sc-lbl { color: var(--danger); }
+
+    .layer-matrix-wrap { padding: 0 22px 16px; overflow-x: auto; }
+    .layer-matrix {
+      width: 100%; border-collapse: collapse; font-size: 12.5px;
+      border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;
+      background: var(--surface);
+    }
+    .layer-matrix th, .layer-matrix td {
+      padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .layer-matrix th {
+      background: var(--surface-warm); color: var(--text-muted);
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;
+    }
+    .layer-matrix tbody tr { cursor: pointer; transition: background 0.14s ease; }
+    .layer-matrix tbody tr:hover { background: var(--surface-warm); }
+    .layer-matrix tr:last-child td { border-bottom: 0; }
+    .layer-matrix tr.row-active { background: var(--accent-soft); }
+    .layer-matrix tr.row-active td:first-child { color: var(--accent); font-weight: 700; }
+    .hit-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 99px;
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
+    .hit-pill.primary { background: var(--good-bg); color: var(--good); border: 1px solid var(--good-border); }
+    .hit-pill.support { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-border); }
+    .hit-pill.idle { background: var(--bg-subtle); color: var(--text-muted); }
+    @media (max-width: 820px) { .sc-detail-grid { grid-template-columns: 1fr; } }
+
+    /* Bottom Pagination */
+    .deck-pagination {
+      margin-top: 18px; padding: 15px 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 14px; flex-wrap: wrap;
+    }
+    .pager-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 10px 16px; border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong); background: var(--surface-warm); color: var(--text);
+      cursor: pointer; transition: all 0.16s ease; text-align: left; min-width: 200px;
+    }
+    .pager-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
+    .pager-btn.next { background: var(--accent); border-color: var(--accent); color: #ffffff; justify-content: space-between; text-align: right; }
+    .pager-btn.next:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+    [data-theme="dark"] .pager-btn.next { color: #10201d; }
+    .pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pager-btn-meta { display: flex; flex-direction: column; line-height: 1.25; }
+    .pager-btn-dir { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.78; }
+    .pager-btn-name { font-size: 13px; font-weight: 700; }
+
+    .pager-center { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .pager-counter { font-family: var(--font-mono-ui); font-size: 12.5px; font-weight: 700; color: var(--text); }
+    .pager-dots { display: flex; align-items: center; gap: 7px; }
+    .pager-dot { width: 9px; height: 9px; border-radius: 99px; border: none; padding: 0; background: var(--border-strong); cursor: pointer; transition: all 0.2s ease; }
+    .pager-dot.active { width: 26px; background: var(--accent); }
+    .pager-hint { font-size: 11px; color: var(--text-muted); }
+
+    /* SVG Node Typography */
+    .n-title { fill: var(--text); font-size: 13px; font-weight: 700; }
+    .n-sub { fill: var(--text-secondary); font-size: 11px; font-weight: 500; }
+    .n-mono { fill: var(--text-muted); font-size: 10.5px; font-family: var(--font-mono-ui); font-weight: 600; }
+    .n-wire-lbl { fill: var(--text-secondary); font-size: 11px; font-weight: 600; }
+
+    /* Technical Reference Repos Table */
+    .ref-repo-box {
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      overflow: hidden;
+    }
+    .ref-repo-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface-warm);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px; font-weight: 700; color: var(--text);
+    }
+    .ref-repo-head span { font-size: 11px; font-weight: 600; color: var(--text-muted); font-family: var(--font-mono-ui); }
+    .ref-repo-table { width: 100%; border-collapse: collapse; font-size: 12.2px; }
+    .ref-repo-table th {
+      text-align: left; padding: 7px 12px; font-size: 10.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);
+      border-bottom: 1px solid var(--border); background: var(--surface-alt);
+    }
+    .ref-repo-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; line-height: 1.45; }
+    .ref-repo-table tr:last-child td { border-bottom: none; }
+    .ref-link {
+      color: var(--accent); font-family: var(--font-mono-ui); font-size: 11.8px; font-weight: 600;
+      text-decoration: none; word-break: break-word;
+    }
+    .ref-link:hover { text-decoration: underline; }
+
+
+    .verdict-pill {
+      display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px;
+      font-size: 10.5px; font-weight: 700; white-space: nowrap;
+    }
+    .verdict-pill.primary { background: var(--good-bg); color: var(--good); }
+    .verdict-pill.support { background: var(--broker-bg); color: var(--broker); }
+    .verdict-pill.warn { background: var(--warn-bg); color: var(--warn); }
+    .verdict-pill.idle { background: var(--surface-warm); color: var(--text-muted); }
+    .copy-pull-box {
+      margin-top: 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+      background: var(--surface); overflow: hidden;
+    }
+    .copy-pull-head {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 10px 14px; background: var(--surface-warm); border-bottom: 1px solid var(--border);
+    }
+    .copy-pull-title { font-size: 12.5px; font-weight: 700; color: var(--text); }
+    .copy-pull-sub { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono-ui); }
+    .copy-pull-btn {
+      font: inherit; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 999px;
+      border: 1px solid var(--accent); background: var(--accent); color: #ffffff; cursor: pointer;
+      transition: transform 0.12s ease, opacity 0.15s ease;
+    }
+    .copy-pull-btn:hover { opacity: 0.92; }
+    .copy-pull-btn.copied { background: var(--good); border-color: var(--good); }
+    .copy-pull-area {
+      width: 100%; min-height: 220px; max-height: 360px; padding: 12px 14px; border: none; outline: none;
+      resize: vertical; background: var(--canvas-bg); color: var(--text);
+      font-family: var(--font-mono-ui); font-size: 11.5px; line-height: 1.55; white-space: pre; overflow: auto;
+    }
+
+    @media (max-width: 980px) {
+      .workspace-shell { grid-template-columns: 1fr; }
+      .side-menu { position: static; max-height: none; }
+      .model-takeaways { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20" stroke="#F7F5F0" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </span>
+        <div>
+          <div class="brand-title">KinShield Flow</div>
+          <div class="brand-sub">System Design Chống Lừa Đảo · 9 mô hình hoạt ảnh</div>
+        </div>
+      </div>
+
+      <div class="global-controls">
+        <button type="button" id="btnPlay" class="pill-btn active">Tạm dừng</button>
+        <div style="display:inline-flex;gap:4px;">
+          <button type="button" class="pill-btn speed-btn" data-speed="0.6" style="padding:6px 10px;">Chậm</button>
+          <button type="button" class="pill-btn speed-btn active" data-speed="1" style="padding:6px 10px;">1x</button>
+          <button type="button" class="pill-btn speed-btn" data-speed="1.6" style="padding:6px 10px;">Nhanh</button>
+        </div>
+        <button type="button" id="btnTheme" class="pill-btn">Tối dịu</button>
+      </div>
+    </div>
+    <div class="deck-progress-track"><div id="progressFill" class="deck-progress-fill" style="width:12.5%"></div></div>
+  </header>
+
+  <div class="workspace-shell">
+    <aside class="side-menu" id="sideMenu" aria-label="Danh sách mô hình KinShield"></aside>
+
+    <main class="stage-column">
+      <article id="modelStage" class="model-card"></article>
+
+      <nav class="deck-pagination" aria-label="Chuyển trang mô hình">
+        <button type="button" id="btnPrev" class="pager-btn">
+          <span style="font-size:17px;">←</span>
+          <span class="pager-btn-meta">
+            <span class="pager-btn-dir">Trang trước</span>
+            <span class="pager-btn-name" id="prevName">Đầu danh sách</span>
+          </span>
+        </button>
+
+        <div class="pager-center">
+          <span class="pager-counter" id="pagerCounter">KinShield · Trang 1 / 8</span>
+          <div class="pager-dots" id="pagerDots"></div>
+          <span class="pager-hint">Mẹo: Dùng phím ← / → để chuyển trang nhanh</span>
+        </div>
+
+        <button type="button" id="btnNext" class="pager-btn next">
+          <span class="pager-btn-meta">
+            <span class="pager-btn-dir">Tiếp theo</span>
+            <span class="pager-btn-name" id="nextName">02. Giải pháp (Sau KinShield)</span>
+          </span>
+          <span style="font-size:17px;">→</span>
+        </button>
+      </nav>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const GROUPS = [
+        "1. Vấn đề & Giải pháp",
+        "2. Mô hình chung",
+        "3. Kỹ thuật"
+      ];
+
+      const STEPS = [
+        {
+          num: "01", group: GROUPS[0], label: "Vấn đề",
+          tag: "Trước khi có KinShield", tagTone: "danger",
+          title: "Vấn đề",
+          subtitle: "Cả kênh gửi Link/Ảnh/QR lẫn kênh gọi điện đều đâm xuyên phòng vệ cũ và không có chốt giữ dòng tiền nào trước khi tiền rời ví.",
+          modes: [],
+          takeaways: [
+            { title: "Blacklist luôn đi sau", desc: "Link m0mo-*.xyz, tệp .apk, ảnh bill sửa và QR bẫy đổi mới mỗi giờ." },
+            { title: "Bị cô lập tâm lý", desc: "Kẻ gian gọi dọa \"cấm kể con\"; cảnh báo chữ nhỏ bị bấm bỏ qua." },
+            { title: "Không có chốt giữ tiền", desc: "Bấm chuyển là tiền rời ví ngay — gia đình chỉ biết khi đã muộn." }
+          ]
+        },
+        {
+          num: "02", group: GROUPS[0], label: "Giải pháp",
+          tag: "Sau khi có KinShield", tagTone: "good",
+          title: "Giải pháp",
+          subtitle: "Lớp 1 (Link/Ảnh/QR) và Lớp 2 (Cuộc gọi) chạy song song theo kênh tấn công, rồi hội tụ về chốt cuối Lớp 3 (Co-Sign 180s).",
+          modes: [
+            { id: "sc_bill", label: "S1: Bill giả / Quishing QR", cls: "good" },
+            { id: "sc_deepvoice", label: "S2: DeepVoice tai nạn", cls: "active" },
+            { id: "sc_shipper", label: "S3: Shipper hủy gói OTP", cls: "warn" },
+            { id: "sc_police", label: "S4: Công an / VNeID .apk", cls: "danger" }
+          ],
+          takeaways: [
+            { title: "Nhánh trên · Lớp 1 (Vật chứng)", desc: "Chặn kênh gửi Link, tệp .apk, ảnh Bill Photoshop (ELA/EXIF) và mã VietQR." },
+            { title: "Nhánh dưới · Lớp 2 (Cuộc gọi)", desc: "Chặn kênh gọi điện dọa dẫm / DeepVoice 4 bước bằng giọng Việt cắt hoảng loạn." },
+            { title: "Chốt cuối · Lớp 3 (Dòng tiền)", desc: "Hội tụ mọi kênh trước khi tiền rời ví: giữ 180s, báo Máy Con, hết giờ tự hủy." }
+          ]
+        },
+        {
+          num: "03", group: GROUPS[1], label: "Điểm chặn trên điện thoại",
+          tag: "Tích hợp thực tế · OS & MoMo", tagTone: "consumer",
+          title: "Cách KinShield chặn trên điện thoại & MoMo",
+          subtitle: "Chọn từng Lớp để xem cha mẹ thao tác gì trên máy, KinShield đặt điểm chặn ở đâu và bản Demo Expo khác bản tích hợp MoMo chỗ nào.",
+          modes: [
+            { id: "m1", label: "Lớp 1: Link · Ảnh · QR", cls: "active" },
+            { id: "m2", label: "Lớp 2: Cuộc gọi lừa đảo", cls: "warn" },
+            { id: "m3", label: "Lớp 3: Lúc chuyển tiền", cls: "good" }
+          ],
+          takeaways: [
+            { title: "Hợp lệ 100% iOS & Android", desc: "Không đọc trộm Zalo, không ghi âm lén — dùng Chia sẻ 1 chạm, quét QR và loa ngoài chủ động." },
+            { title: "Middleware thật ở dòng tiền", desc: "Lớp 3 đứng ngay trước bước PIN/FaceID: khóa tạm 180s trên Redis trước khi tiền rời ví." },
+            { title: "Demo thật → Nhúng MoMo dễ", desc: "Bản thi đấu chạy mượt trên Expo; khi vào MoMo chỉ gắn SDK vào Camera QR & bước Chuyển tiền." }
+          ]
+        },
+        {
+          num: "04", group: GROUPS[1], label: "Mô hình chung hệ thống",
+          tag: "Kiến trúc tổng thể", tagTone: "broker",
+          title: "Mô hình chung — App KinShield ↔ Core ↔ AI ↔ 4 Kho dữ liệu",
+          subtitle: "Cha Mẹ và Con đều dùng App di động mỏng gọi qua Core; Core giữ trạng thái, Socket & DB; AI chạy tách biệt chuyên pháp y + Qdrant + Claude.",
+          modes: [
+            { id: "xray", label: "Luồng X-Ray (Lớp 1)", cls: "active" },
+            { id: "call", label: "Luồng Cuộc gọi (Lớp 2)", cls: "active" },
+            { id: "cosign", label: "Luồng Co-Sign (Lớp 3)", cls: "good" }
+          ],
+          takeaways: [
+            { title: "App di động mỏng nhẹ", desc: "Không nhét Python hay model nặng lên máy Cha Mẹ; cập nhật AI trên server không cần cài lại app." },
+            { title: "Tách Core và AI rõ ràng", desc: "Core lo Auth, Socket, Postgres/Redis/Silo; AI lo Forensics, Qdrant, Claude & Edge-TTS." },
+            { title: "Luôn có đường dự phòng", desc: "Mất Claude, Qdrant hay TTS vẫn tự hạ cánh sang luật Python & :memory:." }
+          ]
+        },
+        {
+          num: "05", group: GROUPS[2], label: "Kỹ thuật Lớp 1 · X-Ray",
+          tag: "Kỹ thuật · Lớp 1", tagTone: "producer",
+          title: "Kỹ thuật Lớp 1 — Soi song song URL + Ảnh + Qdrant trước Claude",
+          subtitle: "Chọn 1 mẫu thử để xem điểm cộng, luật chống báo nhầm báo chí và khóa sàn ≥ 85 điểm.",
+          modes: [
+            { id: "phish", label: "Link bit.ly → m0mo.xyz", cls: "danger" },
+            { id: "bill", label: "Ảnh Bill sửa Photoshop", cls: "warn" },
+            { id: "news", label: "Bài báo VnExpress (An toàn)", cls: "good" }
+          ],
+          takeaways: [
+            { title: "0 Token cho bằng chứng cứng", desc: "ELA + EXIF (<50ms) và URL Unroller (≤2.5s) chạy trước khi gọi Claude." },
+            { title: "Chống báo nhầm tin tức", desc: "Chỉ nhắc tên MoMo mà không có form OTP/mật khẩu → hạ trần 15 điểm." },
+            { title: "Khóa sàn chống ảo giác", desc: "Bằng chứng pháp y ≥ 85 thì LLM không được tự ý hạ điểm xuống." }
+          ]
+        },
+        {
+          num: "06", group: GROUPS[2], label: "Kỹ thuật Lớp 2 · Voice AI",
+          tag: "Kỹ thuật · Lớp 2", tagTone: "kraft",
+          title: "Kỹ thuật Lớp 2 — Socket.IO · Chấm 4 bước + Qdrant · Edge-TTS",
+          subtitle: "Bấm lần lượt 4 bước leo thang tâm lý để xem FastAPI call_analyzer.py cộng điểm, gọi Edge-TTS và tự kích hoạt Lớp 3.",
+          modes: [
+            { id: "s1", label: "Bước 1: Giả danh", cls: "active" },
+            { id: "s2", label: "Bước 2: Hù dọa gấp", cls: "warn" },
+            { id: "s3", label: "Bước 3: Cô lập", cls: "warn" },
+            { id: "s4", label: "Bước 4: Đòi tiền / OTP", cls: "danger" }
+          ],
+          takeaways: [
+            { title: "Ngưỡng 55 → Qdrant RAG", desc: "Truy xuất câu hỏi vặn từ 22 kịch bản A05/MoMo hiện gọn trên App Cha Mẹ." },
+            { title: "Ngưỡng 75 → Edge-TTS Cache", desc: "Phát giọng nữ Việt ấm áp (MP3 cache < 200ms) cắt đứt cơn hoảng loạn." },
+            { title: "Ngưỡng 90 → Auto-Lock Lớp 3", desc: "Tự gọi Core tạo phiên Redis TTL 180s và đẩy SOS sang App Máy Con." }
+          ]
+        },
+        {
+          num: "07", group: GROUPS[2], label: "Kỹ thuật Lớp 3 · Co-Sign",
+          tag: "Kỹ thuật · Lớp 3", tagTone: "consumer",
+          title: "Kỹ thuật Lớp 3 — Redis TTL 180s · Tách 2 kênh Socket · Fail-Safe",
+          subtitle: "Chọn kết cục để xem máy trạng thái Co-Sign trên NestJS + Redis và tường tách dữ liệu Privacy-by-Design.",
+          modes: [
+            { id: "hold", label: "Đang giữ 180s", cls: "warn" },
+            { id: "block", label: "Con bấm Chặn", cls: "good" },
+            { id: "timeout", label: "Hết 180s (Tự hủy)", cls: "good" },
+            { id: "approve", label: "Con duyệt Cho qua", cls: "active" }
+          ],
+          takeaways: [
+            { title: "Tách 2 kênh Socket / Push", desc: "Room Cha Mẹ nhận đủ lời thoại; Room Máy Con chỉ nhận số tiền & lý do rủi ro." },
+            { title: "Redis TTL 180s Fail-Safe", desc: "Key hết hạn 180s chưa có chữ ký duyệt từ Con → Core tự hủy giao dịch." },
+            { title: "Postgres Audit & Ngưỡng nhà", desc: "Lưu vết sự cố để xuất báo cáo; ngưỡng tùy chỉnh 500k – 500 triệu (mặc định 5tr)." }
+          ]
+        },
+        {
+          num: "08", group: GROUPS[2], label: "Lõi Pháp y & Qdrant RAG",
+          tag: "Kỹ thuật · AI Engine", tagTone: "broker",
+          title: "Lõi kinshield-ai — Pháp y Python & Qdrant 22 kịch bản VN",
+          subtitle: "Chọn từng công cụ để xem luồng xử lý thật đã pass 100% unit test offline.",
+          modes: [
+            { id: "ssrf", label: "Chặn SSRF (127.0.0.1)", cls: "danger" },
+            { id: "dom", label: "Mở link + Soi HTML", cls: "warn" },
+            { id: "ela", label: "Soi Bill ELA + EXIF", cls: "warn" },
+            { id: "rag", label: "Qdrant Vector RAG", cls: "good" }
+          ],
+          takeaways: [
+            { title: "URL Inspector an toàn", desc: "Chặn 7/7 IP nội bộ, lần 5 hop redirect, bắt form password/OTP/.apk." },
+            { title: "Image Forensics < 50ms", desc: "Bắt dấu vết Photoshop/Canva trong metadata + vùng lệch nén ELA." },
+            { title: "Qdrant 3 tầng Embedder", desc: "22 thủ đoạn A05/MoMo (Top-1 đạt 6/6, 0% báo nhầm câu đời thường)." }
+          ]
+        },
+        {
+          num: "09", group: GROUPS[2], label: "Kho 58 Repo & Đánh giá RN",
+          tag: "Research · 58 Repo đã pull", tagTone: "good",
+          title: "Tổng hợp 58 Repo GitHub & Đánh giá khả thi React Native (Expo 58)",
+          subtitle: "Đã pull & đọc code thật cả 58 repo vào C:/LE/momo-antiscam-repos/ để đối chiếu với kinshield-mobile (Expo 58 / RN 0.88) và cung cấp lệnh copy pull toàn bộ.",
+          modes: [
+            { id: "all", label: "Tất cả (58)", cls: "active" },
+            { id: "rn", label: "Ưu tiên RN Hooks (21)", cls: "good" },
+            { id: "apps", label: "App Mobile & Elder (13)", cls: "active" },
+            { id: "l1", label: "Lớp 1 · URL/Bill/QR (14)", cls: "warn" },
+            { id: "l2", label: "Lớp 2 · Call/Deepfake (10)", cls: "danger" }
+          ],
+          takeaways: [
+            { title: "Lớp 1 (98% khả thi RN)", desc: "expo-share-intent v9 khớp chính xác Expo 58 + viet-qr offline + bonus phát hiện app VNeID .apk giả." },
+            { title: "Lớp 2 (90% với loa ngoài)", desc: "expo-speech-recognition v58 (vi-VN) + nitro-call-detector (empty manifest); lưu ý GSM Audio Focus trên iOS." },
+            { title: "Lớp 3 (100% · USP độc nhất)", desc: "Không repo nào trong 58 repo có Family Co-Sign 180s + Privacy tách 2 kênh Socket — lợi thế lớn nhất!" }
+          ]
+        }
+      ];
+
+      // State
+      let pageIdx = 0;
+      let running = true;
+      let speed = 1;
+      let modeByStep = {};
+      STEPS.forEach(function (s) { modeByStep[s.num] = s.modes.length ? s.modes[0].id : null; });
+
+      // Bezier helpers (same smooth curve system as SysMotion)
+      function makeCurve(x1, y1, x2, y2, pull) {
+        const dx = (x2 - x1) * (pull || 0.48);
+        return { x1: x1, y1: y1, cx1: x1 + dx, cy1: y1, cx2: x2 - dx, cy2: y2, x2: x2, y2: y2 };
+      }
+      function curveD(c) {
+        return "M " + c.x1 + " " + c.y1 + " C " + c.cx1 + " " + c.cy1 + ", " + c.cx2 + " " + c.cy2 + ", " + c.x2 + " " + c.y2;
+      }
+      function sampleCurve(c, t) {
+        const u = 1 - t;
+        const x = u*u*u*c.x1 + 3*u*u*t*c.cx1 + 3*u*t*t*c.cx2 + t*t*t*c.x2;
+        const y = u*u*u*c.y1 + 3*u*u*t*c.cy1 + 3*u*t*t*c.cy2 + t*t*t*c.y2;
+        return { x: x, y: y };
+      }
+
+      // Verified open-source reference repos researched for KinShield
+      const REF_REPOS_L1 = [
+        { name: "7zones/chongluadao-extension", url: "https://github.com/7zones/chongluadao-extension", cat: "VN Anti-Scam", note: "Mô hình bảo vệ người Việt & cảnh báo domain lừa đảo tại Việt Nam." },
+        { name: "urlvet/urlvet", url: "https://github.com/urlvet/urlvet", cat: "URL · Học ý tưởng", note: "Kiến trúc SSRF Guard, mở redirect không chạy JS, trích xuất DOM an toàn (tự viết mới bằng Python sạch)." },
+        { name: "sachikavr-ux/url-phishing-detector", url: "https://github.com/sachikavr-ux/url-phishing-detector", cat: "URL Features", note: "Trích xuất đặc trưng cấu trúc URL, TLD rủi ro & tên miền giả." },
+        { name: "zouaouikais4/phishguard", url: "https://github.com/zouaouikais4/phishguard", cat: "Phishing Guard", note: "Luật phát hiện URL nhái thương hiệu & trang đăng nhập giả mạo." },
+        { name: "shreyagopal/Phishing-Website-Detection-by-Machine-Learning-Techniques", url: "https://github.com/shreyagopal/Phishing-Website-Detection-by-Machine-Learning-Techniques", cat: "URL / HTML ML", note: "Bộ đặc trưng URL & HTML kinh điển cho phân loại website phishing." },
+        { name: "picopalette/phishing-detection-plugin", url: "https://github.com/picopalette/phishing-detection-plugin", cat: "Plugin Hook", note: "Kiến trúc plugin kiểm tra link gọn nhẹ phía client & server." },
+        { name: "Navy10021/qshing_guard", url: "https://github.com/Navy10021/qshing_guard", cat: "Quishing QR", note: "Pipeline chống QR lừa đảo (Quishing) kết hợp ảnh QR, URL & ngữ cảnh." },
+        { name: "zeforc/viet-qr", url: "https://github.com/zeforc/viet-qr", cat: "VietQR EMVCo", note: "Thư viện parse & tạo mã VietQR chuẩn NAPAS 247 bằng TypeScript (chạy offline trên React Native)." },
+        { name: "GuidoBartoli/sherloq", url: "https://github.com/GuidoBartoli/sherloq", cat: "Ảnh · Học ý tưởng", note: "Tham chiếu chuẩn về ELA (Error Level Analysis), soi EXIF/XMP & lệch thumbnail (tự viết mới bằng Pillow/NumPy)." },
+        { name: "aws-samples/document-tampering-detection", url: "https://github.com/aws-samples/document-tampering-detection", cat: "Bill Forgery", note: "Kiến trúc phát hiện chỉnh sửa ảnh chứng từ/hóa đơn kết hợp xử lý ảnh + AI." },
+        { name: "rahulpmishra/document-forgery-detection", url: "https://github.com/rahulpmishra/document-forgery-detection", cat: "Bill Forgery", note: "Kỹ thuật soi vùng bị sửa số tiền / chữ trên biên lai chuyển khoản." }
+      ];
+
+      const REF_REPOS_L2 = [
+        { name: "wiqilee/VoxGuard", url: "https://github.com/wiqilee/VoxGuard", cat: "Call Shield", note: "Kiến trúc bảo vệ cuộc gọi thời gian thực kết hợp phát hiện gian lận." },
+        { name: "satya-py/real_time_fraudcall_detection", url: "https://github.com/satya-py/real_time_fraudcall_detection", cat: "Realtime Call", note: "Xử lý luồng lời thoại cuộc gọi realtime để cảnh báo sớm." },
+        { name: "Code-r4Life/Fraud-Call-Detection", url: "https://github.com/Code-r4Life/Fraud-Call-Detection", cat: "Call NLP", note: "Phân loại kịch bản lời nói lừa đảo qua điện thoại." },
+        { name: "BYU-PCCL/scam-call-identification", url: "https://github.com/BYU-PCCL/scam-call-identification", cat: "Tâm lý cuộc gọi", note: "Nghiên cứu nhận diện thao túng tâm lý & leo thang trong hội thoại lừa đảo." },
+        { name: "Arshil-Github/Sentinel_25", url: "https://github.com/Arshil-Github/Sentinel_25", cat: "Multi-Signal", note: "Mô hình kết hợp nhiều tín hiệu chống lừa đảo cuộc gọi & tin nhắn." },
+        { name: "dcarpintero/minerva", url: "https://github.com/dcarpintero/minerva", cat: "AI Agent", note: "Hướng thiết kế AI agent đánh giá rủi ro có giải thích rõ ràng." },
+        { name: "wicaksonohanif/rawnet3_VoIP_deepfake_detection", url: "https://github.com/wicaksonohanif/rawnet3_VoIP_deepfake_detection", cat: "DeepVoice VoIP", note: "Hướng mở rộng phát hiện giọng giả DeepVoice trên kênh gọi VoIP (RawNet3)." },
+        { name: "media-sec-lab/Audio-Deepfake-Detection", url: "https://github.com/media-sec-lab/Audio-Deepfake-Detection", cat: "Audio Deepfake", note: "Nghiên cứu mô hình phát hiện âm thanh tổng hợp AI." },
+        { name: "john852517791/awesome-fake-audio-detection", url: "https://github.com/john852517791/awesome-fake-audio-detection", cat: "Benchmark Audio", note: "Danh mục tổng hợp paper, mô hình & dataset phát hiện giọng giả." },
+        { name: "mlvanguards/fraud-audio-detection", url: "https://github.com/mlvanguards/fraud-audio-detection", cat: "Fraud Audio", note: "Pipeline phân tích âm thanh gian lận cho cuộc gọi nghi ngờ." },
+        { name: "Srv99x/voice-detection-ai", url: "https://github.com/Srv99x/voice-detection-ai", cat: "Voice AI", note: "Tham khảo phát hiện giọng AI phục vụ nâng cấp chống giả giọng người thân." }
+      ];
+
+      function renderRefRepos(title, items) {
+        return (
+          '<div class="ref-repo-box">' +
+            '<div class="ref-repo-head">' +
+              '<div>' + title + '</div>' +
+              '<span>' + items.length + ' repo tham khảo · Tự viết mới 100% code sạch</span>' +
+            '</div>' +
+            '<table class="ref-repo-table">' +
+              '<thead><tr><th style="width:34%">Repository (GitHub)</th><th style="width:18%">Nhóm kỹ thuật</th><th>Khả năng &amp; ý tưởng học được cho KinShield</th></tr></thead>' +
+              '<tbody>' +
+              items.map(function (it) {
+                return '<tr>' +
+                  '<td><a class="ref-link" href="' + it.url + '" target="_blank" rel="noopener noreferrer">' + it.name + '</a></td>' +
+                  '<td><span class="hit-pill support">' + it.cat + '</span></td>' +
+                  '<td>' + it.note + '</td>' +
+                '</tr>';
+              }).join("") +
+              '</tbody></table></div>'
+        );
+      }
+
+      const ALL_58_REPOS = [{"cat":"06-react-native-hooks","grp":"rn","slug":"react-native-webrtc/react-native-callkeep","url":"https://github.com/react-native-webrtc/react-native-callkeep","gitUrl":"https://github.com/react-native-webrtc/react-native-callkeep.git","date":"2026-11-24","lic":"ISC","layer":"Lớp 2 · RN","v":"Tham khảo VoIP","vc":"support","note":"Chuẩn kinh điển CallKit/ConnectionService (ISC); ưu tiên expo-callkit-telecom gọn hơn cho Expo 58."},{"cat":"06-react-native-hooks","grp":"rn","slug":"mybigday/whisper.rn","url":"https://github.com/mybigday/whisper.rn","gitUrl":"https://github.com/mybigday/whisper.rn.git","date":"2026-11-17","lic":"MIT","layer":"Lớp 2 · RN","v":"Dùng ngay (Offline)","vc":"primary","note":"v0.8.0-rc.3 (MIT) — chạy whisper.cpp offline ngay trên điện thoại làm dự phòng STT khi mất mạng."},{"cat":"06-react-native-hooks","grp":"rn","slug":"wiroai/ReactNative-Realtime","url":"https://github.com/wiroai/ReactNative-Realtime","gitUrl":"https://github.com/wiroai/ReactNative-Realtime.git","date":"2026-11-15","lic":"MIT","layer":"Lớp 2 · RN","v":"Học kiến trúc RN","vc":"support","note":"Mẫu Voice AI hai chiều (STT ↔ TTS) viết mới bằng React Native + TypeScript (11/2026)."},{"cat":"06-react-native-hooks","grp":"rn","slug":"mfairley/expo-callkit-telecom","url":"https://github.com/mfairley/expo-callkit-telecom","gitUrl":"https://github.com/mfairley/expo-callkit-telecom.git","date":"2026-10-30","lic":"MIT","layer":"Lớp 2 · RN","v":"Khớp Expo 58","vc":"primary","note":"v1.0.1 (peer: expo >=55, MIT) — Expo Module Swift/Kotlin bọc iOS CallKit + Android Jetpack Core-Telecom."},{"cat":"06-react-native-hooks","grp":"rn","slug":"jamsch/expo-speech-recognition","url":"https://github.com/jamsch/expo-speech-recognition","gitUrl":"https://github.com/jamsch/expo-speech-recognition.git","date":"2026-10-29","lic":"MIT","layer":"Lớp 2 · RN","v":"Khớp Expo 58","vc":"primary","note":"v58.0.1 (MIT) — khớp chính xác Expo 58! Hỗ trợ STT liên tục tiếng Việt (vi-VN) cho chế độ mở loa ngoài nghe cùng."},{"cat":"06-react-native-hooks","grp":"rn","slug":"shield-ai-technology/react-native-shield-fraud-plugin","url":"https://github.com/shield-ai-technology/react-native-shield-fraud-plugin","gitUrl":"https://github.com/shield-ai-technology/react-native-shield-fraud-plugin.git","date":"2026-10-28","lic":"MIT","layer":"Lớp 3 · RN","v":"Tham khảo SDK","vc":"support","note":"Mẫu đóng gói Fraud SDK cho React Native (MIT, 10/2026) — tham khảo cách đóng gói Pre-Transfer SDK cho MoMo."},{"cat":"06-react-native-hooks","grp":"rn","slug":"achorein/expo-share-intent","url":"https://github.com/achorein/expo-share-intent","gitUrl":"https://github.com/achorein/expo-share-intent.git","date":"2026-10-21","lic":"MIT","layer":"Lớp 1 · RN","v":"Khớp Expo 58","vc":"primary","note":"v9.0.0 (peer: expo ^58, MIT) — khớp 100% kinshield-mobile! Nhận URL, ảnh Bill, text từ Zalo/SMS trên iOS & Android."},{"cat":"06-react-native-hooks","grp":"rn","slug":"Gautham495/react-native-nitro-call-detector","url":"https://github.com/Gautham495/react-native-nitro-call-detector","gitUrl":"https://github.com/Gautham495/react-native-nitro-call-detector.git","date":"2026-09-15","lic":"MIT","layer":"Lớp 2 · RN","v":"Dùng ngay (New Arch)","vc":"primary","note":"v1.0.6 (MIT, Nitro Module) — bắt cuộc gọi GSM + VoIP (Zalo/WhatsApp) với Android Manifest rỗng, sạch Play Store!"},{"cat":"06-react-native-hooks","grp":"rn","slug":"maniac-tech/react-native-expo-read-sms","url":"https://github.com/maniac-tech/react-native-expo-read-sms","gitUrl":"https://github.com/maniac-tech/react-native-expo-read-sms.git","date":"2026-07-09","lic":"MIT","layer":"Lớp 1 · RN","v":"Cẩn thận Play Store","vc":"warn","note":"Đọc SMS Android cho Expo (MIT, 07/2026) — lưu ý Google Play siết chặt quyền READ_SMS, ưu tiên Share/Notification."},{"cat":"06-react-native-hooks","grp":"rn","slug":"Gautham495/react-native-speech-recognition-kit","url":"https://github.com/Gautham495/react-native-speech-recognition-kit","gitUrl":"https://github.com/Gautham495/react-native-speech-recognition-kit.git","date":"2026-02-26","lic":"MIT","layer":"Lớp 2 · RN","v":"Dùng thay thế","vc":"support","note":"TurboModule STT cho React Native New Arch; dự phòng nếu không dùng expo-speech-recognition."},{"cat":"06-react-native-hooks","grp":"rn","slug":"react-native-voice/voice","url":"https://github.com/react-native-voice/voice","gitUrl":"https://github.com/react-native-voice/voice.git","date":"2026-01-31","lic":"MIT","layer":"Lớp 2 · RN","v":"Tham khảo STT","vc":"support","note":"@react-native-voice/voice (MIT) — có Expo plugin, nhưng expo-speech-recognition v58 mới & đồng bộ SDK hơn."},{"cat":"06-react-native-hooks","grp":"rn","slug":"RakeshPrasad28/react-native-call-detection-android","url":"https://github.com/RakeshPrasad28/react-native-call-detection-android","gitUrl":"https://github.com/RakeshPrasad28/react-native-call-detection-android.git","date":"2026-01-29","lic":"MIT","layer":"Lớp 2 · RN","v":"Tham khảo Expo","vc":"support","note":"Có sẵn Expo config plugin theo dõi trạng thái cuộc gọi Android (MIT, 01/2026)."},{"cat":"06-react-native-hooks","grp":"rn","slug":"atul7017128880/react-native-security-checker","url":"https://github.com/atul7017128880/react-native-security-checker","gitUrl":"https://github.com/atul7017128880/react-native-security-checker.git","date":"2025-09-15","lic":"MIT","layer":"Lớp 1 · RN","v":"Bonus chống .apk giả","vc":"primary","note":"Phát hiện thiết bị bị root, quay màn hình, dịch vụ Accessibility đáng ngờ (bắt app VNeID .apk giả!)."},{"cat":"06-react-native-hooks","grp":"rn","slug":"frymanofer/ReactNative_VAD","url":"https://github.com/frymanofer/ReactNative_VAD","gitUrl":"https://github.com/frymanofer/ReactNative_VAD.git","date":"2025-08-15","lic":"Unspecified","layer":"Lớp 2 · RN","v":"Học kỹ thuật VAD","vc":"support","note":"Voice Activity Detection giúp chỉ gửi đoạn có giọng nói lên AI, tiết kiệm băng thông & pin."},{"cat":"06-react-native-hooks","grp":"rn","slug":"leandrosimoes/react-native-android-notification-listener","url":"https://github.com/leandrosimoes/react-native-android-notification-listener","gitUrl":"https://github.com/leandrosimoes/react-native-android-notification-listener.git","date":"2025-07-25","lic":"Unspecified","layer":"Lớp 1 · RN","v":"Học ý tưởng · Viết mới","vc":"warn","note":"Đọc banner thông báo SMS/Zalo Android không cần READ_SMS — repo RN cũ, nên viết Expo Module Kotlin ~120 dòng."},{"cat":"06-react-native-hooks","grp":"rn","slug":"ak1394/react-native-tts","url":"https://github.com/ak1394/react-native-tts","gitUrl":"https://github.com/ak1394/react-native-tts.git","date":"2024-06-14","lic":"MIT","layer":"Lớp 2 · RN","v":"Dự phòng TTS","vc":"support","note":"TTS hệ thống offline (MIT) làm fallback nếu mất kết nối Edge-TTS từ server."},{"cat":"06-react-native-hooks","grp":"rn","slug":"hybriteq/react-native-floating-bubble","url":"https://github.com/hybriteq/react-native-floating-bubble","gitUrl":"https://github.com/hybriteq/react-native-floating-bubble.git","date":"2023-09-06","lic":"MIT","layer":"Lớp 1 · RN","v":"Cũ (2023) · Học Overlay","vc":"idle","note":"Mẫu bong bóng nổi Android (SYSTEM_ALERT_WINDOW) — cần viết lại Kotlin nếu dùng trên Android 14/15."},{"cat":"06-react-native-hooks","grp":"rn","slug":"dmkvsk/react-native-detect-caller-id","url":"https://github.com/dmkvsk/react-native-detect-caller-id","gitUrl":"https://github.com/dmkvsk/react-native-detect-caller-id.git","date":"2023-04-06","lic":"MIT","layer":"Lớp 2 · RN","v":"Cũ (2023) · Học mẫu","vc":"idle","note":"React 16 / Old Arch — chỉ đọc cách làm iOS Call Directory Extension & Android BroadcastReceiver."},{"cat":"06-react-native-hooks","grp":"rn","slug":"xiqi/react-native-live-audio-stream","url":"https://github.com/xiqi/react-native-live-audio-stream","gitUrl":"https://github.com/xiqi/react-native-live-audio-stream.git","date":"2021-08-27","lic":"MIT","layer":"Lớp 2 · RN","v":"Cũ (2021) · Tránh cài","vc":"idle","note":"Old Arch (2021) — thay bằng expo-speech-recognition v58 để gửi text nhẹ thay vì stream raw PCM."},{"cat":"06-react-native-hooks","grp":"rn","slug":"ajith-ab/react-native-receive-sharing-intent","url":"https://github.com/ajith-ab/react-native-receive-sharing-intent","gitUrl":"https://github.com/ajith-ab/react-native-receive-sharing-intent.git","date":"2021-05-17","lic":"MIT","layer":"Lớp 1 · RN","v":"Cũ (2021) · Tránh cài","vc":"idle","note":"Old Arch (2021), lỗi trên RN 0.88 — thay thế hoàn toàn bằng achorein/expo-share-intent v9."},{"cat":"06-react-native-hooks","grp":"rn","slug":"mguellsegarra/ondori-caller-id","url":"https://github.com/mguellsegarra/ondori-caller-id","gitUrl":"https://github.com/mguellsegarra/ondori-caller-id.git","date":"2021-03-18","lic":"MIT","layer":"Lớp 2 · RN","v":"Cũ (2021) · Học iOS","vc":"idle","note":"Mẫu iOS CXCallDirectoryHandler nạp danh sách số lừa đảo cục bộ (MIT)."},{"cat":"07-react-native-scam-apps","grp":"apps","slug":"SysAdminDoc/CallShield","url":"https://github.com/SysAdminDoc/CallShield","gitUrl":"https://github.com/SysAdminDoc/CallShield.git","date":"2026-11-24","lic":"MIT","layer":"App · Android","v":"Siêu chất (MIT 11/2026)","vc":"primary","note":"30+ lớp chặn cuộc gọi & tin nhắn RCS trên Android (51,519 số spam, 2314 unit test) — chuẩn mẫu CallScreeningService!"},{"cat":"07-react-native-scam-apps","grp":"apps","slug":"BioHazard786/Alternate","url":"https://github.com/BioHazard786/Alternate","gitUrl":"https://github.com/BioHazard786/Alternate.git","date":"2026-11-23","lic":"MIT","layer":"App · Android","v":"Học Overlay + Call","vc":"support","note":"App MIT (11/2026) định danh người gọi lạ cục bộ + overlay không làm bẩn danh bạ."},{"cat":"07-react-native-scam-apps","grp":"apps","slug":"jhonsu01/OpenCallShield","url":"https://github.com/jhonsu01/OpenCallShield","gitUrl":"https://github.com/jhonsu01/OpenCallShield.git","date":"2026-11-23","lic":"MIT","layer":"App · Android","v":"Học CallScreening","vc":"support","note":"App Android MIT (11/2026) dùng CallScreeningService + đồng bộ danh sách số lừa đảo cộng đồng từ GitHub."},{"cat":"07-react-native-scam-apps","grp":"apps","slug":"ryosoftware/calls-blocker","url":"https://github.com/ryosoftware/calls-blocker","gitUrl":"https://github.com/ryosoftware/calls-blocker.git","date":"2026-11-04","lic":"Custom/Other","layer":"App · Android","v":"Học CallScreening","vc":"support","note":"App Kotlin Compose (11/2026) chặn cuộc gọi ngoài danh bạ hoàn toàn offline."},{"cat":"07-react-native-scam-apps","grp":"apps","slug":"Dinesh7571/Truecaller-clone-react-native","url":"https://github.com/Dinesh7571/Truecaller-clone-react-native","gitUrl":"https://github.com/Dinesh7571/Truecaller-clone-react-native.git","date":"2025-04-18","lic":"Unspecified","layer":"App · RN","v":"Học bridge RN↔Kotlin","vc":"support","note":"App React Native full-stack nối Kotlin Native Module bắt cuộc gọi đến & hiện popup cảnh báo."},{"cat":"07-react-native-scam-apps","grp":"apps","slug":"theowni/Android-MaliciousAccessibilityServiceAppsDetector","url":"https://github.com/theowni/Android-MaliciousAccessibilityServiceAppsDetector","gitUrl":"https://github.com/theowni/Android-MaliciousAccessibilityServiceAppsDetector.git","date":"2025-01-14","lic":"MIT","layer":"App · Security","v":"Bonus bắt VNeID .apk","vc":"primary","note":"Phát hiện Trojan ngân hàng / app VNeID giả lạm dụng AccessibilityService & điều khiển từ xa (MIT)."},{"cat":"07-react-native-scam-apps","grp":"apps","slug":"LastAirbender07/Spam_Detection_v1","url":"https://github.com/LastAirbender07/Spam_Detection_v1","gitUrl":"https://github.com/LastAirbender07/Spam_Detection_v1.git","date":"2024-05-10","lic":"Unspecified","layer":"App · RN","v":"Tham khảo SMS RN","vc":"idle","note":"App React Native phân loại SMS spam/ham thời gian thực."},{"cat":"07-react-native-scam-apps","grp":"apps","slug":"harshjadon9/SMS-Scam-detection-app","url":"https://github.com/harshjadon9/SMS-Scam-detection-app","gitUrl":"https://github.com/harshjadon9/SMS-Scam-detection-app.git","date":"2022-08-05","lic":"MIT","layer":"App · RN","v":"Tham khảo Hackathon","vc":"idle","note":"App Hackathon RN + Flask bắt link KYC/ngân hàng giả trong SMS và nút báo cáo cơ quan chức năng."},{"cat":"07-react-native-scam-apps","grp":"apps","slug":"tanyonghe/APS-System","url":"https://github.com/tanyonghe/APS-System","gitUrl":"https://github.com/tanyonghe/APS-System.git","date":"2021-05-10","lic":"Unspecified","layer":"App · RN","v":"Tham khảo SMS RN","vc":"idle","note":"Hệ thống Anti-Phishing SMS kết hợp React Native + model Python (2021)."},{"cat":"03-multiagent-multimodal","grp":"apps","slug":"Yusra-Shah/ElderBridge-Guardianos","url":"https://github.com/Yusra-Shah/ElderBridge-Guardianos","gitUrl":"https://github.com/Yusra-Shah/ElderBridge-Guardianos.git","date":"2026-06-22","lic":"Unspecified","layer":"App · Elder","v":"Học PII Redaction!","vc":"primary","note":"Overlay cho người cao tuổi (06/2026): che CCCD/OTP ngay trên máy trước khi gửi Multi-Agent AI!"},{"cat":"03-multiagent-multimodal","grp":"apps","slug":"nirman-deb/Elder-Guard","url":"https://github.com/nirman-deb/Elder-Guard","gitUrl":"https://github.com/nirman-deb/Elder-Guard.git","date":"2026-05-31","lic":"Unspecified","layer":"App · Elder","v":"Rất sát KinShield!","vc":"primary","note":"Guardian ẩn cho người lớn tuổi (05/2026): soi link bằng Jsoup + mini-RAG + chặn APK cài ngoài (nhưng chưa có Co-Sign Gia Đình!)."},{"cat":"03-multiagent-multimodal","grp":"apps","slug":"NikhilChowdhury27/scamshield","url":"https://github.com/NikhilChowdhury27/scamshield","gitUrl":"https://github.com/NikhilChowdhury27/scamshield.git","date":"2025-12-11","lic":"Unspecified","layer":"App · Elder","v":"Tham khảo UX cao tuổi","vc":"support","note":"Nền tảng giải thích rủi ro đơn giản, chữ to, ưu tiên trợ năng cho người lớn tuổi (12/2025)."},{"cat":"03-multiagent-multimodal","grp":"apps","slug":"dcarpintero/minerva","url":"https://github.com/dcarpintero/minerva","gitUrl":"https://github.com/dcarpintero/minerva.git","date":"2024-12-19","lic":"Apache-2.0","layer":"AI · Agent","v":"Học Multi-Agent","vc":"support","note":"Apache-2.0 — mẫu thiết kế Multi-Agent có tool calling & giải thích quyết định minh bạch."},{"cat":"01-vietnam","grp":"l1","slug":"zeforc/viet-qr","url":"https://github.com/zeforc/viet-qr","gitUrl":"https://github.com/zeforc/viet-qr.git","date":"2026-07-04","lic":"ISC","layer":"Lớp 1 · VietQR","v":"Dùng ngay RN/JS!","vc":"primary","note":"ISC (07/2026) — bộ parse & tạo mã VietQR chuẩn EMVCo/NAPAS 247 bằng TypeScript, chạy offline <2ms trên RN!"},{"cat":"01-vietnam","grp":"l1","slug":"openhoangnc/vietqr","url":"https://github.com/openhoangnc/vietqr","gitUrl":"https://github.com/openhoangnc/vietqr.git","date":"2026-01-12","lic":"MIT","layer":"Lớp 1 · VietQR","v":"Dùng ngay RN/JS!","vc":"primary","note":"MIT (01/2026, vietqr-zero) — 0 dependency, có sẵn danh sách ngân hàng VN & logo để đối chiếu STK thật từ QR."},{"cat":"01-vietnam","grp":"l1","slug":"7zones/chongluadao-extension","url":"https://github.com/7zones/chongluadao-extension","gitUrl":"https://github.com/7zones/chongluadao-extension.git","date":"2025-04-26","lic":"ISC","layer":"Lớp 1 · VN","v":"Tham khảo VN","vc":"primary","note":"ISC — dự án Chống Lừa Đảo Việt Nam: kinh nghiệm cảnh báo domain lừa đảo thực tế tại VN."},{"cat":"04-url-phishing-extension","grp":"l1","slug":"urlvet/urlvet","url":"https://github.com/urlvet/urlvet","gitUrl":"https://github.com/urlvet/urlvet.git","date":"2026-11-22","lic":"AGPL-3.0","layer":"Lớp 1 · URL","v":"AGPL · Chỉ học ý tưởng","vc":"warn","note":"AGPL-3.0 (cấm copy code) — đã học kiến trúc SSRF Guard & mở redirect an toàn, tự viết mới 100% trong url_inspector.py."},{"cat":"04-url-phishing-extension","grp":"l1","slug":"zouaouikais4/phishguard","url":"https://github.com/zouaouikais4/phishguard","gitUrl":"https://github.com/zouaouikais4/phishguard.git","date":"2026-11-11","lic":"Unspecified","layer":"Lớp 1 · URL","v":"Tham khảo URL","vc":"support","note":"11/2026 — luật phát hiện URL nhái thương hiệu & trang đăng nhập giả."},{"cat":"04-url-phishing-extension","grp":"l1","slug":"fouadtrad/Detecting-Quishing-Attacks-with-Machine-Learning-Techniques-Through-QR-Code-Analysis","url":"https://github.com/fouadtrad/Detecting-Quishing-Attacks-with-Machine-Learning-Techniques-Through-QR-Code-Analysis","gitUrl":"https://github.com/fouadtrad/Detecting-Quishing-Attacks-with-Machine-Learning-Techniques-Through-QR-Code-Analysis.git","date":"2026-11-08","lic":"Custom/Other","layer":"Lớp 1 · QR","v":"Tham khảo QR ML","vc":"support","note":"Phân tích trực tiếp cấu trúc mã QR phát hiện liên kết độc hại (11/2026)."},{"cat":"04-url-phishing-extension","grp":"l1","slug":"sachikavr-ux/url-phishing-detector","url":"https://github.com/sachikavr-ux/url-phishing-detector","gitUrl":"https://github.com/sachikavr-ux/url-phishing-detector.git","date":"2026-08-28","lic":"MIT","layer":"Lớp 1 · URL","v":"Tham khảo URL (MIT)","vc":"support","note":"MIT (08/2026) — trích xuất đặc trưng URL, TLD rủi ro & backend kiểm tra nhanh."},{"cat":"04-url-phishing-extension","grp":"l1","slug":"lindsey98/PhishIntention","url":"https://github.com/lindsey98/PhishIntention","gitUrl":"https://github.com/lindsey98/PhishIntention.git","date":"2026-06-04","lic":"Custom/Other","layer":"Lớp 1 · URL","v":"Học thuật toán 2 ĐK","vc":"primary","note":"Tư duy vàng: chỉ báo phishing khi vừa giả thương hiệu vừa có form lấy mật khẩu/OTP → hạ trần 15đ cho báo chí!"},{"cat":"04-url-phishing-extension","grp":"l1","slug":"Navy10021/qshing_guard","url":"https://github.com/Navy10021/qshing_guard","gitUrl":"https://github.com/Navy10021/qshing_guard.git","date":"2026-02-11","lic":"Unspecified","layer":"Lớp 1 · QR","v":"Học Quishing QR","vc":"primary","note":"Pipeline chống Quishing (QR lừa đảo, 02/2026) kết hợp ảnh QR + đặc trưng URL + ngữ cảnh."},{"cat":"04-url-phishing-extension","grp":"l1","slug":"picopalette/phishing-detection-plugin","url":"https://github.com/picopalette/phishing-detection-plugin","gitUrl":"https://github.com/picopalette/phishing-detection-plugin.git","date":"2023-08-19","lic":"MIT","layer":"Lớp 1 · URL","v":"Tham khảo Plugin","vc":"support","note":"MIT — kiến trúc plugin kiểm tra đường dẫn nhẹ giữa client và backend."},{"cat":"04-url-phishing-extension","grp":"l1","slug":"shreyagopal/Phishing-Website-Detection-by-Machine-Learning-Techniques","url":"https://github.com/shreyagopal/Phishing-Website-Detection-by-Machine-Learning-Techniques","gitUrl":"https://github.com/shreyagopal/Phishing-Website-Detection-by-Machine-Learning-Techniques.git","date":"2020-05-10","lic":"Unspecified","layer":"Lớp 1 · URL","v":"Tham khảo Features","vc":"idle","note":"Bộ đặc trưng URL/HTML kinh điển cho bài toán phân loại website giả mạo."},{"cat":"08-bill-image-forensics","grp":"l1","slug":"GuidoBartoli/sherloq","url":"https://github.com/GuidoBartoli/sherloq","gitUrl":"https://github.com/GuidoBartoli/sherloq.git","date":"2026-07-16","lic":"GPL-3.0","layer":"Lớp 1 · Ảnh","v":"GPL · Chỉ học kỹ thuật","vc":"warn","note":"GPL-3.0 (cấm copy code) — tham chiếu chuẩn ELA JPEG Q90 & EXIF/thumbnail; đã tự viết mới trong image_forensics.py (<50ms)."},{"cat":"08-bill-image-forensics","grp":"l1","slug":"rahulpmishra/document-forgery-detection","url":"https://github.com/rahulpmishra/document-forgery-detection","gitUrl":"https://github.com/rahulpmishra/document-forgery-detection.git","date":"2026-04-19","lic":"Unspecified","layer":"Lớp 1 · Ảnh","v":"Học soi Bill giả","vc":"support","note":"04/2026 — kỹ thuật phát hiện vùng bị chỉnh sửa số tiền trên biên lai chuyển khoản."},{"cat":"08-bill-image-forensics","grp":"l1","slug":"aws-samples/document-tampering-detection","url":"https://github.com/aws-samples/document-tampering-detection","gitUrl":"https://github.com/aws-samples/document-tampering-detection.git","date":"2024-01-30","lic":"Custom/Other","layer":"Lớp 1 · Ảnh","v":"Học kiến trúc AWS","vc":"primary","note":"AWS Samples — kết hợp pháp y ảnh (ELA) + AI Vision phát hiện sửa ảnh hóa đơn/chứng từ."},{"cat":"02-realtime-call","grp":"l2","slug":"satya-py/real_time_fraudcall_detection","url":"https://github.com/satya-py/real_time_fraudcall_detection","gitUrl":"https://github.com/satya-py/real_time_fraudcall_detection.git","date":"2026-04-19","lic":"Unspecified","layer":"Lớp 2 · Call","v":"Học luồng STT","vc":"support","note":"04/2026 — xử lý luồng lời thoại cuộc gọi realtime + model nhẹ TFLite."},{"cat":"02-realtime-call","grp":"l2","slug":"wiqilee/VoxGuard","url":"https://github.com/wiqilee/VoxGuard","gitUrl":"https://github.com/wiqilee/VoxGuard.git","date":"2026-03-27","lic":"MIT","layer":"Lớp 2 · Call","v":"Học kiến trúc Call","vc":"primary","note":"MIT (03/2026) — kiến trúc bảo vệ cuộc gọi thời gian thực + cảnh báo overlay."},{"cat":"02-realtime-call","grp":"l2","slug":"Arshil-Github/Sentinel_25","url":"https://github.com/Arshil-Github/Sentinel_25","gitUrl":"https://github.com/Arshil-Github/Sentinel_25.git","date":"2026-03-13","lic":"Unspecified","layer":"Lớp 2 · Call","v":"Học đa tín hiệu","vc":"support","note":"03/2026 — kết hợp dashboard giám sát + phát hiện gian lận cuộc gọi."},{"cat":"02-realtime-call","grp":"l2","slug":"Code-r4Life/Fraud-Call-Detection","url":"https://github.com/Code-r4Life/Fraud-Call-Detection","gitUrl":"https://github.com/Code-r4Life/Fraud-Call-Detection.git","date":"2026-03-09","lic":"MIT","layer":"Lớp 2 · Call","v":"Học NLP cuộc gọi","vc":"support","note":"MIT (03/2026) — phân loại kịch bản lừa đảo qua nội dung hội thoại."},{"cat":"02-realtime-call","grp":"l2","slug":"BYU-PCCL/scam-call-identification","url":"https://github.com/BYU-PCCL/scam-call-identification","gitUrl":"https://github.com/BYU-PCCL/scam-call-identification.git","date":"2025-09-27","lic":"MIT","layer":"Lớp 2 · Call","v":"Học 4 bước tâm lý","vc":"primary","note":"MIT (BYU-PCCL) — cơ sở khoa học nhận diện thao túng tâm lý trong cuộc gọi lừa đảo."},{"cat":"05-audio-deepfake","grp":"l2","slug":"john852517791/awesome-fake-audio-detection","url":"https://github.com/john852517791/awesome-fake-audio-detection","gitUrl":"https://github.com/john852517791/awesome-fake-audio-detection.git","date":"2026-11-10","lic":"MIT","layer":"Lớp 2 · DeepVoice","v":"Kho tài liệu chuẩn","vc":"support","note":"MIT (11/2026) — danh mục tổng hợp paper & dataset chuẩn nhất về phát hiện giả giọng."},{"cat":"05-audio-deepfake","grp":"l2","slug":"Srv99x/voice-detection-ai","url":"https://github.com/Srv99x/voice-detection-ai","gitUrl":"https://github.com/Srv99x/voice-detection-ai.git","date":"2026-07-31","lic":"MIT","layer":"Lớp 2 · DeepVoice","v":"Mở rộng DeepVoice","vc":"support","note":"MIT (07/2026) — pipeline phân tích giọng nói AI để nâng cấp Lớp 2 giai đoạn Production."},{"cat":"05-audio-deepfake","grp":"l2","slug":"wicaksonohanif/rawnet3_VoIP_deepfake_detection","url":"https://github.com/wicaksonohanif/rawnet3_VoIP_deepfake_detection","gitUrl":"https://github.com/wicaksonohanif/rawnet3_VoIP_deepfake_detection.git","date":"2026-06-09","lic":"MIT","layer":"Lớp 2 · DeepVoice","v":"Mở rộng VoIP (Backend)","vc":"support","note":"MIT (06/2026) — RawNet3 bắt giọng giả DeepVoice trên kênh VoIP (chạy server khi có audio stream, không chạy trên GSM RN)."},{"cat":"05-audio-deepfake","grp":"l2","slug":"mlvanguards/fraud-audio-detection","url":"https://github.com/mlvanguards/fraud-audio-detection","gitUrl":"https://github.com/mlvanguards/fraud-audio-detection.git","date":"2025-06-16","lic":"MIT","layer":"Lớp 2 · DeepVoice","v":"Mở rộng Audio ML","vc":"support","note":"MIT — phát hiện âm thanh gian lận bằng đặc trưng phổ âm."},{"cat":"05-audio-deepfake","grp":"l2","slug":"media-sec-lab/Audio-Deepfake-Detection","url":"https://github.com/media-sec-lab/Audio-Deepfake-Detection","gitUrl":"https://github.com/media-sec-lab/Audio-Deepfake-Detection.git","date":"2025-06-04","lic":"Unspecified","layer":"Lớp 2 · DeepVoice","v":"Tham khảo Model","vc":"idle","note":"Mô hình phân loại audio thật/giả cho nghiên cứu chống giả giọng."}];
+      const PULL_ALL_SCRIPT = "# Pull tất cả 58 repo nghiên cứu KinShield (chạy được trên PowerShell, Git Bash, macOS & Linux)\nmkdir -p momo-antiscam-repos && cd momo-antiscam-repos\n\n# === 06-react-native-hooks (21 repos) ===\ngit clone --depth 1 https://github.com/react-native-webrtc/react-native-callkeep.git 06-react-native-hooks/react-native-callkeep\ngit clone --depth 1 https://github.com/mybigday/whisper.rn.git 06-react-native-hooks/whisper.rn\ngit clone --depth 1 https://github.com/wiroai/ReactNative-Realtime.git 06-react-native-hooks/ReactNative-Realtime\ngit clone --depth 1 https://github.com/mfairley/expo-callkit-telecom.git 06-react-native-hooks/expo-callkit-telecom\ngit clone --depth 1 https://github.com/jamsch/expo-speech-recognition.git 06-react-native-hooks/expo-speech-recognition\ngit clone --depth 1 https://github.com/shield-ai-technology/react-native-shield-fraud-plugin.git 06-react-native-hooks/react-native-shield-fraud-plugin\ngit clone --depth 1 https://github.com/achorein/expo-share-intent.git 06-react-native-hooks/expo-share-intent\ngit clone --depth 1 https://github.com/Gautham495/react-native-nitro-call-detector.git 06-react-native-hooks/react-native-nitro-call-detector\ngit clone --depth 1 https://github.com/maniac-tech/react-native-expo-read-sms.git 06-react-native-hooks/react-native-expo-read-sms\ngit clone --depth 1 https://github.com/Gautham495/react-native-speech-recognition-kit.git 06-react-native-hooks/react-native-speech-recognition-kit\ngit clone --depth 1 https://github.com/react-native-voice/voice.git 06-react-native-hooks/voice\ngit clone --depth 1 https://github.com/RakeshPrasad28/react-native-call-detection-android.git 06-react-native-hooks/react-native-call-detection-android\ngit clone --depth 1 https://github.com/atul7017128880/react-native-security-checker.git 06-react-native-hooks/react-native-security-checker\ngit clone --depth 1 https://github.com/frymanofer/ReactNative_VAD.git 06-react-native-hooks/ReactNative_VAD\ngit clone --depth 1 https://github.com/leandrosimoes/react-native-android-notification-listener.git 06-react-native-hooks/react-native-android-notification-listener\ngit clone --depth 1 https://github.com/ak1394/react-native-tts.git 06-react-native-hooks/react-native-tts\ngit clone --depth 1 https://github.com/hybriteq/react-native-floating-bubble.git 06-react-native-hooks/react-native-floating-bubble\ngit clone --depth 1 https://github.com/dmkvsk/react-native-detect-caller-id.git 06-react-native-hooks/react-native-detect-caller-id\ngit clone --depth 1 https://github.com/xiqi/react-native-live-audio-stream.git 06-react-native-hooks/react-native-live-audio-stream\ngit clone --depth 1 https://github.com/ajith-ab/react-native-receive-sharing-intent.git 06-react-native-hooks/react-native-receive-sharing-intent\ngit clone --depth 1 https://github.com/mguellsegarra/ondori-caller-id.git 06-react-native-hooks/ondori-caller-id\n\n# === 07-react-native-scam-apps (9 repos) ===\ngit clone --depth 1 https://github.com/SysAdminDoc/CallShield.git 07-react-native-scam-apps/CallShield\ngit clone --depth 1 https://github.com/BioHazard786/Alternate.git 07-react-native-scam-apps/Alternate\ngit clone --depth 1 https://github.com/jhonsu01/OpenCallShield.git 07-react-native-scam-apps/OpenCallShield\ngit clone --depth 1 https://github.com/ryosoftware/calls-blocker.git 07-react-native-scam-apps/calls-blocker\ngit clone --depth 1 https://github.com/Dinesh7571/Truecaller-clone-react-native.git 07-react-native-scam-apps/Truecaller-clone-react-native\ngit clone --depth 1 https://github.com/theowni/Android-MaliciousAccessibilityServiceAppsDetector.git 07-react-native-scam-apps/Android-MaliciousAccessibilityServiceAppsDetector\ngit clone --depth 1 https://github.com/LastAirbender07/Spam_Detection_v1.git 07-react-native-scam-apps/Spam_Detection_v1\ngit clone --depth 1 https://github.com/harshjadon9/SMS-Scam-detection-app.git 07-react-native-scam-apps/SMS-Scam-detection-app\ngit clone --depth 1 https://github.com/tanyonghe/APS-System.git 07-react-native-scam-apps/APS-System\n\n# === 03-multiagent-multimodal (4 repos) ===\ngit clone --depth 1 https://github.com/Yusra-Shah/ElderBridge-Guardianos.git 03-multiagent-multimodal/ElderBridge-Guardianos\ngit clone --depth 1 https://github.com/nirman-deb/Elder-Guard.git 03-multiagent-multimodal/Elder-Guard\ngit clone --depth 1 https://github.com/NikhilChowdhury27/scamshield.git 03-multiagent-multimodal/scamshield\ngit clone --depth 1 https://github.com/dcarpintero/minerva.git 03-multiagent-multimodal/minerva\n\n# === 01-vietnam (3 repos) ===\ngit clone --depth 1 https://github.com/zeforc/viet-qr.git 01-vietnam/viet-qr\ngit clone --depth 1 https://github.com/openhoangnc/vietqr.git 01-vietnam/vietqr\ngit clone --depth 1 https://github.com/7zones/chongluadao-extension.git 01-vietnam/chongluadao-extension\n\n# === 04-url-phishing-extension (8 repos) ===\ngit clone --depth 1 https://github.com/urlvet/urlvet.git 04-url-phishing-extension/urlvet\ngit clone --depth 1 https://github.com/zouaouikais4/phishguard.git 04-url-phishing-extension/phishguard\ngit clone --depth 1 https://github.com/fouadtrad/Detecting-Quishing-Attacks-with-Machine-Learning-Techniques-Through-QR-Code-Analysis.git 04-url-phishing-extension/Detecting-Quishing-Attacks-with-Machine-Learning-Techniques-Through-QR-Code-Analysis\ngit clone --depth 1 https://github.com/sachikavr-ux/url-phishing-detector.git 04-url-phishing-extension/url-phishing-detector\ngit clone --depth 1 https://github.com/lindsey98/PhishIntention.git 04-url-phishing-extension/PhishIntention\ngit clone --depth 1 https://github.com/Navy10021/qshing_guard.git 04-url-phishing-extension/qshing_guard\ngit clone --depth 1 https://github.com/picopalette/phishing-detection-plugin.git 04-url-phishing-extension/phishing-detection-plugin\ngit clone --depth 1 https://github.com/shreyagopal/Phishing-Website-Detection-by-Machine-Learning-Techniques.git 04-url-phishing-extension/Phishing-Website-Detection-by-Machine-Learning-Techniques\n\n# === 08-bill-image-forensics (3 repos) ===\ngit clone --depth 1 https://github.com/GuidoBartoli/sherloq.git 08-bill-image-forensics/sherloq\ngit clone --depth 1 https://github.com/rahulpmishra/document-forgery-detection.git 08-bill-image-forensics/document-forgery-detection\ngit clone --depth 1 https://github.com/aws-samples/document-tampering-detection.git 08-bill-image-forensics/document-tampering-detection\n\n# === 02-realtime-call (5 repos) ===\ngit clone --depth 1 https://github.com/satya-py/real_time_fraudcall_detection.git 02-realtime-call/real_time_fraudcall_detection\ngit clone --depth 1 https://github.com/wiqilee/VoxGuard.git 02-realtime-call/VoxGuard\ngit clone --depth 1 https://github.com/Arshil-Github/Sentinel_25.git 02-realtime-call/Sentinel_25\ngit clone --depth 1 https://github.com/Code-r4Life/Fraud-Call-Detection.git 02-realtime-call/Fraud-Call-Detection\ngit clone --depth 1 https://github.com/BYU-PCCL/scam-call-identification.git 02-realtime-call/scam-call-identification\n\n# === 05-audio-deepfake (5 repos) ===\ngit clone --depth 1 https://github.com/john852517791/awesome-fake-audio-detection.git 05-audio-deepfake/awesome-fake-audio-detection\ngit clone --depth 1 https://github.com/Srv99x/voice-detection-ai.git 05-audio-deepfake/voice-detection-ai\ngit clone --depth 1 https://github.com/wicaksonohanif/rawnet3_VoIP_deepfake_detection.git 05-audio-deepfake/rawnet3_VoIP_deepfake_detection\ngit clone --depth 1 https://github.com/mlvanguards/fraud-audio-detection.git 05-audio-deepfake/fraud-audio-detection\ngit clone --depth 1 https://github.com/media-sec-lab/Audio-Deepfake-Detection.git 05-audio-deepfake/Audio-Deepfake-Detection";
+
+      // Reusable SVG node helper
+      function svgBox(x, y, w, h, fillVar, strokeVar, title, sub, mono, dashed) {
+        return (
+          '<g>' +
+            '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="12" fill="var(' + fillVar + ')" stroke="var(' + strokeVar + ')" stroke-width="1.6"' + (dashed ? ' stroke-dasharray="6 4"' : '') + '/>' +
+            '<text x="' + (x + w/2) + '" y="' + (y + (mono ? 26 : sub ? 28 : h/2 + 5)) + '" text-anchor="middle" class="n-title">' + title + '</text>' +
+            (sub ? '<text x="' + (x + w/2) + '" y="' + (y + (mono ? 44 : 47)) + '" text-anchor="middle" class="n-sub">' + sub + '</text>' : '') +
+            (mono ? '<text x="' + (x + w/2) + '" y="' + (y + 62) + '" text-anchor="middle" class="n-mono">' + mono + '</text>' : '') +
+          '</g>'
+        );
+      }
+
+      // Build scene definition (SVG markup + animated packet tracks + status banner)
+      function buildScene(stepIdx, mode) {
+        let wires = [];
+        let nodes = "";
+        let extraHtml = "";
+        let banner = { tone: "default", text: "", metric: "" };
+        let tracks = []; // { c, color, label, count, rate, phase, bounceAt }
+
+        if (stepIdx === 0) {
+          // 01: BEFORE KINSHIELD — Single clean diagram showing the core structural failure (mirrors Model 02!)
+          const cTop1 = makeCurve(220, 78, 326, 78);
+          const cBot1 = makeCurve(220, 206, 326, 206);
+          const cTop2 = makeCurve(536, 78, 638, 126);
+          const cBot2 = makeCurve(536, 206, 638, 158);
+          const cOut  = makeCurve(834, 142, 926, 142);
+          const cLate = makeCurve(1018, 186, 878, 295, 0.35);
+
+          wires = [
+            { c: cTop1, color: "--danger", label: "Đâm xuyên", dy: -18 },
+            { c: cBot1, color: "--danger", label: "Đâm xuyên", dy: 22 },
+            { c: cTop2, color: "--danger", label: "Tin & bấm", dy: -16 },
+            { c: cBot2, color: "--danger", label: "Hoảng loạn", dy: 22 },
+            { c: cOut,  color: "--danger", label: "Đi thẳng", dy: -18 },
+            { c: cLate, color: "--wire", label: "Chỉ biết sau khi mất", dashed: true, dx: 24, dy: 22 }
+          ];
+          tracks = [
+            { c: cTop1, color: "--danger", label: "QR/APK", count: 1, rate: 0.42 },
+            { c: cBot1, color: "--danger", label: "CALL", count: 1, rate: 0.42, phase: 0.18 },
+            { c: cTop2, color: "--danger", label: "OTP", count: 1, rate: 0.44, phase: 0.45 },
+            { c: cBot2, color: "--danger", label: "DỌA", count: 1, rate: 0.44, phase: 0.6 },
+            { c: cOut,  color: "--danger", label: "₫", count: 1, rate: 0.46, phase: 0.8 }
+          ];
+          nodes =
+            svgBox(14, 34, 206, 88, "--danger-bg", "--danger", "Kênh Link · Ảnh · QR", "Tệp .apk · Bill sửa · QR bẫy", "PHƯƠNG THỨC 1") +
+            svgBox(14, 162, 206, 88, "--danger-bg", "--danger", "Kênh Cuộc gọi thoại", "Giả Công an · Shipper · DeepVoice", "PHƯƠNG THỨC 2") +
+            svgBox(330, 34, 206, 88, "--warn-bg", "--warn", "Blacklist cũ đi sau", "Link & ảnh tạo mới mỗi giờ", "KHÔNG CHẶN KỊP", true) +
+            svgBox(330, 162, 206, 88, "--warn-bg", "--warn", "Cha mẹ bị cô lập", "Dặn \"cấm kể con\" · Bỏ qua chữ nhỏ", "MẤT BÌNH TĨNH", true) +
+            svgBox(642, 98, 192, 88, "--surface", "--danger", "Không có chốt giữ", "Bấm chuyển là tiền đi ngay", "0 GIÂY HẠ NHIỆT", true) +
+            svgBox(930, 98, 176, 88, "--danger-bg", "--danger", "MẤT TIỀN NGAY", "Bay tiền · Lộ OTP", "KHÔNG KỊP CỨU") +
+            svgBox(602, 258, 272, 74, "--surface-warm", "--border-strong", "Máy Con / Gia đình", "Bị cắt đứt liên lạc hoàn toàn", "KHÔNG NHẬN CẢNH BÁO", true);
+
+          banner = { tone: "danger", text: "Trước KinShield: cả 2 kênh tấn công đều vượt qua phòng vệ cũ, đẩy tiền rời ví ngay lập tức trước khi gia đình kịp biết.", metric: "MẤT TIỀN TRONG 2–4 PHÚT" };
+        }
+        else if (stepIdx === 1) {
+          // 02: AFTER KINSHIELD — Parallel by Attack Channel (L1 || L2) -> Converge to Money Gate (L3)
+          const scMeta = {
+            sc_police: {
+              atk: "Công an / VNeID .apk", atkSub: "Gọi dọa + gửi link .apk",
+              l1Hit: true, l2Hit: true, l3Hit: true,
+              l1Tag: "CHẶN .APK (98đ)", l2Tag: "CẮT CÔ LẬP (94đ)", l3Tag: "GIỮ 180s + BÁO CON",
+              l1Pkt: ".apk", l2Pkt: "CALL",
+              l1OutLbl: "Cờ đỏ → Khóa", l2OutLbl: "≥90đ → Khóa",
+              metric: "CẢ 2 NHÁNH + CHỐT LỚP 3 · VN-SCAM-01/02",
+              msg: "Scenario 4 (Công an / VNeID .apk): Kẻ gian đánh cả 2 kênh cùng lúc → Nhánh Lớp 1 chặn .apk, Nhánh Lớp 2 cắt cuộc gọi dọa, hội tụ về Lớp 3 khóa tiền 180s.",
+              dWhat: "Giả cán bộ Công an gọi dọa dính án rửa tiền, dặn cấm kể con, đồng thời gửi link cài VNeID .apk & ép chuyển tiền xác minh.",
+              dBlock: "Nhánh Lớp 1 chặn link .apk (98đ) · Nhánh Lớp 2 phát hiện bước cô lập, đọc giọng Việt cắt hoảng loạn (94đ).",
+              dBackup: "Chốt cuối Lớp 3 tự khóa giao dịch 180s + bắn SOS sang Máy Con (không lộ lời thoại); hết giờ tự hủy an toàn."
+            },
+            sc_shipper: {
+              atk: "Shipper hủy gói OTP", atkSub: "Gọi dọa + link form OTP",
+              l1Hit: true, l2Hit: true, l3Hit: false,
+              l1Tag: "CHẶN FORM OTP (98đ)", l2Tag: "NHẮC KHÔNG ĐỌC OTP", l3Tag: "DỰ PHÒNG NẾU CHUYỂN",
+              l1Pkt: "OTP", l2Pkt: "CALL",
+              l1OutLbl: "Đã chặn sớm", l2OutLbl: "Dự phòng",
+              metric: "CHẶN SỚM Ở 2 NHÁNH SONG SONG · VN-SCAM-03",
+              msg: "Scenario 3 (Shipper hủy gói hội viên): Chặn dứt điểm ngay ở 2 nhánh song song (Lớp 1 chặn link OTP, Lớp 2 nhắc cúp máy); Lớp 3 ở chế độ dự phòng.",
+              dWhat: "Giả shipper gọi báo chuyển nhầm TK đăng ký gói hội viên trừ 3.5tr/tháng, gửi link giả đòi mật khẩu & 6 số OTP để hủy.",
+              dBlock: "Nhánh Lớp 1 bóc redirect + soi HTML bắt form password/OTP giả MoMo (98đ) · Nhánh Lớp 2 đọc cảnh báo không đọc OTP.",
+              dBackup: "Nếu cha mẹ vẫn lỡ mở ví chuyển khoản lớn cho shipper → Chốt cuối Lớp 3 mới bật để giữ 180s hỏi Máy Con."
+            },
+            sc_deepvoice: {
+              atk: "DeepVoice tai nạn", atkSub: "Chỉ gọi thoại · giục 50tr",
+              l1Hit: false, l2Hit: true, l3Hit: true,
+              l1Tag: "KHÔNG CÓ LINK / ẢNH", l2Tag: "CẢNH BÁO GIẢ GIỌNG", l3Tag: "KHÓA 50TR + GỌI CON",
+              l1Pkt: "", l2Pkt: "50tr",
+              l1OutLbl: "Không chạy", l2OutLbl: "≥90đ → Khóa",
+              metric: "NHÁNH LỚP 2 + CHỐT LỚP 3 · VN-SCAM-04",
+              msg: "Scenario 2 (DeepVoice tai nạn): Không hề có link/ảnh nên Lớp 1 không chạy — Nhánh Lớp 2 bắt cuộc gọi hối gấp, đẩy sang Lớp 3 gọi thẳng Máy Con thật!",
+              dWhat: "Giả giọng AI gọi điện báo con bị tai nạn đang vào phòng mổ, hối chuyển gấp 50 triệu vào STK lạ (không gửi link hay ảnh nào).",
+              dBlock: "Nhánh Lớp 2 chạy đầu tiên: bắt cụm từ tai nạn + hối gấp + STK lạ, đọc giọng Việt nhắc mẹ bình tĩnh gọi lại số quen của con.",
+              dBackup: "Chốt cuối Lớp 3 giữ 50 triệu trong 180s và báo trực tiếp lên điện thoại thật của Con → vạch trần ngay chiêu giả giọng!"
+            },
+            sc_bill: {
+              atk: "Bill giả / QR cọc", atkSub: "Chỉ gửi ảnh / mã QR",
+              l1Hit: true, l2Hit: false, l3Hit: true,
+              l1Tag: "ELA + EXIF + VIETQR", l2Tag: "KHÔNG CÓ CUỘC GỌI", l3Tag: "BÁO CON / GIỮ CỌC",
+              l1Pkt: "BILL", l2Pkt: "",
+              l1OutLbl: "Chặn + Báo Con", l2OutLbl: "Không chạy",
+              metric: "NHÁNH LỚP 1 CHẶN CHÍNH · VN-SCAM-06/07",
+              msg: "Scenario 1 (Bill Photoshop / Quishing QR): Không có cuộc gọi nên Lớp 2 không chạy — Nhánh Lớp 1 chặn trực tiếp bằng ELA/EXIF/VietQR.",
+              dWhat: "Gửi ảnh bill chuyển khoản sửa Photoshop giục giao hàng khi tiền chưa nổi, hoặc dán đè mã QR bẫy/cọc phòng giá rẻ.",
+              dBlock: "Nhánh Lớp 1 chặn trực tiếp: ELA + EXIF bắt Photoshop (87đ), VietQR EMVCo bóc STK thật, URL Inspector chặn QR giấu link.",
+              dBackup: "Nhánh Lớp 2 đứng ngoài (không có cuộc gọi). Chốt cuối Lớp 3 hỗ trợ 1 chạm \"Báo Máy Con\" và tự giữ 180s nếu lỡ chuyển cọc lớn."
+            }
+          }[mode];
+
+          // Parallel geometry: Col 1 (14..200) -> Col 2 L1(312..512, y=26..118) || L2(312..512, y=170..262) -> Col 3 L3(634..842, y=82..182) -> Col 4 Safe(948..1104)
+          const cInL1 = makeCurve(200, 124, 308, 72);
+          const cInL2 = makeCurve(200, 164, 308, 216);
+          const cL1L3 = makeCurve(512, 72, 630, 114);
+          const cL2L3 = makeCurve(512, 216, 630, 150);
+          const cL3Safe = makeCurve(842, 132, 944, 132);
+          const cFamDown = makeCurve(712, 182, 712, 258, 0.05);
+          const cFamUp = makeCurve(764, 262, 764, 186, 0.05);
+
+          wires = [
+            { c: cInL1, color: scMeta.l1Hit ? "--producer" : "--wire", label: "Link / Ảnh / QR", dashed: !scMeta.l1Hit, dy: -16 },
+            { c: cInL2, color: scMeta.l2Hit ? "--kraft" : "--wire", label: "Cuộc gọi thoại", dashed: !scMeta.l2Hit, dy: 22 },
+            { c: cL1L3, color: scMeta.l1Hit && scMeta.l3Hit ? "--producer" : "--wire", label: scMeta.l1OutLbl, dashed: !(scMeta.l1Hit && scMeta.l3Hit), dy: -16 },
+            { c: cL2L3, color: scMeta.l2Hit && scMeta.l3Hit ? "--kraft" : "--wire", label: scMeta.l2OutLbl, dashed: !(scMeta.l2Hit && scMeta.l3Hit), dy: 22 },
+            { c: cL3Safe, color: "--good", label: "Giữ an toàn", dy: -18 },
+            { c: cFamDown, color: scMeta.l3Hit ? "--consumer" : "--wire", label: "Báo tóm tắt", dashed: !scMeta.l3Hit, dx: -14, anchor: "end" },
+            { c: cFamUp, color: scMeta.l3Hit ? "--good" : "--wire", label: "Con bấm Chặn", dashed: !scMeta.l3Hit, dx: 14, anchor: "start" }
+          ];
+
+          tracks = [];
+          if (scMeta.l1Hit) {
+            tracks.push({ c: cInL1, color: "--danger", label: scMeta.l1Pkt, count: 1, rate: 0.44, bounceAt: !scMeta.l3Hit ? 0.88 : undefined });
+            if (scMeta.l3Hit) tracks.push({ c: cL1L3, color: "--producer", label: mode === "sc_bill" ? "SOS" : "98đ", count: 1, rate: 0.44, phase: 0.35 });
+          }
+          if (scMeta.l2Hit) {
+            tracks.push({ c: cInL2, color: "--kraft", label: scMeta.l2Pkt, count: 1, rate: 0.44, phase: 0.15, bounceAt: !scMeta.l3Hit ? 0.88 : undefined });
+            if (scMeta.l3Hit) tracks.push({ c: cL2L3, color: "--kraft", label: "LOCK", count: 1, rate: 0.44, phase: 0.45 });
+          }
+          if (scMeta.l3Hit) {
+            tracks.push({ c: cFamDown, color: "--consumer", label: "SOS", count: 1, rate: 0.42, phase: 0.55 });
+            tracks.push({ c: cFamUp, color: "--good", label: "CHẶN", count: 1, rate: 0.42, phase: 0.78 });
+          }
+          tracks.push({ c: cL3Safe, color: "--good", label: "SAFE", count: 1, rate: 0.4, phase: 0.65 });
+
+          nodes =
+            svgBox(14, 96, 186, 96, "--danger-bg", "--danger", scMeta.atk, scMeta.atkSub, "KÊNH TẤN CÔNG") +
+            svgBox(312, 26, 200, 92, scMeta.l1Hit ? "--producer-bg" : "--surface", scMeta.l1Hit ? "--producer" : "--border", "LỚP 1 · X-Ray", "Link · Ảnh Bill · VietQR", scMeta.l1Tag, !scMeta.l1Hit) +
+            svgBox(312, 170, 200, 92, scMeta.l2Hit ? "--kraft-bg" : "--surface", scMeta.l2Hit ? "--kraft" : "--border", "LỚP 2 · Voice AI", "Nghe 4 bước · Giọng Việt", scMeta.l2Tag, !scMeta.l2Hit) +
+            svgBox(634, 82, 208, 100, scMeta.l3Hit ? "--consumer-bg" : "--surface", scMeta.l3Hit ? "--consumer" : "--border", "LỚP 3 · Co-Sign", "Chốt dòng tiền · 180s", scMeta.l3Tag, !scMeta.l3Hit) +
+            svgBox(948, 88, 156, 88, "--good-bg", "--good", "TIỀN AN TOÀN", "Giữ nguyên trong ví", "100% SAFE") +
+            svgBox(598, 262, 280, 74, scMeta.l3Hit ? "--good-bg" : "--surface-warm", scMeta.l3Hit ? "--good" : "--border", "Máy Con (Guardian)", "Chỉ nhận tóm tắt · Không nghe lén", "CHẶN / GỌI XÁC NHẬN", !scMeta.l3Hit);
+
+          banner = { tone: "good", text: scMeta.msg, metric: scMeta.metric };
+
+          const rows = [
+            { id: "sc_bill",      name: "S1 · Bill giả / Quishing",  l1: ["ELA + EXIF + VietQR", "primary"], l2: ["Không có cuộc gọi", "idle"], l3: ["1 chạm báo Máy Con", "support"] },
+            { id: "sc_deepvoice", name: "S2 · DeepVoice tai nạn",    l1: ["Không có link/ảnh", "idle"], l2: ["Bắt hối chuyển gấp", "primary"], l3: ["Giữ 50tr + Gọi Con", "primary"] },
+            { id: "sc_shipper",   name: "S3 · Shipper hủy gói OTP",  l1: ["Bắt form OTP (98đ)", "primary"], l2: ["Nhắc không đọc OTP", "primary"], l3: ["Dự phòng nếu chuyển", "idle"] },
+            { id: "sc_police",    name: "S4 · Công an / VNeID .apk", l1: ["Chặn .apk (98đ)", "primary"], l2: ["Cắt cô lập (94đ)", "primary"], l3: ["Khóa 180s + Báo Con", "primary"] }
+          ];
+          extraHtml =
+            '<div class="sc-detail-grid">' +
+              '<div class="sc-detail-box atk"><span class="sc-lbl">1. Diễn biến Scenario</span><div class="sc-val">' + scMeta.dWhat + '</div></div>' +
+              '<div class="sc-detail-box hit"><span class="sc-lbl">2. Nhánh chặn theo phương thức</span><div class="sc-val">' + scMeta.dBlock + '</div></div>' +
+              '<div class="sc-detail-box"><span class="sc-lbl">3. Chốt dòng tiền cuối (Lớp 3)</span><div class="sc-val">' + scMeta.dBackup + '</div></div>' +
+            '</div>' +
+            '<div class="layer-matrix-wrap"><table class="layer-matrix">' +
+              '<thead><tr><th>Scenario (bấm dòng để xem)</th><th>Nhánh trên · Lớp 1 (Link/Ảnh/QR)</th><th>Nhánh dưới · Lớp 2 (Cuộc gọi)</th><th>Chốt cuối · Lớp 3 (Dòng tiền)</th></tr></thead>' +
+              '<tbody>' +
+              rows.map(function (r) {
+                return '<tr class="' + (r.id === mode ? 'row-active' : '') + '" data-row-mode="' + r.id + '">' +
+                  '<td>' + r.name + '</td>' +
+                  '<td><span class="hit-pill ' + r.l1[1] + '">' + r.l1[0] + '</span></td>' +
+                  '<td><span class="hit-pill ' + r.l2[1] + '">' + r.l2[0] + '</span></td>' +
+                  '<td><span class="hit-pill ' + r.l3[1] + '">' + r.l3[0] + '</span></td>' +
+                '</tr>';
+              }).join("") +
+              '</tbody></table></div>';
+        }
+        else if (stepIdx === 2) {
+          // 03: CLEAR 3-STEP INTERCEPTION DIAGRAM + DEMO VS MOMO PRODUCTION STRIP
+          const c1 = makeCurve(300, 93, 416, 93);
+          const c2 = makeCurve(700, 93, 816, 93);
+          const cDemo = makeCurve(500, 140, 282, 218, 0.25);
+          const cProd = makeCurve(620, 140, 838, 218, 0.25);
+
+          const mCfg = {
+            m1: {
+              tone: "--producer", bg: "--producer-bg", bTone: "good",
+              w1: "Bấm Share sang app", p1: "SHARE",
+              w2: "Soi trong 1–2 giây", p2: "SOI AI",
+              b1: ["1. Thấy link / bill nghi ngờ", "Trên Zalo, SMS hoặc mã QR lạ", "TRÊN MÁY CHA MẸ"],
+              b2: ["2. Chia sẻ cho App KinShield", "Soi link .apk, Photoshop, VietQR", "CHỦ ĐỘNG · KHÔNG ĐỌC TRỘM"],
+              b3: ["3. Hiện cảnh báo Đỏ / Xanh", "Chặn trước khi cha mẹ bấm vào", "AN TOÀN TRƯỚC KHI TIN"],
+              demo: ["Hiện tại · Bản Demo (Expo)", "Thấy link/ảnh nghi ngờ thì bấm Share sang App (hoặc quét QR)", "CHẠY THẬT NGAY"],
+              prod: ["Sau này · Bật tự động trong Cài đặt", "Tự động chuyển link/thông báo sang soi (hoặc chạy ngầm trong MoMo)", "KHÔNG CẦN NHỚ BẤM SHARE"],
+              banner: "Lớp 1: Hiện tại cha mẹ thấy link/ảnh bill nghi ngờ thì bấm Share sang App KinShield để soi (1–2s); sau này chỉ cần bật chế độ Tự động trong Cài đặt!",
+              metric: "LỚP 1 · SHARE SANG APP → TỰ ĐỘNG QUA CÀI ĐẶT"
+            },
+            m2: {
+              tone: "--kraft", bg: "--kraft-bg", bTone: "warn",
+              w1: "Mở loa ngoài cho app nghe", p1: "LOA",
+              w2: "Phát giọng nữ Việt", p2: "TTS",
+              b1: ["1. Cuộc gọi số lạ nghi ngờ", "Giả Công an · Shipper · DeepVoice", "TRÊN MÁY CHA MẸ"],
+              b2: ["2. Mở loa ngoài để nghe cùng", "App thu qua micro · soi 4 bước dọa", "CHỦ ĐỘNG · KHÔNG GHI ÂM LÉN"],
+              b3: ["3. Đọc to cắt hoảng loạn", "\"Cô chú dừng lại nhé!\" + khóa Lớp 3", "BỪNG TỈNH & CÚP MÁY"],
+              demo: ["Hiện tại · Bản Demo (Expo)", "Cha mẹ mở loa ngoài để App nghe qua Micro & đọc Edge-TTS", "HỢP LỆ 100% iOS & ANDROID"],
+              prod: ["Sau này · Tự động không cần loa ngoài", "Kết nối trực tiếp luồng gọi VoIP / tổng đài nhà mạng", "MỞ RỘNG ĐƯỜNG DÀI"],
+              banner: "Lớp 2: Khi nhận cuộc gọi lạ nghi ngờ, cha mẹ chỉ cần mở loa ngoài để App KinShield nghe cùng qua micro và đọc to giọng nữ Việt cắt cơn hoảng loạn!",
+              metric: "LỚP 2 · MỞ LOA NGOÀI ĐỂ APP NGHE CÙNG"
+            },
+            m3: {
+              tone: "--warn", bg: "--warn-bg", bTone: "good",
+              w1: "Chặn giữa đường", p1: "50tr",
+              w2: "Con Chặn / Hết 180s", p2: "HỦY",
+              b1: ["1. Bấm chuyển tiền lớn", "Vượt ngưỡng 5tr hoặc có cờ đỏ", "TRƯỚC BƯỚC PIN / FACEID"],
+              b2: ["2. Giữ tạm 180 giây", "Đóng băng tiền + báo SOS Máy Con", "MIDDLEWARE THẬT (REDIS)"],
+              b3: ["3. Hủy an toàn (0₫ mất)", "Chỉ chuyển khi Con gọi xác nhận Duyệt", "CHƯA HỀ TRỪ TIỀN VÍ"],
+              demo: ["Bản Demo thi đấu (Expo)", "Màn chuyển tiền mô phỏng đi qua Hook Redis 180s thật", "DEMO 2 MÁY MẸ ↔ CON"],
+              prod: ["Khi tích hợp vào MoMo", "Gắn 1 SDK ngay trước màn nhập PIN / sinh trắc học", "BẢO VỆ 100% DÒNG TIỀN"],
+              banner: "Lớp 3 (Middleware thật sự): Đứng ngay giữa nút \"Xác nhận chuyển tiền\" và cổng MoMo/Bank — giữ tạm 180s cho Máy Con kịp chặn trước khi trừ tiền!",
+              metric: "LỚP 3 · CHẶN TRƯỚC BƯỚC TRỪ TIỀN"
+            }
+          }[mode];
+
+          wires = [
+            { c: c1, color: mCfg.tone, label: mCfg.w1, dy: -22 },
+            { c: c2, color: "--good", label: mCfg.w2, dy: -22 },
+            { c: cDemo, color: "--wire", dashed: true, label: "Hiện tại (Bản Demo)", dx: -16, anchor: "end" },
+            { c: cProd, color: "--broker", dashed: true, label: "Sau này (Tự động / MoMo)", dx: 16, anchor: "start" }
+          ];
+          tracks = [
+            { c: c1, color: mCfg.tone, label: mCfg.p1, count: 1, rate: 0.42 },
+            { c: c2, color: "--good", label: mCfg.p2, count: 1, rate: 0.42, phase: 0.5 }
+          ];
+
+          nodes =
+            svgBox(24, 46, 276, 94, "--surface", "--border-strong", mCfg.b1[0], mCfg.b1[1], mCfg.b1[2]) +
+            svgBox(420, 46, 280, 94, mCfg.bg, mCfg.tone, mCfg.b2[0], mCfg.b2[1], mCfg.b2[2]) +
+            svgBox(820, 46, 276, 94, "--good-bg", "--good", mCfg.b3[0], mCfg.b3[1], mCfg.b3[2]) +
+            svgBox(24, 222, 516, 86, "--surface-warm", "--border-strong", mCfg.demo[0], mCfg.demo[1], mCfg.demo[2]) +
+            svgBox(580, 222, 516, 86, "--broker-bg", "--broker", mCfg.prod[0], mCfg.prod[1], mCfg.prod[2]);
+
+          banner = { tone: mCfg.bTone, text: mCfg.banner, metric: mCfg.metric };
+        }
+        else if (stepIdx === 3) {
+          // 04: HIGH-LEVEL ARCHITECTURE — every arrow flush with box edges!
+          const cClientCore = makeCurve(194, 98, 300, 98);
+          const cConCore = makeCurve(304, 206, 198, 206);
+          const cCoreAi = makeCurve(514, 146, 620, 146);
+          const cAiExt = makeCurve(834, 94, 928, 76);
+          const cAiTts = makeCurve(834, 186, 928, 186);
+          const cCoreDb = makeCurve(409, 240, 409, 276, 0.05);
+          const cAiQdrant = makeCurve(729, 240, 729, 276, 0.05);
+
+          wires = [
+            { c: cClientCore, color: "--accent", label: "HTTPS / Socket", dy: -22 },
+            { c: cConCore, color: "--consumer", label: "Push / Socket", dy: 24 },
+            { c: cCoreAi, color: "--broker", label: "/ai/*", dy: -22 },
+            { c: cAiExt, color: "--producer", label: "Claude / Web", dy: -18 },
+            { c: cAiTts, color: "--kraft", label: "Edge-TTS", dy: 22 },
+            { c: cCoreDb, color: "--wire", label: "PG · Redis · Silo", dx: 14, anchor: "start" },
+            { c: cAiQdrant, color: "--broker", label: "Qdrant", dx: 14, anchor: "start" }
+          ];
+
+          if (mode === "xray") {
+            tracks = [
+              { c: cClientCore, color: "--producer", label: "XRAY", count: 1, rate: 0.45 },
+              { c: cCoreDb, color: "--wire", label: "S3", count: 1, rate: 0.42, phase: 0.2 },
+              { c: cCoreAi, color: "--broker", label: "AI", count: 1, rate: 0.45, phase: 0.35 },
+              { c: cAiQdrant, color: "--broker", label: "RAG", count: 1, rate: 0.45, phase: 0.52 },
+              { c: cAiExt, color: "--producer", label: "LLM", count: 1, rate: 0.45, phase: 0.68 }
+            ];
+            banner = { tone: "good", text: "Luồng X-Ray (Lớp 1): App Cha Mẹ chụp QR/bill hoặc dán link → Core lưu Silo S3 & lọc nhanh → AI soi Forensics + Qdrant + Claude.", metric: "APP CHA MẸ → CORE → AI" };
+          } else if (mode === "call") {
+            tracks = [
+              { c: cClientCore, color: "--kraft", label: "MIC", count: 1, rate: 0.45 },
+              { c: cCoreAi, color: "--kraft", label: "CALL", count: 1, rate: 0.45, phase: 0.25 },
+              { c: cAiQdrant, color: "--broker", label: "RAG", count: 1, rate: 0.44, phase: 0.45 },
+              { c: cAiTts, color: "--kraft", label: "MP3", count: 1, rate: 0.45, phase: 0.65 }
+            ];
+            banner = { tone: "warn", text: "Luồng Cuộc gọi (Lớp 2): App Cha Mẹ gửi lời thoại qua Socket → AI chấm 4 bước thao túng + tra Qdrant → phát giọng Edge-TTS cắt hoảng loạn.", metric: "SOCKET.IO · EDGE-TTS" };
+          } else {
+            tracks = [
+              { c: cClientCore, color: "--warn", label: "180s", count: 1, rate: 0.45 },
+              { c: cCoreDb, color: "--good", label: "REDIS", count: 1, rate: 0.42, phase: 0.28 },
+              { c: cConCore, color: "--consumer", label: "SOS", count: 1, rate: 0.45, phase: 0.55 }
+            ];
+            banner = { tone: "good", text: "Luồng Co-Sign (Lớp 3): Core khóa tạm giao dịch 180s trong Redis → đẩy tóm tắt rủi ro (không kèm lời thoại) sang App Máy Con để Chặn hoặc Duyệt.", metric: "APP MÁY CON · PRIVACY-BY-DESIGN" };
+          }
+
+          nodes =
+            svgBox(16, 52, 178, 92, "--surface", "--border-strong", "App Cha Mẹ", "Quét QR/Bill · Nghe gọi", "MOBILE APP (EXPO)") +
+            svgBox(16, 166, 178, 78, "--consumer-bg", "--consumer", "App Máy Con", "Nhận SOS · Chặn/Duyệt", "PUSH / SOCKET") +
+            svgBox(304, 52, 210, 188, "--broker-bg", "--broker", "kinshield-core", "Auth · Lọc nhanh · Co-Sign", "NestJS 12 · :4000") +
+            svgBox(624, 52, 210, 188, "--producer-bg", "--producer", "kinshield-ai", "Forensics + Qdrant + Claude", "FastAPI · :8000") +
+            svgBox(932, 42, 170, 68, "--surface", "--border-strong", "Claude + Web lạ", "Vision · HTML", "EXTERNAL") +
+            svgBox(932, 152, 170, 68, "--kraft-bg", "--kraft", "Edge-TTS", "Giọng nữ VN", "MP3 CACHE") +
+            svgBox(272, 280, 274, 66, "--surface-warm", "--border-strong", "Postgres · Redis · Silo S3", "Users, OTP, s3.kinshield.click", "DOKPLOY EC2") +
+            svgBox(624, 280, 210, 66, "--good-bg", "--good", "Qdrant Vector DB", "22 kịch bản lừa đảo VN", ":6333 / :memory:");
+        }
+        else if (stepIdx === 4) {
+          // 05: LAYER 1 X-RAY PARALLEL PIPELINE
+          const cT1 = makeCurve(156, 172, 248, 56);
+          const cUrl = makeCurve(156, 172, 248, 134);
+          const cImg = makeCurve(156, 172, 248, 214);
+          const cRag = makeCurve(156, 172, 248, 294);
+          const cT1F = makeCurve(472, 56, 568, 156);
+          const cUrlF = makeCurve(472, 134, 568, 172);
+          const cImgF = makeCurve(472, 214, 568, 188);
+          const cFCl = makeCurve(726, 172, 792, 172);
+          const cRagCl = makeCurve(472, 294, 792, 206, 0.35);
+          const cClOut = makeCurve(952, 172, 996, 172);
+
+          const isPhish = mode === "phish", isBill = mode === "bill", isNews = mode === "news";
+          const outTone = isNews ? "--good" : "--danger";
+          const outBg = isNews ? "--good-bg" : "--danger-bg";
+          const outTitle = isNews ? "15 / SAFE" : isBill ? "87 / BLOCK" : "98 / LOCK";
+
+          wires = [
+            { c: cT1, color: isPhish ? "--danger" : "--wire" },
+            { c: cUrl, color: isPhish ? "--danger" : isNews ? "--good" : "--wire" },
+            { c: cImg, color: isBill ? "--warn" : "--wire" },
+            { c: cRag, color: "--broker" },
+            { c: cT1F, color: "--wire" }, { c: cUrlF, color: isPhish ? "--danger" : "--wire" },
+            { c: cImgF, color: isBill ? "--warn" : "--wire" },
+            { c: cFCl, color: outTone }, { c: cRagCl, color: "--broker", label: "Top-3 RAG", dy: 18 }, { c: cClOut, color: outTone }
+          ];
+          tracks = [
+            { c: isBill ? cImg : cUrl, color: isNews ? "--good" : "--danger", label: isBill ? "ELA" : "URL", count: 1, rate: 0.46 },
+            { c: cRag, color: "--broker", label: "RAG", count: 1, rate: 0.44, phase: 0.2 },
+            { c: isBill ? cImgF : cUrlF, color: isNews ? "--good" : "--danger", label: isBill ? "87" : isNews ? "15" : "98", count: 1, rate: 0.46, phase: 0.45 },
+            { c: cFCl, color: outTone, label: "MAX", count: 1, rate: 0.46, phase: 0.7 },
+            { c: cRagCl, color: "--broker", label: "TOP3", count: 1, rate: 0.4, phase: 0.55 }
+          ];
+
+          nodes =
+            svgBox(14, 130, 142, 84, "--surface", "--border-strong", "Đầu vào", isBill ? "Ảnh Bill CK" : isNews ? "Link báo" : "Link bit.ly", "/api/xray") +
+            svgBox(252, 22, 220, 68, "--broker-bg", "--broker", "Lọc nhanh · Core", "VietQR · Typosquat", "< 50ms") +
+            svgBox(252, 100, 220, 68, isPhish ? "--danger-bg" : "--producer-bg", isPhish ? "--danger" : "--producer", "URL Inspector", "5 hop · SSRF · HTML DOM", isPhish ? "98đ (MoMo + OTP)" : isNews ? "15đ (Hạ trần báo)" : "SSRF-SAFE") +
+            svgBox(252, 180, 220, 68, isBill ? "--warn-bg" : "--producer-bg", isBill ? "--warn" : "--producer", "Image Forensics", "ELA (Pillow) + EXIF", isBill ? "87đ (Photoshop+ELA)" : "< 50ms") +
+            svgBox(252, 260, 220, 68, "--good-bg", "--good", "Qdrant RAG", "Tra 22 kịch bản VN", "Top-3 vector") +
+            svgBox(572, 132, 154, 80, "--surface-warm", "--border-strong", "Fusion", "Max + cộng hưởng", isNews ? "15 / 100" : isBill ? "87 / 100" : "99 / 100") +
+            svgBox(796, 132, 156, 80, "--consumer-bg", "--consumer", "4 Agent Claude", "Đọc bằng chứng", "Khóa sàn ≥ 85") +
+            svgBox(1000, 132, 106, 80, outBg, outTone, outTitle, isNews ? "An toàn" : "Chặn");
+
+          banner = isNews
+            ? { tone: "good", text: "Bài báo VnExpress nhắc chữ \"MoMo\" nhưng không có form mật khẩu/OTP → luật chống báo nhầm hạ trần còn 15 điểm.", metric: "0% FALSE POSITIVE" }
+            : isBill
+            ? { tone: "warn", text: "Image Forensics phát hiện Metadata Adobe Photoshop (+45) + vùng số tiền ELA lệch 24.6x (+42) → tổng 87 điểm.", metric: "IMAGE FORENSICS: 87/100" }
+            : { tone: "danger", text: "URL Inspector bóc 2 bước redirect tới m0mo-hoantien.xyz + bắt form mật khẩu/OTP + giả MoMo → khóa sàn LOCKDOWN.", metric: "URL FORENSICS: 98/100" };
+          extraHtml = renderRefRepos("Repo tham khảo cho Lớp 1 (URL Phishing · Chống Lừa Đảo VN · Soi ảnh Bill)", REF_REPOS_L1);
+        }
+        else if (stepIdx === 5) {
+          // 06: LAYER 2 LIVE CALL 4 STAGES
+          const stageMap = {
+            s1: { idx: 1, score: 38, level: "SAFE", tone: "default", msg: "Bước 1 (Giả danh): \"Tôi là trung úy Công an...\" — Hệ thống ghi nhận tín hiệu uy quyền, tiếp tục nghe." },
+            s2: { idx: 2, score: 62, level: "WARN", tone: "warn", msg: "Bước 2 (Hù dọa gấp): \"Dính án rửa tiền, xử lý trong 15 phút\" — Hiện gợi ý câu hỏi vặn lại cho mẹ." },
+            s3: { idx: 3, score: 80, level: "BLOCK", tone: "danger", msg: "Bước 3 (Cô lập): \"Tuyệt đối không được kể cho con\" — Bật giọng nữ Việt đọc cảnh báo ấm áp ngay!" },
+            s4: { idx: 4, score: 94, level: "LOCKDOWN", tone: "danger", msg: "Bước 4 (Đòi tiền/OTP): \"Mở MoMo chuyển tiền xác minh\" — Tự khóa 180s & bắn báo động đỏ sang Máy Con!" }
+          }[mode];
+
+          const c1 = makeCurve(212, 98, 304, 98);
+          const c2 = makeCurve(504, 98, 596, 98);
+          const c3 = makeCurve(796, 98, 888, 98);
+          const cVoice = makeCurve(698, 140, 440, 240, 0.2);
+          const cLock = makeCurve(990, 140, 860, 240, 0.2);
+
+          wires = [
+            { c: c1, color: stageMap.idx >= 2 ? "--warn" : "--wire", label: "Leo thang", dy: -22 },
+            { c: c2, color: stageMap.idx >= 3 ? "--danger" : "--wire", label: "Cô lập", dy: -22 },
+            { c: c3, color: stageMap.idx >= 4 ? "--danger" : "--wire", label: "Ép chuyển", dy: -22 },
+            { c: cVoice, color: stageMap.idx >= 3 ? "--kraft" : "--wire", label: "≥ 75: Đọc giọng Việt", dx: -16, anchor: "end" },
+            { c: cLock, color: stageMap.idx >= 4 ? "--danger" : "--wire", label: "≥ 90: Khóa Lớp 3", dx: 16, anchor: "start" }
+          ];
+          tracks = [];
+          if (stageMap.idx >= 2) tracks.push({ c: c1, color: "--warn", label: "62đ", count: 1, rate: 0.44 });
+          if (stageMap.idx >= 3) {
+            tracks.push({ c: c2, color: "--danger", label: "80đ", count: 1, rate: 0.44, phase: 0.25 });
+            tracks.push({ c: cVoice, color: "--kraft", label: "TTS", count: 1, rate: 0.44, phase: 0.4 });
+          }
+          if (stageMap.idx >= 4) {
+            tracks.push({ c: c3, color: "--danger", label: "94đ", count: 1, rate: 0.48, phase: 0.5 });
+            tracks.push({ c: cLock, color: "--danger", label: "LOCK", count: 1, rate: 0.48, phase: 0.65 });
+          }
+
+          nodes =
+            svgBox(16, 56, 196, 84, stageMap.idx >= 1 ? "--broker-bg" : "--surface", stageMap.idx >= 1 ? "--broker" : "--border-strong", "1. Giả danh", "Socket /call · Qdrant", "38đ · SAFE") +
+            svgBox(308, 56, 196, 84, stageMap.idx >= 2 ? "--warn-bg" : "--surface", stageMap.idx >= 2 ? "--warn" : "--border-strong", "2. Dọa & Hối thúc", "call_analyzer.py · RAG", "62đ · WARN") +
+            svgBox(600, 56, 196, 84, stageMap.idx >= 3 ? "--danger-bg" : "--surface", stageMap.idx >= 3 ? "--danger" : "--border-strong", "3. Cô lập gia đình", "\"Cấm kể cho con\"", "80đ · BLOCK") +
+            svgBox(892, 56, 206, 84, stageMap.idx >= 4 ? "--danger-bg" : "--surface", stageMap.idx >= 4 ? "--danger" : "--border-strong", "4. Đòi tiền / OTP", "POST /family/lockdown", "94đ · LOCKDOWN") +
+            svgBox(200, 244, 340, 76, stageMap.idx >= 3 ? "--kraft-bg" : "--surface-warm", stageMap.idx >= 3 ? "--kraft" : "--border", "Edge-TTS · MP3 Cache (<200ms)", "Phát giọng nữ Việt ấm áp trên App Cha Mẹ", "CẮT CƠN HOẢNG LOẠN") +
+            svgBox(630, 244, 340, 76, stageMap.idx >= 4 ? "--danger-bg" : "--surface-warm", stageMap.idx >= 4 ? "--danger" : "--border", "Auto-Trigger Lớp 3 · Redis 180s", "Khóa tạm dòng tiền + Push SOS App Máy Con", "KHÔNG GỬI LỜI THOẠI");
+
+          banner = { tone: stageMap.tone, text: stageMap.msg, metric: "RISK: " + stageMap.score + "/100 · " + stageMap.level };
+          extraHtml = renderRefRepos("Repo tham khảo cho Lớp 2 (Cuộc gọi lừa đảo · Tâm lý · Mở rộng DeepVoice)", REF_REPOS_L2);
+        }
+        else if (stepIdx === 6) {
+          // 07: LAYER 3 CO-SIGN 180s & PRIVACY WALL
+          const cHold = makeCurve(204, 134, 366, 134);
+          const cBlock = makeCurve(580, 108, 822, 66);
+          const cTimeout = makeCurve(580, 134, 822, 102);
+          const cApprove = makeCurve(580, 160, 822, 232);
+          const cNotify = makeCurve(475, 180, 475, 248, 0.05);
+
+          wires = [
+            { c: cHold, color: "--warn", label: "≥75đ / vượt ngưỡng", dy: -22 },
+            { c: cBlock, color: mode === "block" ? "--good" : "--wire", label: "Con bấm Chặn", dy: -18 },
+            { c: cTimeout, color: mode === "timeout" ? "--good" : "--wire", label: "Hết 180s (tự hủy)", dy: 18 },
+            { c: cApprove, color: mode === "approve" ? "--consumer" : "--wire", label: "Con duyệt Cho qua", dy: 22 },
+            { c: cNotify, color: "--consumer", label: "Chỉ gửi tóm tắt", dx: 14, anchor: "start" }
+          ];
+          tracks = [{ c: cHold, color: "--warn", label: "180s", count: 1, rate: 0.44 }];
+          if (mode === "hold") tracks.push({ c: cNotify, color: "--consumer", label: "SOS", count: 1, rate: 0.44, phase: 0.3 });
+          if (mode === "block") tracks.push({ c: cBlock, color: "--good", label: "CHẶN", count: 1, rate: 0.48, phase: 0.35 });
+          if (mode === "timeout") tracks.push({ c: cTimeout, color: "--good", label: "HỦY", count: 1, rate: 0.44, phase: 0.35 });
+          if (mode === "approve") tracks.push({ c: cApprove, color: "--consumer", label: "OK", count: 1, rate: 0.48, phase: 0.35 });
+
+          nodes =
+            svgBox(18, 92, 186, 84, "--surface", "--border-strong", "Core Guard", "Ngưỡng 5tr · NestJS", "MONITORING") +
+            svgBox(370, 88, 210, 92, "--warn-bg", "--warn", "Redis TTL 180s", "Khóa tạm · Hết giờ tự hủy", "LOCKDOWN") +
+            svgBox(826, 32, 266, 94, mode === "block" || mode === "timeout" ? "--good-bg" : "--surface", mode === "block" || mode === "timeout" ? "--good" : "--border-strong", "Đã chặn an toàn", "Lưu Postgres Audit · Giữ tiền", "BLOCKED_SAFE") +
+            svgBox(826, 190, 266, 86, mode === "approve" ? "--consumer-bg" : "--surface", mode === "approve" ? "--consumer" : "--border-strong", "Đã cho qua", "Ký duyệt từ App Máy Con", "APPROVED") +
+            svgBox(305, 252, 340, 76, "--consumer-bg", "--consumer", "Tách 2 kênh Socket / Push · App Con", "Chỉ gửi: 50tr · TK lạ · 94đ | ẨN 100% lời thoại", "PRIVACY-BY-DESIGN");
+
+          banner = {
+            hold:    { tone: "warn", text: "Đang đếm ngược 180 giây hạ nhiệt — Máy Con nhận tóm tắt rủi ro, hoàn toàn không thấy nội dung trò chuyện riêng.", metric: "COOL-OFF: 02:59" },
+            block:   { tone: "good", text: "Con bấm \"Chặn & Gọi Mẹ\" → giao dịch bị hủy tức thì, xuất biên bản sự cố để báo cáo.", metric: "BLOCKED_SAFE" },
+            timeout: { tone: "good", text: "Hết 180 giây mà con đang họp không trả lời → cơ chế Fail-Safe tự động hủy giao dịch an toàn.", metric: "FAIL-SAFE AUTO-CANCEL" },
+            approve: { tone: "default", text: "Con gọi hỏi trực tiếp thấy đúng là giao dịch thật → bấm Cho qua để tiền đi bình thường.", metric: "APPROVED BY GUARDIAN" }
+          }[mode];
+        }
+        else if (stepIdx === 7) {
+          // 08: AI ENGINE INTERNALS (Block 1 + Block 2)
+          const cIn = makeCurve(214, 148, 336, 148);
+          const cOut = makeCurve(720, 148, 842, 148);
+          const cConst = makeCurve(530, 250, 530, 218, 0.05);
+
+          const cfg = {
+            ssrf: {
+              inT: "http://127.0.0.1:4000", inS: "Link nội bộ giả mạo",
+              midT: "URL Inspector · SSRF Guard", midS: "DNS lookup → chặn private/loopback/169.254", midM: "url_inspector.py",
+              outT: "CHẶN NGAY (0đ)", outS: "Ngắt kết nối bảo vệ server", outBg: "--danger-bg", outSt: "--danger",
+              bTone: "good", bText: "SSRF Guard chặn 7/7 dải IP nội bộ & DNS rebinding trước mỗi bước redirect.", bMet: "SSRF BLOCK: 7/7 PASS"
+            },
+            dom: {
+              inT: "bit.ly → m0mo.xyz", inS: "2-hop + HTML login",
+              midT: "URL Inspector · Redirect + DOM", midS: "BeautifulSoup soi password, OTP, .apk, brand", midM: "url_inspector.py",
+              outT: "PHISHING · 98đ", outS: "Giả MoMo + Form OTP", outBg: "--danger-bg", outSt: "--danger",
+              bTone: "danger", bText: "Bóc chuỗi redirect an toàn không chạy JS, bắt combo giả thương hiệu + ô nhập mật khẩu/OTP.", bMet: "URL SCORE: 98/100"
+            },
+            ela: {
+              inT: "bill_chuyen_khoan.png", inS: "Sửa số tiền + Photoshop",
+              midT: "Image Forensics · ELA + EXIF", midS: "Nén JPEG Q90 đo lệch pixel + quét Adobe/Canva", midM: "image_forensics.py",
+              outT: "BILL GIẢ · 87đ", outS: "Photoshop + ELA 24.6x", outBg: "--warn-bg", outSt: "--warn",
+              bTone: "warn", bText: "Phát hiện dấu vết Adobe Photoshop (+45) + vùng số tiền sai lệch nén 24.67x (+42) trong < 50ms.", bMet: "IMAGE SCORE: 87/100"
+            },
+            rag: {
+              inT: "\"CTV chốt đơn Shopee\"", inS: "Tin nhắn dụ nạp tiền",
+              midT: "Qdrant Vector RAG", midS: "Vector 384-dim Cosine + Keyword Hybrid Rerank", midM: "qdrant_store.py · 22 mẫu",
+              outT: "VN-SCAM-09", outS: "Tuyển CTV việc nhẹ", outBg: "--good-bg", outSt: "--good",
+              bTone: "good", bText: "Qdrant truy xuất chính xác mã VN-SCAM-09 kèm câu hỏi vặn chuẩn A05; câu đời thường trả 0 kết quả.", bMet: "TOP-1: 6/6 · 0% FP"
+            }
+          }[mode];
+
+          wires = [
+            { c: cIn, color: "--accent", label: "Đầu vào", dy: -22 },
+            { c: cOut, color: cfg.outSt, label: "Bằng chứng", dy: -22 },
+            { c: cConst, color: "--wire", dashed: true }
+          ];
+          tracks = [
+            { c: cIn, color: "--accent", label: "IN", count: 1, rate: 0.44 },
+            { c: cOut, color: cfg.outSt, label: "JSON", count: 1, rate: 0.44, phase: 0.4 }
+          ];
+          nodes =
+            svgBox(18, 104, 196, 88, "--surface", "--border-strong", cfg.inT, cfg.inS, "INPUT") +
+            svgBox(340, 82, 380, 132, "--broker-bg", "--broker", cfg.midT, cfg.midS, cfg.midM) +
+            svgBox(846, 104, 256, 88, cfg.outBg, cfg.outSt, cfg.outT, cfg.outS, "ĐƯA SANG CLAUDE") +
+            svgBox(340, 250, 380, 68, "--surface-warm", "--border", "constants.py · Tập trung 1 nơi", "Whitelist VN · Bỏ google/facebook khỏi miễn soi", "KHÔNG __init__.py THỪA");
+
+          banner = { tone: cfg.bTone, text: cfg.bText, metric: cfg.bMet };
+          extraHtml = renderRefRepos("Tổng hợp toàn bộ Repo nghiên cứu (URL · Ảnh Bill · Cuộc gọi · DeepVoice)", REF_REPOS_L1.concat(REF_REPOS_L2));
+        }
+        else if (stepIdx === 8) {
+          // 09: 58-REPO RESEARCH AUDIT & REACT NATIVE (EXPO 58) FEASIBILITY VERDICT
+          const cL1 = makeCurve(236, 134, 344, 58);
+          const cL2 = makeCurve(236, 134, 344, 152);
+          const cL3 = makeCurve(236, 134, 344, 246);
+          const cL1O = makeCurve(754, 58, 846, 118);
+          const cL2O = makeCurve(754, 152, 846, 152);
+          const cL3O = makeCurve(754, 246, 846, 186);
+
+          wires = [
+            { c: cL1, color: "--producer", label: "21 RN + 14 L1", dy: -16 },
+            { c: cL2, color: "--kraft", label: "STT + CallKit", dy: -14 },
+            { c: cL3, color: "--good", label: "Độc nhất / 58 repo", dy: 20 },
+            { c: cL1O, color: "--good", label: "98% khả thi", dy: -16 },
+            { c: cL2O, color: "--warn", label: "90% (loa ngoài)", dy: -14 },
+            { c: cL3O, color: "--good", label: "100% Expo Go", dy: 20 }
+          ];
+          tracks = [
+            { c: cL1, color: "--producer", label: "98%", count: 1, rate: 0.44 },
+            { c: cL2, color: "--kraft", label: "90%", count: 1, rate: 0.44, phase: 0.25 },
+            { c: cL3, color: "--good", label: "100%", count: 1, rate: 0.44, phase: 0.5 },
+            { c: cL1O, color: "--good", label: "OK", count: 1, rate: 0.44, phase: 0.6 },
+            { c: cL3O, color: "--good", label: "USP", count: 1, rate: 0.44, phase: 0.8 }
+          ];
+          nodes =
+            svgBox(14, 88, 222, 92, "--broker-bg", "--broker", "58 Repo đã Pull", "kinshield-mobile: Expo 58", "RN 0.88 · NEW ARCH") +
+            svgBox(348, 18, 406, 80, "--producer-bg", "--producer", "Lớp 1 · X-Ray (98% khả thi RN)", "expo-share-intent v9 (^58) + viet-qr TS + AI Server", "NÉ: receive-sharing-intent (2021) · AGPL/GPL") +
+            svgBox(348, 112, 406, 80, "--kraft-bg", "--kraft", "Lớp 2 · Voice AI (90% loa ngoài)", "expo-speech-recognition v58 + nitro-call-detector", "LƯU Ý: GSM Audio Focus iOS · RawNet3 chạy server") +
+            svgBox(348, 206, 406, 80, "--good-bg", "--good", "Lớp 3 · Co-Sign 180s (100% khả thi)", "Socket.IO + Redis 180s + Privacy Wall 2 kênh", "KHÔNG REPO NÀO TRONG 58 REPO CÓ!") +
+            svgBox(850, 96, 254, 112, "--surface-warm", "--good", "CHỐT CHIẾN LƯỢC", "1. Chạy mượt trên Expo Go", "2. Build 1 .apk EAS ăn điểm");
+
+          const filtered = mode === "all" ? ALL_58_REPOS : ALL_58_REPOS.filter(function (r) { return r.grp === mode; });
+          const modeTitleMap = {
+            all: "Tất cả 58 Repository đã pull & kiểm tra code thật (ưu tiên React Native lên đầu)",
+            rn: "21 Module & Native Hook cho React Native / Expo 58",
+            apps: "13 Ứng dụng Mobile Chống Lừa Đảo, CallShield & Elder Guardian",
+            l1: "14 Repo Lớp 1 (VietQR · Chống Lừa Đảo VN · URL Phishing · Quishing · Soi Bill ELA)",
+            l2: "10 Repo Lớp 2 (Cuộc gọi lừa đảo Realtime · Tâm lý · DeepVoice Audio)"
+          };
+
+          banner = {
+            tone: "good",
+            text: "Đánh giá kỹ trên kinshield-mobile (Expo 58 / RN 0.88): Cả 3 lớp đều làm được! Chọn đúng module 2026 (expo-share-intent v9, expo-speech-recognition v58, nitro-call-detector) và né 5 lib cũ 2021–2023.",
+            metric: "HIỂN THỊ " + filtered.length + " / 58 REPO"
+          };
+
+          const escapedScript = PULL_ALL_SCRIPT.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          extraHtml =
+            '<div class="sc-detail-grid">' +
+              '<div class="sc-detail-box hit"><span class="sc-lbl">1. Đánh giá Lớp 1 trên React Native (98%)</span><div class="sc-val"><strong>Làm rất ngon:</strong> <code>expo-share-intent v9</code> khớp chính xác Expo 58; <code>viet-qr</code> parse VietQR offline &lt;2ms. <em>Bonus học từ ElderBridge &amp; SecurityChecker:</em> che CCCD/OTP trước khi gửi AI &amp; phát hiện app VNeID .apk bật Accessibility.</div></div>' +
+              '<div class="sc-detail-box"><span class="sc-lbl">2. Đánh giá Lớp 2 trên React Native (90%)</span><div class="sc-val"><strong>Làm được với loa ngoài:</strong> <code>expo-speech-recognition v58</code> (vi-VN) + <code>nitro-call-detector</code> (manifest rỗng sạch Play Store). <em>Cảnh báo kỹ thuật:</em> khi gọi GSM thật, iOS khóa micro độc quyền → demo loa ngoài 2 máy + đường dài nối VoIP/nhà mạng cho RawNet3.</div></div>' +
+              '<div class="sc-detail-box hit"><span class="sc-lbl">3. Đánh giá Lớp 3 trên React Native (100% USP)</span><div class="sc-val"><strong>Hoàn toàn khả thi &amp; Độc nhất:</strong> Chạy mượt 100% ngay trên Expo Go (Socket.IO + Redis 180s). Trong 58 repo đã pull (kể cả Elder-Guard, CallShield, VoxGuard), <strong>chưa repo nào có Family Co-Sign 180s + Privacy tách 2 kênh</strong>!</div></div>' +
+            '</div>' +
+            '<div class="copy-pull-box">' +
+              '<div class="copy-pull-head">' +
+                '<div><div class="copy-pull-title">Plain-Text Copy · Pull toàn bộ 58 Repo GitHub (1 lệnh chạy ngay)</div><div class="copy-pull-sub">Tương thích PowerShell, Git Bash, macOS &amp; Linux · Đã kiểm chứng 58/58 repo sống 100%</div></div>' +
+                '<button type="button" class="copy-pull-btn" id="btnCopyPull58" data-copy-pull="1">Copy toàn bộ 58 lệnh pull</button>' +
+              '</div>' +
+              '<textarea id="pullAll58Text" class="copy-pull-area" readonly spellcheck="false">' + escapedScript + '</textarea>' +
+            '</div>' +
+            '<div class="ref-repo-box">' +
+              '<div class="ref-repo-head">' +
+                '<div>' + modeTitleMap[mode] + '</div>' +
+                '<span>' + filtered.length + ' / 58 repo · Local: C:/LE/momo-antiscam-repos/</span>' +
+              '</div>' +
+              '<table class="ref-repo-table">' +
+                '<thead><tr><th style="width:27%">Repository (GitHub)</th><th style="width:13%">Nhóm</th><th style="width:11%">Cập nhật · Lic</th><th style="width:16%">Đánh giá RN/Expo 58</th><th>Phân tích áp dụng cho 3 Lớp</th></tr></thead>' +
+                '<tbody>' +
+                filtered.map(function (it, idx) {
+                  return '<tr>' +
+                    '<td><strong style="color:var(--text-muted);font-family:var(--font-mono-ui);margin-right:5px;">' + String(idx + 1).padStart(2, "0") + '.</strong><a class="ref-link" href="' + it.url + '" target="_blank" rel="noopener noreferrer">' + it.slug + '</a></td>' +
+                    '<td><span class="hit-pill support">' + it.layer + '</span></td>' +
+                    '<td style="font-family:var(--font-mono-ui);font-size:11px;white-space:nowrap;">' + it.date + '<br><span style="color:var(--text-muted);">' + it.lic + '</span></td>' +
+                    '<td><span class="verdict-pill ' + it.vc + '">' + it.v + '</span></td>' +
+                    '<td>' + it.note + '</td>' +
+                  '</tr>';
+                }).join("") +
+                '</tbody></table></div>';
+        }
+
+        // Build Arrowhead Markers + Clean Wires + Top Labels Layer
+        const markerColors = ["--wire", "--accent", "--broker", "--producer", "--kraft", "--consumer", "--good", "--warn", "--danger"];
+        const defsSvg = "<defs>" + markerColors.map(function (mc) {
+          const id = "arr-" + mc.replace("--", "");
+          return '<marker id="' + id + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="var(' + mc + ')"/></marker>';
+        }).join("") + "</defs>";
+
+        let wiresSvg = "";
+        let labelsSvg = "";
+        wires.forEach(function (w) {
+          const d = curveD(w.c);
+          const mId = "arr-" + w.color.replace("--", "");
+          wiresSvg += '<path d="' + d + '" fill="none" stroke="var(' + w.color + ')" stroke-width="2.4" stroke-linecap="round"' + (w.dashed ? ' stroke-dasharray="6 5"' : '') + ' marker-end="url(#' + mId + ')" opacity="0.85"/>';
+          if (w.label) {
+            const mid = sampleCurve(w.c, 0.5);
+            const lx = mid.x + (w.dx || 0);
+            const ly = mid.y + (w.dy !== undefined ? w.dy : 4);
+            const anchor = w.anchor || "middle";
+            const tw = w.label.length * 6.4 + 14;
+            const rx = anchor === "end" ? lx - tw + 4 : anchor === "start" ? lx - 4 : lx - tw / 2;
+            labelsSvg +=
+              '<g>' +
+                '<rect x="' + rx.toFixed(1) + '" y="' + (ly - 12).toFixed(1) + '" width="' + tw.toFixed(1) + '" height="17" rx="5" fill="var(--canvas-bg)" opacity="0.92"/>' +
+                '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" class="n-wire-lbl">' + w.label + '</text>' +
+              '</g>';
+          }
+        });
+
+        const svgHtml =
+          '<svg class="stage-svg" viewBox="0 0 1120 350" role="img" aria-label="Sơ đồ hoạt ảnh KinShield">' +
+            defsSvg +
+            '<g class="wires-layer">' + wiresSvg + '</g>' +
+            '<g class="nodes-layer">' + nodes + '</g>' +
+            '<g class="labels-layer">' + labelsSvg + '</g>' +
+            '<g id="packetsLayer"></g>' +
+          '</svg>';
+
+        return { svgHtml: svgHtml, tracks: tracks, banner: banner, extraHtml: extraHtml };
+      }
+
+      // Animation Engine (requestAnimationFrame moving SVG packets along Bezier curves)
+      let activeTracks = [];
+      let activePackets = [];
+      let rafId = null;
+      let lastTs = 0;
+
+      function initPackets(tracks) {
+        activeTracks = tracks;
+        activePackets = [];
+        tracks.forEach(function (tr, ti) {
+          const n = tr.count || 1;
+          for (let i = 0; i < n; i++) {
+            activePackets.push({
+              ti: ti,
+              t: ((tr.phase || 0) + i / n) % 1,
+              dir: 1
+            });
+          }
+        });
+        renderPackets();
+      }
+
+      function renderPackets() {
+        const layer = document.getElementById("packetsLayer");
+        if (!layer) return;
+        let out = "";
+        for (let i = 0; i < activePackets.length; i++) {
+          const p = activePackets[i];
+          const tr = activeTracks[p.ti];
+          if (!tr) continue;
+          const pt = sampleCurve(tr.c, p.t);
+          const lbl = tr.label || "";
+          const rw = Math.max(22, lbl.length * 6 + 10);
+          out +=
+            '<g transform="translate(' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1) + ')">' +
+              '<rect x="' + (-rw/2).toFixed(1) + '" y="-9" width="' + rw.toFixed(1) + '" height="18" rx="9" fill="var(' + tr.color + ')" stroke="var(--canvas-bg)" stroke-width="2"/>' +
+              '<text x="0" y="3" text-anchor="middle" fill="#ffffff" font-size="8.8" font-weight="700" font-family="JetBrains Mono, monospace">' + lbl + '</text>' +
+            '</g>';
+        }
+        layer.innerHTML = out;
+      }
+
+      function tick(ts) {
+        if (!lastTs) lastTs = ts;
+        const dt = Math.min(0.05, (ts - lastTs) / 1000);
+        lastTs = ts;
+        if (running && activePackets.length) {
+          for (let i = 0; i < activePackets.length; i++) {
+            const p = activePackets[i];
+            const tr = activeTracks[p.ti];
+            if (!tr) continue;
+            const rate = (tr.rate || 0.45) * speed;
+            if (tr.bounceAt) {
+              p.t += dt * rate * p.dir;
+              if (p.t >= tr.bounceAt) { p.t = tr.bounceAt; p.dir = -1; }
+              if (p.t <= 0.04) { p.t = 0.04; p.dir = 1; }
+            } else {
+              p.t = (p.t + dt * rate) % 1;
+            }
+          }
+          renderPackets();
+        }
+        rafId = window.requestAnimationFrame(tick);
+      }
+
+      // Render Sidebar, Stage Card & Pagination
+      function renderSidebar() {
+        const el = document.getElementById("sideMenu");
+        let html =
+          '<div class="side-cover">' +
+            '<div class="side-cover-top">' +
+              '<span class="side-cover-title">KinShield Design</span>' +
+              '<span class="side-cover-count">' + STEPS.length + ' trang</span>' +
+            '</div>' +
+            '<div class="side-cover-sub">Vấn đề → Giải pháp → Mô hình chung → Kỹ thuật</div>' +
+          '</div>';
+
+        GROUPS.forEach(function (gName) {
+          html += '<div class="side-menu-group"><div class="side-menu-heading">' + gName + '</div>';
+          STEPS.forEach(function (st, idx) {
+            if (st.group !== gName) return;
+            html +=
+              '<button type="button" class="side-menu-item ' + (idx === pageIdx ? "active" : "") + '" data-idx="' + idx + '">' +
+                '<span class="side-menu-num">' + st.num + '</span>' +
+                '<span>' + st.label + '</span>' +
+              '</button>';
+          });
+          html += '</div>';
+        });
+        el.innerHTML = html;
+      }
+
+      function renderStage() {
+        const st = STEPS[pageIdx];
+        const activeMode = modeByStep[st.num];
+        const scene = buildScene(pageIdx, activeMode);
+
+        const controlsHtml = st.modes.map(function (m) {
+          const isAct = m.id === activeMode;
+          return '<button type="button" class="ctrl-btn ' + (isAct ? m.cls : "") + '" data-mode="' + m.id + '">' + m.label + '</button>';
+        }).join("");
+
+        const takeawaysHtml = st.takeaways.map(function (t) {
+          return '<div class="takeaway-item"><strong>' + t.title + '</strong><span>' + t.desc + '</span></div>';
+        }).join("");
+
+        const bannerCls = scene.banner.tone && scene.banner.tone !== "default" ? " " + scene.banner.tone : "";
+
+        document.getElementById("modelStage").innerHTML =
+          '<div class="model-header">' +
+            '<div class="model-title-group">' +
+              '<div class="model-badges">' +
+                '<span class="badge">Mô hình ' + st.num + '</span>' +
+                '<span class="badge ' + st.tagTone + '">' + st.tag + '</span>' +
+              '</div>' +
+              '<h2>' + st.title + '</h2>' +
+              '<p class="model-subtitle">' + st.subtitle + '</p>' +
+            '</div>' +
+            (controlsHtml ? '<div class="model-controls">' + controlsHtml + '</div>' : '') +
+          '</div>' +
+          '<div class="stage-canvas-wrap">' + scene.svgHtml + '</div>' +
+          '<div class="status-banner' + bannerCls + '">' +
+            '<span>' + scene.banner.text + '</span>' +
+            '<strong class="status-metric">' + scene.banner.metric + '</strong>' +
+          '</div>' +
+          (scene.extraHtml || '') +
+          '<div class="model-takeaways">' + takeawaysHtml + '</div>';
+
+        initPackets(scene.tracks);
+        renderPagination();
+      }
+
+      function renderPagination() {
+        const prev = pageIdx > 0 ? STEPS[pageIdx - 1] : null;
+        const next = pageIdx < STEPS.length - 1 ? STEPS[pageIdx + 1] : null;
+        const pct = Math.round(((pageIdx + 1) / STEPS.length) * 100);
+
+        document.getElementById("progressFill").style.width = pct + "%";
+        document.getElementById("btnPrev").disabled = !prev;
+        document.getElementById("prevName").textContent = prev ? prev.num + ". " + prev.label : "Đầu danh sách";
+        document.getElementById("btnNext").disabled = !next;
+        document.getElementById("nextName").textContent = next ? next.num + ". " + next.label : "Hoàn thành " + STEPS.length + " mô hình";
+        document.getElementById("pagerCounter").textContent = "KinShield · Trang " + (pageIdx + 1) + " / " + STEPS.length;
+
+        document.getElementById("pagerDots").innerHTML = STEPS.map(function (s, idx) {
+          return '<button type="button" class="pager-dot ' + (idx === pageIdx ? "active" : "") + '" data-dot="' + idx + '" title="' + s.num + '. ' + s.label + '"></button>';
+        }).join("");
+      }
+
+      function goToPage(idx) {
+        pageIdx = Math.max(0, Math.min(STEPS.length - 1, idx));
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, "", "#" + STEPS[pageIdx].num);
+        }
+        renderSidebar();
+        renderStage();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      // Event delegation
+      document.getElementById("sideMenu").addEventListener("click", function (e) {
+        const btn = e.target.closest(".side-menu-item");
+        if (btn) goToPage(Number(btn.getAttribute("data-idx")));
+      });
+      document.getElementById("modelStage").addEventListener("click", function (e) {
+        const btn = e.target.closest(".ctrl-btn");
+        if (btn) {
+          modeByStep[STEPS[pageIdx].num] = btn.getAttribute("data-mode");
+          renderStage();
+          return;
+        }
+        const row = e.target.closest("tr[data-row-mode]");
+        if (row) {
+          modeByStep[STEPS[pageIdx].num] = row.getAttribute("data-row-mode");
+          renderStage();
+        }
+      });
+      document.getElementById("pagerDots").addEventListener("click", function (e) {
+        const dot = e.target.closest(".pager-dot");
+        if (dot) goToPage(Number(dot.getAttribute("data-dot")));
+      });
+      document.getElementById("btnPrev").addEventListener("click", function () { goToPage(pageIdx - 1); });
+      document.getElementById("btnNext").addEventListener("click", function () { goToPage(pageIdx + 1); });
+
+      document.getElementById("btnPlay").addEventListener("click", function () {
+        running = !running;
+        this.textContent = running ? "Tạm dừng" : "Chạy tiếp";
+        this.classList.toggle("active", running);
+      });
+
+      document.querySelectorAll(".speed-btn").forEach(function (b) {
+        b.addEventListener("click", function () {
+          speed = Number(b.getAttribute("data-speed"));
+          document.querySelectorAll(".speed-btn").forEach(function (x) { x.classList.remove("active"); });
+          b.classList.add("active");
+        });
+      });
+
+      document.getElementById("btnTheme").addEventListener("click", function () {
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        const next = isDark ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        this.textContent = next === "dark" ? "Sáng dịu" : "Tối dịu";
+      });
+
+      window.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight" && pageIdx < STEPS.length - 1) goToPage(pageIdx + 1);
+        else if (e.key === "ArrowLeft" && pageIdx > 0) goToPage(pageIdx - 1);
+      });
+
+      const initHash = (window.location.hash || "").replace("#", "");
+      if (initHash) {
+        const foundIdx = STEPS.findIndex(function (s) { return s.num === initHash; });
+        if (foundIdx >= 0) pageIdx = foundIdx;
+      }
+      renderSidebar();
+      renderStage();
+      rafId = window.requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
