@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mẫu trình chiếu HTML"
+  short_description: "Tạo slide tương tác dễ đọc trên màn chiếu"
+  default_prompt: "Dùng $html-presentation-template để tạo bản trình chiếu HTML cho chức năng sau và kiểm tra các cảnh ở 1280 × 720."
